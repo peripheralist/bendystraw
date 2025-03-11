@@ -33,14 +33,13 @@ type QueryArgs = Partial<{
 }>;
 
 const builQueryHandler =
-  (queryName: string) => async (_: unknown, args: QueryArgs) => {
+  (queryName: (typeof QUERY_NAMES)[number]) =>
+  async (_: unknown, args: QueryArgs) => {
     const { where, first, skip, orderBy, orderDirection } = args;
 
     // Start a Supabase query
     // queryName must match table name
-    let query = supabase
-      .from(`juicebox_${camelToSnakeCase(queryName)}`)
-      .select("*");
+    let query = supabase.from(camelToSnakeCase(queryName)).select("*");
 
     if (where) {
       Object.entries(where).forEach(([k, v]) => {

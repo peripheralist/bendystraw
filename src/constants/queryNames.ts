@@ -4,4 +4,4 @@ export const QUERY_NAMES = [
   "decorateBannyEvents",
   "payEvents",
   "mintTokensEvents",
-];
+] as const;
