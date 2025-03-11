@@ -11,7 +11,7 @@ const typeDefs = gql${"`"}` +
     .toString()
     .replaceAll("`", "'")
     .replaceAll(/type .* {\s/g, "$&  chain: Int!\n")
-    .replaceAll(/filter {\s/g, "$&  chain: Int!\n") +
+    .replaceAll(/filter {\s/g, "$&  chain: Int\n  chain_in: [Int]\n") +
   `${"`"};
 
 export default typeDefs;

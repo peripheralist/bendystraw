@@ -1,5 +1,10 @@
 import { QUERY_NAMES } from "@/constants/queryNames";
-import { camelToSnakeCase, formatChain, snakeToCamelCase } from "@/utils";
+import {
+  camelToSnakeCase,
+  idOfChainName,
+  nameOfChainId,
+  snakeToCamelCase,
+} from "@/utils";
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.SUPABASE_URL;
@@ -32,74 +37,121 @@ type QueryArgs = Partial<{
   orderDirection: "asc" | "desc";
 }>;
 
+function formatKV(k: string, v: Required<QueryArgs>["where"][string]) {
+  let _k = k;
+  let _v = v;
+
+  if (_k === "chain") {
+    _v = (
+      Array.isArray(v)
+        ? v.map((chainId) => nameOfChainId(chainId))
+        : nameOfChainId(v as number)
+    )!;
+
+    _k = "_gs_chain";
+
+    if (_v === undefined) {
+      throw new Error("Error formatting where value");
+    }
+  }
+
+  return [_k, _v] as const;
+}
+
 const builQueryHandler =
-  (queryName: (typeof QUERY_NAMES)[number]) =>
+  <T extends string = "*">(queryName: (typeof QUERY_NAMES)[number]) =>
   async (_: unknown, args: QueryArgs) => {
     const { where, first, skip, orderBy, orderDirection } = args;
 
+    let select = "*";
+
+    switch (queryName) {
+      case "projectEvents":
+        select +=
+          ", pay_event:pay_events(*), mint_tokens_event:mint_tokens_events(*)";
+        break;
+      case "projects":
+        select += ", pay_events(*), mint_tokens_events(*), project_events(*)";
+        break;
+      case "nftTiers":
+        select += ", nft_tiers(*)";
+        break;
+    }
+
     // Start a Supabase query
     // queryName must match table name
-    let query = supabase.from(camelToSnakeCase(queryName)).select("*");
+    let query = supabase
+      .from(camelToSnakeCase(queryName))
+      .select<T>(select as T);
 
     if (where) {
       Object.entries(where).forEach(([k, v]) => {
-        FILTER_SUFFIXES.forEach((suffix) => {
-          if (k.endsWith(suffix)) {
-            const _k = camelToSnakeCase(k.split(suffix)[0]);
+        if (FILTER_SUFFIXES.some((suffix) => k.endsWith(suffix))) {
+          // If k ends in suffix, process suffix
+          FILTER_SUFFIXES.forEach((suffix) => {
+            if (k.endsWith(suffix)) {
+              const kShort = camelToSnakeCase(k.split(suffix)[0]);
 
-            switch (suffix) {
-              case "_contains":
-                if (!Array.isArray(v)) {
-                  throw new Error("_contains argument must be an array");
-                }
-                query = query.contains(_k, v);
-                return;
-              case "_ends_with":
-                query = query.ilike(_k, `%${v}`);
-                return;
-              case "_ends_with_nocase":
-              case "_starts_with_nocase":
-                throw new Error("_nocase not supported");
-              case "_gt":
-                query = query.gt(_k, v);
-                return;
-              case "_gte":
-                query = query.gte(_k, v);
-                return;
-              case "_in":
-                if (!Array.isArray(v)) {
-                  throw new Error("_in argument must be an array");
-                }
-                query = query.in(_k, v);
-                return;
-              case "_lt":
-                query = query.lt(_k, v);
-                return;
-              case "_lte":
-                query = query.lte(_k, v);
-                return;
-              case "_not":
-                query = query.neq(_k, v);
-                return;
-              case "_not_in":
-                throw new Error("_not_in not supported");
-              case "_starts_with":
-                query = query.ilike(_k, `${v}%`);
-                return;
+              const [_k, _v] = formatKV(kShort, v);
+
+              switch (suffix) {
+                case "_contains":
+                  if (!Array.isArray(_v)) {
+                    throw new Error("_contains argument must be an array");
+                  }
+                  query = query.contains(_k, _v);
+                  return;
+                case "_ends_with":
+                  query = query.ilike(_k, `%${_v}`);
+                  return;
+                case "_ends_with_nocase":
+                case "_starts_with_nocase":
+                  throw new Error("_nocase not supported");
+                case "_gt":
+                  query = query.gt(_k, _v);
+                  return;
+                case "_gte":
+                  query = query.gte(_k, _v);
+                  return;
+                case "_in":
+                  if (!Array.isArray(_v)) {
+                    throw new Error("_in argument must be an array");
+                  }
+                  query = query.in(_k, _v);
+                  return;
+                case "_lt":
+                  query = query.lt(_k, _v);
+                  return;
+                case "_lte":
+                  query = query.lte(_k, _v);
+                  return;
+                case "_not":
+                  query = query.neq(_k, _v);
+                  return;
+                case "_not_in":
+                  throw new Error("_not_in not supported");
+                case "_starts_with":
+                  query = query.ilike(_k, `${_v}%`);
+                  return;
+              }
             }
-          }
-        });
+          });
+        } else {
+          const [_k, _v] = formatKV(k, v);
+
+          query = query.eq(_k, _v);
+        }
       });
     }
 
-    // 3) Sort / orderBy
+    // Sort / orderBy
     if (orderBy) {
       query = query.order(orderBy, {
         ascending: orderDirection !== "desc",
       });
     }
 
-    // 4) Pagination
+    // Pagination
     // The Graph’s "first" & "skip" typically do limit/offset
     if (first) {
       if (skip) {
@@ -118,7 +170,7 @@ const builQueryHandler =
     }
 
     return data.map((d) =>
-      Object.entries(d).reduce(
+      Object.entries(d!).reduce(
         (acc, [key, value]) => ({
           ...acc,
           // convert property names to camelCase
@@ -126,7 +178,7 @@ const builQueryHandler =
         }),
         {
           // add chain property
-          chain: formatChain(d._gs_chain),
+          chain: idOfChainName((d as { _gs_chain: string })._gs_chain),
         }
       )
     );

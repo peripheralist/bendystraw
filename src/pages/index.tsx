@@ -26,10 +26,12 @@ export default function Home() {
         <code style={{ whiteSpace: "pre", display: "block", padding: 10 }}>
           {`query {
   nfts(where: { chain: 1 }) {
+    id
     tokenId
   }
 
-  payEvents(first: 100) {
+  projects(where: { chain_in: [1, 8453] }) {
+    id
     chain
   }
 }`}
@@ -41,12 +43,26 @@ export default function Home() {
         <br />
         <br />
         <br />
-        <h2>Queries:</h2>
         <br />
         <div style={{ fontSize: "0.8rem" }}>
           <span style={{ fontWeight: "bold" }}>Supported</span> |{" "}
           <span style={{ color: "gray" }}>Not yet supported</span>
         </div>
+        <br />
+        <h2>Chains:</h2>
+        <br />
+        <ul>
+          <li style={{ fontWeight: "bold" }}>Ethereum</li>
+          <li style={{ color: "gray" }}>Ethereum Sepolia</li>
+          <li style={{ fontWeight: "bold" }}>Base</li>
+          <li style={{ color: "gray" }}>Base Sepolia</li>
+          <li style={{ color: "gray" }}>Optimism</li>
+          <li style={{ color: "gray" }}>Optimism Sepolia</li>
+          <li style={{ color: "gray" }}>Arbitrum</li>
+          <li style={{ color: "gray" }}>Arbitrum Sepolia</li>
+        </ul>
+        <br />
+        <h2>Queries:</h2>
         <br />
         <ul>
           {SCHEMA_TYPES?.sort().map((n) => {

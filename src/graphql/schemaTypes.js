@@ -1,31 +1,3 @@
-const SCHEMA_TYPES = [
-  "AddToBalanceEvent",
-  "AutoIssueEvent",
-  "BurnEvent",
-  "CashOutEvent",
-  "DecorateBannyEvent",
-  "DeployedERC20Event",
-  "DistributePayoutsEvent",
-  "DistributeReservedTokensEvent",
-  "DistributeToPayoutSplitEvent",
-  "DistributeToReservedTokenSplitEvent",
-  "ENSNode",
-  "MintTokensEvent",
-  "NFT",
-  "NFTCollection",
-  "NFTTier",
-  "Participant",
-  "PayEvent",
-  "PermissionsHolder",
-  "Project",
-  "ProjectCreateEvent",
-  "ProjectEvent",
-  "ProtocolLog",
-  "Query",
-  "StoreAutoIssuanceAmountEvent",
-  "Subscription",
-  "UseAllowanceEvent",
-  "Wallet",
-];
-
-export default SCHEMA_TYPES;
+const SCHEMA_TYPES = ["AddToBalanceEvent","AutoIssueEvent","BurnEvent","CashOutEvent","DecorateBannyEvent","DeployedERC20Event","DistributePayoutsEvent","DistributeReservedTokensEvent","DistributeToPayoutSplitEvent","DistributeToReservedTokenSplitEvent","ENSNode","MintTokensEvent","NFT","NFTCollection","NFTTier","Participant","PayEvent","PermissionsHolder","Project","ProjectCreateEvent","ProjectEvent","ProtocolLog","Query","StoreAutoIssuanceAmountEvent","Subscription","UseAllowanceEvent","Wallet"]
+  
+export default SCHEMA_TYPES

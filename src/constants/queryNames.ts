@@ -1,7 +1,9 @@
 export const QUERY_NAMES = [
-  "nfts",
-  "projectEvents",
   "decorateBannyEvents",
-  "payEvents",
   "mintTokensEvents",
+  "nfts",
+  "nftTiers",
+  "payEvents",
+  "projectEvents",
+  "projects",
 ] as const;

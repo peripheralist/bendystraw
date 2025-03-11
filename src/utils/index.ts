@@ -8,7 +8,7 @@ export const snakeToCamelCase = (str: string) =>
     .toLowerCase()
     .replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
 
-export const formatChain = (chainName: string) => {
+export const idOfChainName = (chainName: string) => {
   switch (chainName.toLowerCase()) {
     case "mainnet":
       return 1;
@@ -20,5 +20,18 @@ export const formatChain = (chainName: string) => {
       return 10;
     default:
       return 0;
+  }
+};
+
+export const nameOfChainId = (chainId: number) => {
+  switch (chainId) {
+    case 1:
+      return "mainnet";
+    case 8453:
+      return "base";
+    case 42161:
+      return "arbitrum-one";
+    case 10:
+      return "op-mainnet";
   }
 };

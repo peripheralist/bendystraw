@@ -73,7 +73,8 @@ type AddToBalanceEvent {
 }
 
 input AddToBalanceEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -243,7 +244,8 @@ type AutoIssueEvent {
 }
 
 input AutoIssueEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -342,7 +344,8 @@ type BurnEvent {
 }
 
 input BurnEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -515,7 +518,8 @@ type CashOutEvent {
 }
 
 input CashOutEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -703,7 +707,8 @@ type DecorateBannyEvent {
 }
 
 input DecorateBannyEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -814,7 +819,8 @@ type DeployedERC20Event {
 }
 
 input DeployedERC20Event_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -982,7 +988,8 @@ type DistributePayoutsEvent {
 }
 
 input DistributePayoutsEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -1186,7 +1193,8 @@ type DistributeReservedTokensEvent {
 }
 
 input DistributeReservedTokensEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -1341,7 +1349,8 @@ type DistributeToPayoutSplitEvent {
 }
 
 input DistributeToPayoutSplitEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -1572,7 +1581,8 @@ type DistributeToReservedTokenSplitEvent {
 }
 
 input DistributeToReservedTokenSplitEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -1776,7 +1786,8 @@ type ENSNode {
 }
 
 input ENSNode_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -1826,7 +1837,8 @@ type MintTokensEvent {
 }
 
 input MintTokensEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -1997,7 +2009,8 @@ type NFT {
 }
 
 input NFT_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -2230,7 +2243,8 @@ type NFTCollection {
 }
 
 input NFTCollection_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -2392,7 +2406,8 @@ type NFTTier {
 }
 
 input NFTTier_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -2617,7 +2632,8 @@ type Participant {
 }
 
 input Participant_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -2811,7 +2827,8 @@ type PayEvent {
 }
 
 input PayEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -3014,7 +3031,8 @@ type PermissionsHolder {
 }
 
 input PermissionsHolder_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -3159,7 +3177,8 @@ type Project {
 }
 
 input Project_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -3438,7 +3457,8 @@ type ProjectCreateEvent {
 }
 
 input ProjectCreateEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -3576,7 +3596,8 @@ type ProjectEvent {
 }
 
 input ProjectEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -4090,7 +4111,8 @@ type ProtocolLog {
 }
 
 input ProtocolLog_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -5265,7 +5287,8 @@ type StoreAutoIssuanceAmountEvent {
 }
 
 input StoreAutoIssuanceAmountEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -6369,7 +6392,8 @@ type UseAllowanceEvent {
 }
 
 input UseAllowanceEvent_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
@@ -6598,7 +6622,8 @@ type Wallet {
 }
 
 input Wallet_filter {
-  chain: Int!
+  chain: Int
+  chain_in: [Int]
   id: ID
   id_not: ID
   id_gt: ID
