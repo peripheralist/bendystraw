@@ -1,6 +1,7 @@
 import Head from "next/head";
 import SCHEMA_TYPES from "@/graphql/schemaTypes";
 import { QUERY_NAMES } from "@/constants/queryNames";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -35,7 +36,7 @@ export default function Home() {
         </code>
         <br />
         <br />
-        <a href="/api/graphql">Explore the API</a>
+        <Link href={"/api/graphql"}>Explore the API</Link>
         <br />
         <br />
         <br />
