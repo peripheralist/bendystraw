@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { projects } from "ponder:schema";
+import { project } from "ponder:schema";
 
 ponder.on("JBProjects:Approval", async ({ event, context }) => {
   console.log(event.args);
@@ -14,7 +14,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
   const { projectId, owner, caller } = args;
   const { chainId } = context.network;
 
-  await context.db.insert(projects).values({
+  await context.db.insert(project).values({
     projectId,
     owner,
     deployer: caller,

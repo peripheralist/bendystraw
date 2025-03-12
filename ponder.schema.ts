@@ -13,8 +13,8 @@ export const nfts = onchainTable(
   })
 );
 
-export const projects = onchainTable(
-  "projects",
+export const project = onchainTable(
+  "project",
   (t) => ({
     chainId: t.integer().notNull(),
     projectId: t.bigint().notNull(),

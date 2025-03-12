@@ -1,9 +1,9 @@
 import { ponder } from "ponder:registry";
-import { projects } from "ponder:schema";
+import { project } from "ponder:schema";
 
 ponder.on("JBController:SetUri", async ({ event, context }) => {
   await context.db
-    .update(projects, {
+    .update(project, {
       chainId: context.network.chainId,
       projectId: event.args.projectId,
     })
@@ -16,7 +16,7 @@ ponder.on("JBController:BurnTokens", async ({ event, context }) => {
 
 ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   await context.db
-    .update(projects, {
+    .update(project, {
       chainId: context.network.chainId,
       projectId: event.args.projectId,
     })

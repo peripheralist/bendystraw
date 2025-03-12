@@ -1,8 +1,8 @@
 import { ponder } from "ponder:registry";
-import { projects } from "ponder:schema";
+import { project } from "ponder:schema";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
-  const row = await context.db.find(projects, {
+  const row = await context.db.find(project, {
     chainId: context.network.chainId,
     projectId: event.args.projectId,
   });
@@ -10,7 +10,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   if (!row) return;
 
   await context.db
-    .update(projects, {
+    .update(project, {
       chainId: context.network.chainId,
       projectId: event.args.projectId,
     })
