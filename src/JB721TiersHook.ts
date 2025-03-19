@@ -19,7 +19,7 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
     // Will only succeed for Banny tiers
     const svgCall = await context.client.readContract({
       abi: Banny721TokenUriResolverAbi,
-      address: context.contracts.Banny721TokenUriResolver.address,
+      address: "0xff80c37a57016eff3d19fb286e9c740ec4537dd3",
       functionName: "svgOf",
       args: [
         "0x2da41cdc79ae49f2725ab549717b2dbcfc42b958", // banny hook
