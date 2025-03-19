@@ -2,11 +2,11 @@ import { ponder } from "ponder:registry";
 import { project } from "ponder:schema";
 
 ponder.on("JBProjects:Approval", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });
 
 ponder.on("JBProjects:ApprovalForAll", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
@@ -25,5 +25,5 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
 });
 
 ponder.on("JBProjects:OwnershipTransferred", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });

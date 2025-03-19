@@ -11,7 +11,7 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
 });
 
 ponder.on("JBController:BurnTokens", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });
 
 ponder.on("JBController:LaunchProject", async ({ event, context }) => {
@@ -24,9 +24,9 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
 });
 
 ponder.on("JBController:LaunchRulesets", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });
 
 ponder.on("JBController:Migrate", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });

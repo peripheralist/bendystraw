@@ -1,6 +1,6 @@
 import { onchainTable, primaryKey } from "ponder";
 
-export const nfts = onchainTable(
+export const nft = onchainTable(
   "nft",
   (t) => ({
     chainId: t.integer(),
@@ -10,6 +10,47 @@ export const nfts = onchainTable(
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.chainId, table.hook, table.tokenId] }),
+  })
+);
+
+export const nftTier = onchainTable(
+  "nft_tier",
+  (t) => ({
+    tierId: t.bigint().notNull(),
+    chainId: t.integer().notNull(),
+    hook: t.hex(),
+    price: t.bigint().notNull(),
+    allowOnwerMint: t.boolean(),
+    encodedIpfsUri: t.hex(),
+    resolvedUri: t.text(),
+    initialSupply: t.integer(),
+    remainingSupply: t.integer(),
+    cannotBeRemoved: t.boolean(),
+    transfersPausable: t.boolean(),
+    votingUnits: t.integer(),
+    createdAt: t.bigint(),
+    category: t.integer(),
+    reserveFrequency: t.integer(),
+    reserveBeneficiary: t.hex(),
+    svg: t.text(), // only used for bannyverse,
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.chainId, table.hook, table.tierId] }),
+  })
+);
+
+export const nftHook = onchainTable(
+  "nft_hook",
+  (t) => ({
+    chainId: t.integer().notNull(),
+    address: t.hex().notNull(),
+    projectId: t.bigint(),
+    name: t.text(),
+    symbol: t.text(),
+    createdAt: t.bigint(),
+  }),
+  (table) => ({
+    pk: primaryKey({ columns: [table.chainId, table.address] }),
   })
 );
 

@@ -18,13 +18,13 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
 });
 
 ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });
 
 ponder.on("JBMultiTerminal:FeeReverted", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });
 
 ponder.on("JBMultiTerminal:HoldFee", async ({ event, context }) => {
-  console.log(event.args);
+  // console.log(event.args);
 });

@@ -1,5 +1,5 @@
-import { createConfig } from "ponder";
-import { http } from "viem";
+import { createConfig, factory } from "ponder";
+import { http, parseAbiItem } from "viem";
 
 import { JBProjectsAbi } from "./abis/JBProjectsAbi";
 import { JBControllerAbi } from "./abis/JBControllerAbi";
@@ -9,6 +9,7 @@ import { JB721TiersHookDeployerAbi } from "./abis/JB721TiersHookDeployerAbi";
 import { JBPermissionsAbi } from "./abis/JBPermissionsAbi";
 import { Banny721TokenUriResolverAbi } from "./abis/Banny721TokenUriResolverAbi";
 import { REVDeployerAbi } from "./abis/REVDeployerAbi";
+import { JB721TiersHookAbi } from "./abis/JB721TiersHookAbi";
 
 export default createConfig({
   networks: {
@@ -39,24 +40,36 @@ export default createConfig({
     //   abi: JBTokensAbi,
     //   startBlock: 21863179,
     // },
-    // JB721TiersHookDeployer: {
-    //   network: "mainnet",
-    //   address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
-    //   abi: JB721TiersHookDeployerAbi,
-    //   startBlock: 21863981,
-    // },
+    JB721TiersHookDeployer: {
+      network: "mainnet",
+      address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
+      abi: JB721TiersHookDeployerAbi,
+      startBlock: 21863981,
+    },
+    JB721TiersHook: {
+      network: "mainnet",
+      abi: JB721TiersHookAbi,
+      address: factory({
+        address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
+        event: parseAbiItem(
+          "event HookDeployed(uint256 projectId, address hook, address caller)"
+        ),
+        parameter: "projectId",
+      }),
+      startBlock: 21863981,
+    },
     // JBPermissions: {
     //   network: "mainnet",
     //   address: "0xf5ca295dc286a176e35ebb7833031fd95550eb14",
     //   abi: JBPermissionsAbi,
     //   startBlock: 21863136,
     // },
-    // Banny721TokenUriResolver: {
-    //   network: "mainnet",
-    //   address: "0xff80c37a57016eff3d19fb286e9c740ec4537dd3",
-    //   abi: Banny721TokenUriResolverAbi,
-    //   startBlock: 21870391,
-    // },
+    Banny721TokenUriResolver: {
+      network: "mainnet",
+      address: "0xff80c37a57016eff3d19fb286e9c740ec4537dd3",
+      abi: Banny721TokenUriResolverAbi,
+      startBlock: 21870391,
+    },
     // RevDeployer: {
     //   network: "mainnet",
     //   address: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
