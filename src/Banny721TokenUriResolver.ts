@@ -129,7 +129,7 @@ ponder.on(
 
     const tierPromises = [];
 
-    for (let i = BigInt(0); i < maxTierCall; i += BigInt(1)) {
+    for (let i = BigInt(1); i < maxTierCall; i += BigInt(1)) {
       tierPromises.push(
         Promise.all([
           tierOf({ context, hook: BANNY_RETAIL_HOOK, tierId: i }),
