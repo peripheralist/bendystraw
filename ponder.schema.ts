@@ -3,10 +3,14 @@ import { onchainTable, primaryKey } from "ponder";
 export const nft = onchainTable(
   "nft",
   (t) => ({
-    chainId: t.integer(),
-    tokenId: t.bigint(),
-    projectId: t.integer(),
-    hook: t.hex(),
+    chainId: t.integer().notNull(),
+    hook: t.hex().notNull(),
+    tokenId: t.bigint().notNull(),
+    projectId: t.bigint().notNull(),
+    owner: t.hex().notNull(),
+    category: t.integer().notNull(),
+    createdAt: t.bigint().notNull(),
+    tokenUri: t.text(),
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.chainId, table.hook, table.tokenId] }),
@@ -16,9 +20,9 @@ export const nft = onchainTable(
 export const nftTier = onchainTable(
   "nft_tier",
   (t) => ({
-    tierId: t.bigint().notNull(),
     chainId: t.integer().notNull(),
-    hook: t.hex(),
+    hook: t.hex().notNull(),
+    tierId: t.bigint().notNull(),
     price: t.bigint().notNull(),
     allowOnwerMint: t.boolean(),
     encodedIpfsUri: t.hex(),
@@ -28,11 +32,11 @@ export const nftTier = onchainTable(
     cannotBeRemoved: t.boolean(),
     transfersPausable: t.boolean(),
     votingUnits: t.integer(),
-    createdAt: t.bigint(),
+    createdAt: t.bigint().notNull(),
     category: t.integer(),
     reserveFrequency: t.integer(),
     reserveBeneficiary: t.hex(),
-    svg: t.text(), // only used for bannyverse,
+    svg: t.text(), // only Banny,
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.chainId, table.hook, table.tierId] }),
@@ -44,10 +48,10 @@ export const nftHook = onchainTable(
   (t) => ({
     chainId: t.integer().notNull(),
     address: t.hex().notNull(),
-    projectId: t.bigint(),
+    projectId: t.bigint().notNull(),
     name: t.text(),
     symbol: t.text(),
-    createdAt: t.bigint(),
+    createdAt: t.bigint().notNull(),
   }),
   (table) => ({
     pk: primaryKey({ columns: [table.chainId, table.address] }),
@@ -81,4 +85,20 @@ export const project = onchainTable(
     // createdWithinTrendingWindow: t.boolean(),
   }),
   (table) => ({ pk: primaryKey({ columns: [table.chainId, table.projectId] }) })
+);
+
+export const decorateBannyEvent = onchainTable(
+  "decorate_banny_event",
+  (t) => ({
+    chainId: t.integer().notNull(),
+    txHash: t.hex().notNull(),
+    timestamp: t.bigint(),
+    caller: t.hex().notNull(),
+    hook: t.hex().notNull(),
+    bannyBodyId: t.bigint().notNull(),
+    outfitIds: t.bigint().array(),
+    backgroundId: t.bigint(),
+    tokenUri: t.text(),
+  }),
+  (table) => ({ pk: primaryKey({ columns: [table.chainId, table.txHash] }) })
 );
