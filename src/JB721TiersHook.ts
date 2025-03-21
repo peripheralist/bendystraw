@@ -13,9 +13,10 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const { tier, tierId } = event.args;
 
   try {
+    // `resolvedUri` and `svg` are the only things we can't get from the event args
     const { resolvedUri } = await tierOf({ context, hook, tierId });
 
-    let svg = undefined;
+    let svg = null;
     if (hook == BANNY_RETAIL_HOOK) {
       svg = await getBannySvg({ context, tierId });
     }
@@ -35,7 +36,7 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
       initialSupply: tier.initialSupply,
       remainingSupply: tier.initialSupply,
       transfersPausable: tier.transfersPausable,
-      votingUnits: tier.votingUnits,
+      votingUnits: BigInt(tier.votingUnits),
       resolvedUri,
       svg,
     });
@@ -83,12 +84,12 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
     } else {
       const projectId = await context.client.readContract({
         abi: JB721TiersHookAbi,
-        address: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
+        address: hook,
         functionName: "PROJECT_ID",
       });
       const tokenUri = await context.client.readContract({
         abi: JB721TiersHookAbi,
-        address: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
+        address: hook,
         functionName: "tokenURI",
         args: [event.args.tokenId],
       });

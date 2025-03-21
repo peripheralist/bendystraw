@@ -66,9 +66,9 @@ export default createConfig({
     // },
     Banny721TokenUriResolver: {
       network: "mainnet",
-      address: "0xff80c37a57016eff3d19fb286e9c740ec4537dd3",
+      address: "0xa5f8911d4cfd60a6697479f078409434424fe666",
       abi: Banny721TokenUriResolverAbi,
-      startBlock: 21870391,
+      startBlock: 22039034,
     },
     // RevDeployer: {
     //   network: "mainnet",

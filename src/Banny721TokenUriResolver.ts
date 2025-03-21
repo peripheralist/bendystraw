@@ -1,11 +1,11 @@
+import { and, eq, or } from "ponder";
 import { ponder } from "ponder:registry";
 import { decorateBannyEvent, nft, nftTier } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
-import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { BANNY_RETAIL_HOOK } from "./constants";
+import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
 import { tierOf } from "./util/tierOf";
-import { and, eq, or } from "ponder";
 
 ponder.on(
   "Banny721TokenUriResolver:DecorateBanny",
@@ -120,40 +120,33 @@ ponder.on(
 ponder.on(
   "Banny721TokenUriResolver:SetSvgBaseUri",
   async ({ event, context }) => {
-    const maxTierCall = await context.client.readContract({
-      abi: JB721TiersHookStoreAbi,
-      address: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
-      functionName: "maxTierIdOf",
-      args: [BANNY_RETAIL_HOOK],
-    });
+    try {
+      const tiers = await getAllTiers({ context, hook: BANNY_RETAIL_HOOK });
 
-    const tierPromises = [];
-
-    for (let i = BigInt(1); i < maxTierCall; i += BigInt(1)) {
-      tierPromises.push(
-        Promise.all([
-          tierOf({ context, hook: BANNY_RETAIL_HOOK, tierId: i }),
-          getBannySvg({ context, tierId: i }),
-        ])
+      const tiersWithSvgs = await Promise.all(
+        tiers.map(async (t) => ({
+          ...t,
+          svg: await getBannySvg({ context, tierId: BigInt(t.id) }),
+        }))
       );
+
+      await Promise.all(
+        tiersWithSvgs.map(({ id, resolvedUri, encodedIPFSUri, svg }) =>
+          context.db
+            .update(nftTier, {
+              hook: BANNY_RETAIL_HOOK,
+              chainId: context.network.chainId,
+              tierId: BigInt(id),
+            })
+            .set({
+              resolvedUri: resolvedUri,
+              encodedIpfsUri: encodedIPFSUri,
+              svg,
+            })
+        )
+      );
+    } catch (e) {
+      console.error("Banny721TokenUriResolver:SetSvgBaseUri", e);
     }
-
-    const tiers = await Promise.all(tierPromises);
-
-    await Promise.all(
-      tiers.map(([{ id: tierId, resolvedUri, encodedIPFSUri }, svg]) =>
-        context.db
-          .update(nftTier, {
-            hook: BANNY_RETAIL_HOOK,
-            chainId: context.network.chainId,
-            tierId: BigInt(tierId),
-          })
-          .set({
-            resolvedUri: resolvedUri,
-            encodedIpfsUri: encodedIPFSUri,
-            svg,
-          })
-      )
-    );
   }
 );

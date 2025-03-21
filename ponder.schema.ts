@@ -31,7 +31,7 @@ export const nftTier = onchainTable(
     remainingSupply: t.integer(),
     cannotBeRemoved: t.boolean(),
     transfersPausable: t.boolean(),
-    votingUnits: t.integer(),
+    votingUnits: t.bigint(),
     createdAt: t.bigint().notNull(),
     category: t.integer(),
     reserveFrequency: t.integer(),
