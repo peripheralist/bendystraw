@@ -94,7 +94,6 @@ export const decorateBannyEvent = onchainTable(
     txHash: t.hex().notNull(),
     timestamp: t.bigint(),
     caller: t.hex().notNull(),
-    hook: t.hex().notNull(),
     bannyBodyId: t.bigint().notNull(),
     outfitIds: t.bigint().array(),
     backgroundId: t.bigint(),
