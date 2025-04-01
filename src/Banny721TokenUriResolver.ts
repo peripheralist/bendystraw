@@ -6,6 +6,7 @@ import { BANNY_RETAIL_HOOK } from "./constants";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
 import { tierOf } from "./util/tierOf";
+import { getEventParams } from "./util/getEventParams";
 
 ponder.on(
   "Banny721TokenUriResolver:DecorateBanny",
@@ -19,11 +20,8 @@ ponder.on(
       });
 
       await context.db.insert(decorateBannyEvent).values({
-        chainId: context.network.chainId,
-        txHash: event.transaction.hash,
-        timestamp: event.block.timestamp,
+        ...getEventParams({ event, context }),
         bannyBodyId: event.args.bannyBodyId,
-        caller: event.args.caller,
         outfitIds: event.args.outfitIds.map((o) => o),
         backgroundId: event.args.backgroundId,
         tokenUri,

@@ -1,26 +1,29 @@
 import { ponder } from "ponder:registry";
 import { nftHook, nftTier } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
+import { BANNY_RETAIL_HOOK } from "./constants";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
-import { BANNY_RETAIL_HOOK } from "./constants";
 
 ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
   const { hook } = event.args;
+  const { client, db, network } = context;
 
   try {
-    const nameCall = await context.client.readContract({
-      abi: JB721TiersHookAbi,
-      address: hook,
-      functionName: "name",
-    });
-    const symbolCall = await context.client.readContract({
-      abi: JB721TiersHookAbi,
-      address: hook,
-      functionName: "symbol",
-    });
+    const [nameCall, symbolCall] = await Promise.all([
+      client.readContract({
+        abi: JB721TiersHookAbi,
+        address: hook,
+        functionName: "name",
+      }),
+      client.readContract({
+        abi: JB721TiersHookAbi,
+        address: hook,
+        functionName: "symbol",
+      }),
+    ]);
 
-    await context.db.insert(nftHook).values({
+    await db.insert(nftHook).values({
       chainId: context.network.chainId,
       address: hook,
       projectId: event.args.projectId,
@@ -41,11 +44,12 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
           svg = await getBannySvg({ context, tierId });
         }
 
-        return context.db.insert(nftTier).values({
+        return db.insert(nftTier).values({
           tierId,
-          chainId: context.network.chainId,
+          chainId: network.chainId,
           price: tier.price,
           hook,
+          projectId: event.args.projectId,
           allowOwnerMint: tier.allowOwnerMint,
           createdAt: event.block.timestamp,
           cannotBeRemoved: tier.cannotBeRemoved,

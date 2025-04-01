@@ -1,11 +1,10 @@
 import { ponder } from "ponder:registry";
-import { nftTier } from "ponder:schema";
+import { nft, nftTier } from "ponder:schema";
+import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
+import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { BANNY_RETAIL_HOOK } from "./constants";
 import { getBannySvg } from "./util/getBannySvg";
 import { tierOf } from "./util/tierOf";
-import { nft } from "ponder:schema";
-import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
-import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 
 ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
@@ -21,11 +20,18 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
       svg = await getBannySvg({ context, tierId });
     }
 
+    const projectIdCall = await context.client.readContract({
+      abi: JB721TiersHookAbi,
+      address: hook,
+      functionName: "PROJECT_ID",
+    });
+
     await context.db.insert(nftTier).values({
       tierId,
       chainId: context.network.chainId,
       price: tier.price,
       hook,
+      projectId: projectIdCall,
       allowOwnerMint: tier.allowOwnerMint,
       createdAt: event.block.timestamp,
       cannotBeRemoved: tier.cannotBeRemoved,
