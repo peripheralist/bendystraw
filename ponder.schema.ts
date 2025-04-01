@@ -30,7 +30,7 @@ const eventParams = (t: PGCB) => ({
 });
 
 export const internal = onchainTable("internal", (t) => ({
-  id: t.uuid().defaultRandom().primaryKey(),
+  chainId: t.integer().notNull().primaryKey(),
   totalPaid: t.bigint().notNull(),
 }));
 
