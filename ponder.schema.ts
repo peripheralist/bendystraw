@@ -45,6 +45,7 @@ export const nft = onchainTable(
     owner: t.hex().notNull(),
     category: t.integer().notNull(),
     tokenUri: t.text(),
+    tier: t.integer().notNull(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.hook, t.tokenId] }),
