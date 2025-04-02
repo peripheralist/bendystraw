@@ -164,7 +164,6 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   nfts: many(nft),
   nftHooks: many(nftHook),
   mintTokensEvents: many(mintTokensEvent),
-  decorateBannyEvents: many(decorateBannyEvent),
   sendPayoutsEvents: many(sendPayoutsEvent),
   sendPayoutToSplitEvents: many(sendPayoutToSplitEvent),
   sendReservedTokensToSplitsEvents: many(sendReservedTokensToSplitsEvent),
