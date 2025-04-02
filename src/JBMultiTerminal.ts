@@ -2,6 +2,7 @@ import { ponder } from "ponder:registry";
 import {
   addToBalanceEvent,
   cashOutTokensEvent,
+  payEvent,
   project,
   sendPayoutsEvent,
   sendPayoutToSplitEvent,
@@ -234,6 +235,109 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
   } catch (e) {
     console.error("JBMultiTerminal:UseAllowance", e);
   }
+});
+
+ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
+  try {
+    const {
+      projectId,
+      amount,
+      caller,
+      beneficiary,
+      memo,
+      newlyIssuedTokenCount,
+    } = event.args;
+    const { from, hash, transactionIndex } = event.transaction;
+    const { chainId } = context.network;
+
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
+    await Promise.all([
+      context.db
+        .update(project, {
+          projectId,
+          chainId,
+        })
+        .set({
+          balance: _project.balance + amount,
+          totalPaid: _project.totalPaid + amount,
+        }),
+
+      context.db.insert(payEvent).values({
+        projectId,
+        chainId,
+        caller,
+        from,
+        txHash: hash,
+        txIndex: transactionIndex,
+        timestamp: event.block.timestamp,
+        amount,
+        beneficiary,
+        memo,
+        newlyIssuedTokenCount,
+      }),
+    ]);
+  } catch (e) {
+    console.error("JBMultiTerminal:Pay", e);
+  }
+
+  // handleTrendingPayment(event.block.timestamp, pay.id);
+
+  // // if (!isDistribution) {
+  // const lastPaidTimestamp = event.block.timestamp.toI32();
+
+  // const payer = event.params.payer;
+
+  // const participantId = idForParticipant(projectId, payer);
+
+  // let participant = Participant.load(participantId);
+
+  // // update contributorsCount
+  // if (!participant || participant.volume.isZero()) {
+  //   project.contributorsCount = project.contributorsCount + 1;
+  // }
+
+  // if (!participant) {
+  //   participant = newParticipant(projectId, payer);
+  // }
+
+  // participant.volume = participant.volume.plus(amount);
+  // if (amountUSD) {
+  //   participant.volumeUSD = participant.volumeUSD.plus(amountUSD);
+  // }
+  // participant.lastPaidTimestamp = lastPaidTimestamp;
+  // participant.paymentsCount = participant.paymentsCount + 1;
+  // participant.save();
+
+  // // Update wallet, create if needed
+  // const walletId = toHexLowercase(payer);
+  // let wallet = Wallet.load(walletId);
+  // if (!wallet) {
+  //   wallet = newWallet(walletId);
+  // }
+  // wallet.volume = wallet.volume.plus(amount);
+  // if (amountUSD) {
+  //   wallet.volumeUSD = wallet.volumeUSD.plus(amountUSD);
+  // }
+  // wallet.lastPaidTimestamp = lastPaidTimestamp;
+  // wallet.save();
+  // // }
+
+  // const protocolLog = ProtocolLog.load(PROTOCOL_ID);
+  // if (protocolLog) {
+  //   if (amountUSD) {
+  //     protocolLog.volumeUSD = protocolLog.volumeUSD.plus(amountUSD);
+  //   }
+  //   protocolLog.paymentsCount = protocolLog.paymentsCount + 1;
+  //   protocolLog.save();
+  // }
 });
 
 ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {

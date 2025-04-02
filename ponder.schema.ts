@@ -433,3 +433,21 @@ export const useAllowanceEventRelations = relations(
     }),
   })
 );
+
+export const payEvent = onchainTable(
+  "pay_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    distributionFromProjectId: t.integer(),
+    beneficiary: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    // amountUSD: BigInt
+    memo: t.text(),
+    feeFromProject: t.integer(), // Int # Indicates payment is a fee from project with this ID
+    newlyIssuedTokenCount: t.bigint().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+  })
+);
