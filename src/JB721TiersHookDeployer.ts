@@ -24,7 +24,7 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
     ]);
 
     await db.insert(nftHook).values({
-      chainId: context.network.chainId,
+      chainId: network.chainId,
       address: hook,
       projectId: Number(event.args.projectId),
       createdAt: Number(event.block.timestamp),
@@ -42,10 +42,6 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
         let svg = undefined;
         if (hook == BANNY_RETAIL_HOOK) {
           svg = await getBannySvg({ context, tierId });
-        }
-
-        if (context.network.chainId !== 1) {
-          console.log("NFTTIER2 chain", context.network.chainId);
         }
 
         return db.insert(nftTier).values({

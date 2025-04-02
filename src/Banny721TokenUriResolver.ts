@@ -16,16 +16,29 @@ ponder.on(
         abi: JB721TiersHookAbi,
         address: BANNY_RETAIL_HOOK,
         functionName: "tokenURI",
-        args: [event.args.backgroundId],
+        args: [event.args.bannyBodyId],
       });
 
-      await context.db.insert(decorateBannyEvent).values({
-        ...getEventParams({ event, context }),
-        bannyBodyId: event.args.bannyBodyId,
-        outfitIds: event.args.outfitIds.map((o) => o),
-        backgroundId: event.args.backgroundId,
-        tokenUri,
-      });
+      await Promise.all([
+        // update nft tokenUri
+        await context.db
+          .update(nft, {
+            chainId: context.network.chainId,
+            hook: BANNY_RETAIL_HOOK,
+            tokenId: event.args.bannyBodyId,
+          })
+          .set({
+            tokenUri,
+          }),
+        // store decorate event
+        await context.db.insert(decorateBannyEvent).values({
+          ...getEventParams({ event, context }),
+          bannyBodyId: event.args.bannyBodyId,
+          outfitIds: event.args.outfitIds.map((o) => o),
+          backgroundId: event.args.backgroundId,
+          tokenUri,
+        }),
+      ]);
     } catch (e) {
       console.error("Banny721TokenUriResolver:DecorateBanny", e);
     }

@@ -4,8 +4,8 @@ import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { BANNY_RETAIL_HOOK } from "./constants";
 import { getBannySvg } from "./util/getBannySvg";
-import { tierOf } from "./util/tierOf";
 import { getEventParams } from "./util/getEventParams";
+import { tierOf } from "./util/tierOf";
 
 ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
@@ -26,10 +26,6 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
       address: hook,
       functionName: "PROJECT_ID",
     });
-
-    if (context.network.chainId !== 1) {
-      console.log("NFTTIER1 chain", context.network.chainId);
-    }
 
     await context.db.insert(nftTier).values({
       tierId: Number(tierId),
