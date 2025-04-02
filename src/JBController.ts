@@ -11,7 +11,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
     await context.db.insert(mintTokensEvent).values({
       ...getEventParams({ event, context }),
-      projectId: event.args.projectId,
+      projectId: Number(event.args.projectId),
       beneficiary: event.args.beneficiary,
       beneficiaryTokenCount: event.args.beneficiaryTokenCount,
       memo: event.args.memo,
@@ -30,7 +30,7 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
     await context.db
       .update(project, {
         chainId: context.network.chainId,
-        projectId: event.args.projectId,
+        projectId: Number(event.args.projectId),
       })
       .set({ deployer: event.args.caller, metadataUri: event.args.projectUri });
   } catch (e) {
@@ -43,7 +43,7 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
     await context.db
       .update(project, {
         chainId: context.network.chainId,
-        projectId: event.args.projectId,
+        projectId: Number(event.args.projectId),
       })
       .set({ metadataUri: event.args.uri });
   } catch (e) {
@@ -57,13 +57,13 @@ ponder.on(
     try {
       await context.db.insert(sendReservedTokensToSplitsEvent).values({
         ...getEventParams({ event, context }),
-        projectId: event.args.projectId,
+        projectId: Number(event.args.projectId),
         from: event.transaction.from,
         tokenCount: event.args.tokenCount,
         leftoverAmount: event.args.leftoverAmount,
         owner: event.args.owner,
-        rulesetId: event.args.rulesetId,
-        rulesetCycleNumber: event.args.rulesetCycleNumber,
+        rulesetId: Number(event.args.rulesetId),
+        rulesetCycleNumber: Number(event.args.rulesetCycleNumber),
       });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplits", e);
@@ -79,17 +79,16 @@ ponder.on(
 
       await context.db.insert(sendReservedTokensToSplitEvent).values({
         ...getEventParams({ event, context }),
-        projectId,
-        rulesetId,
+        projectId: Number(projectId),
+        rulesetId: Number(rulesetId),
         tokenCount,
         groupId,
-        from: event.transaction.from,
         beneficiary: split.beneficiary,
         hook: split.hook,
         lockedUntil: split.lockedUntil,
         percent: split.percent,
         preferAddToBalance: split.preferAddToBalance,
-        splitProjectId: split.projectId,
+        splitProjectId: Number(split.projectId),
       });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplit", e);

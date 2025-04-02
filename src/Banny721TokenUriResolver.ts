@@ -5,8 +5,8 @@ import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { BANNY_RETAIL_HOOK } from "./constants";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
-import { tierOf } from "./util/tierOf";
 import { getEventParams } from "./util/getEventParams";
+import { tierOf } from "./util/tierOf";
 
 ponder.on(
   "Banny721TokenUriResolver:DecorateBanny",
@@ -38,17 +38,17 @@ ponder.on(
     try {
       const svg = await getBannySvg({ context, tierId: event.args.upc });
 
-      const tier = await context.db.find(nftTier, {
+      const _nftTier = await context.db.find(nftTier, {
         chainId: context.network.chainId,
         hook: BANNY_RETAIL_HOOK,
-        tierId: event.args.upc,
+        tierId: Number(event.args.upc),
       });
 
       await context.db
         .update(nftTier, {
           chainId: context.network.chainId,
           hook: BANNY_RETAIL_HOOK,
-          tierId: event.args.upc,
+          tierId: Number(event.args.upc),
         })
         .set({ svg });
 
@@ -61,7 +61,7 @@ ponder.on(
           and(
             eq(nft.chainId, context.network.chainId),
             eq(nft.hook, BANNY_RETAIL_HOOK),
-            or(eq(nft.category, 1), eq(nft.category, tier?.category || 0))
+            or(eq(nft.category, 1), eq(nft.category, _nftTier?.category || 0))
           )
         );
 
@@ -103,7 +103,7 @@ ponder.on(
         .update(nftTier, {
           hook: BANNY_RETAIL_HOOK,
           chainId: context.network.chainId,
-          tierId: event.args.upc,
+          tierId: Number(event.args.upc),
         })
         .set({
           resolvedUri: tier.resolvedUri,
@@ -134,7 +134,7 @@ ponder.on(
             .update(nftTier, {
               hook: BANNY_RETAIL_HOOK,
               chainId: context.network.chainId,
-              tierId: BigInt(id),
+              tierId: id,
             })
             .set({
               resolvedUri: resolvedUri,

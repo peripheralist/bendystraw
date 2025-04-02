@@ -205,9 +205,9 @@ export const decorateBannyEvent = onchainTable(
   "decorate_banny_event",
   (t) => ({
     ...eventParams(t),
-    bannyBodyId: t.integer().notNull(),
-    outfitIds: t.integer().array(),
-    backgroundId: t.integer(),
+    bannyBodyId: t.bigint().notNull(),
+    outfitIds: t.bigint().array(),
+    backgroundId: t.bigint(),
     tokenUri: t.text(),
   }),
   (t) => ({

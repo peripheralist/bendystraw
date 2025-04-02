@@ -26,8 +26,8 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
     await db.insert(nftHook).values({
       chainId: context.network.chainId,
       address: hook,
-      projectId: event.args.projectId,
-      createdAt: event.block.timestamp,
+      projectId: Number(event.args.projectId),
+      createdAt: Number(event.block.timestamp),
       name: nameCall,
       symbol: symbolCall,
     });
@@ -45,13 +45,13 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
         }
 
         return db.insert(nftTier).values({
-          tierId,
+          tierId: Number(tierId),
           chainId: network.chainId,
           price: tier.price,
           hook,
-          projectId: event.args.projectId,
+          projectId: Number(event.args.projectId),
           allowOwnerMint: tier.allowOwnerMint,
-          createdAt: event.block.timestamp,
+          createdAt: Number(event.block.timestamp),
           cannotBeRemoved: tier.cannotBeRemoved,
           reserveBeneficiary: tier.reserveBeneficiary,
           reserveFrequency: tier.reserveFrequency,
