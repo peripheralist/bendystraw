@@ -45,7 +45,7 @@ export const nft = onchainTable(
     owner: t.hex().notNull(),
     category: t.integer().notNull(),
     tokenUri: t.text(),
-    tier: t.integer().notNull(),
+    tierId: t.integer().notNull(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.hook, t.tokenId] }),
@@ -54,7 +54,7 @@ export const nft = onchainTable(
 
 export const nftRelations = relations(nft, ({ one }) => ({
   tier: one(nftTier, {
-    fields: [nft.tier, nft.chainId],
+    fields: [nft.tierId, nft.chainId],
     references: [nftTier.tierId, nftTier.chainId],
   }),
   project: one(project, {

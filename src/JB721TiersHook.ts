@@ -114,7 +114,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
               projectId: Number(projectId),
               createdAt: Number(event.block.timestamp),
               tokenUri,
-              tier: tier.id,
+              tierId: tier.id,
             });
           }
         }),
