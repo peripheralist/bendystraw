@@ -171,6 +171,8 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   addToBalanceEvents: many(addToBalanceEvent),
   cashOutTokensEvents: many(cashOutTokensEvent),
   useAllowanceEvents: many(useAllowanceEvent),
+  payEvents: many(payEvent),
+  mintEvents: many(mintEvent),
 }));
 
 export const mintTokensEvent = onchainTable(
@@ -451,3 +453,33 @@ export const payEvent = onchainTable(
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
   })
 );
+
+export const payEventRelations = relations(payEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [payEvent.projectId, payEvent.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+}));
+
+export const mintEvent = onchainTable(
+  "mint_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    hook: t.hex().notNull(),
+    beneficiary: t.hex().notNull(),
+    tierId: t.bigint().notNull(),
+    tokenId: t.bigint().notNull(),
+    totalAmountPaid: t.bigint().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.txHash, t.caller] }),
+  })
+);
+
+export const mintEventRelations = relations(mintEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [mintEvent.projectId, mintEvent.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+}));
