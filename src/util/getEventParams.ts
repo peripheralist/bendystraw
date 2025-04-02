@@ -19,7 +19,7 @@ export const getEventParams = ({ event, context }: Args) => ({
   chainId: context.network.chainId,
   txHash: event.transaction.hash,
   txIndex: event.transaction.transactionIndex,
-  timestamp: event.block.timestamp,
+  timestamp: Number(event.block.timestamp),
   caller: event.args.caller,
   from: event.transaction.from,
 });

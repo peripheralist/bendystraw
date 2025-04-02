@@ -11,10 +11,10 @@ type PGCB<
   ? ColumnTypes
   : never;
 
-const projectId = (t: PGCB) => ({ projectId: t.bigint().notNull() });
+const projectId = (t: PGCB) => ({ projectId: t.integer().notNull() });
 const chainId = (t: PGCB) => ({ chainId: t.integer().notNull() });
-const timestamp = (t: PGCB) => ({ timestamp: t.bigint().notNull() });
-const createdAt = (t: PGCB) => ({ createdAt: t.bigint().notNull() });
+const timestamp = (t: PGCB) => ({ timestamp: t.integer().notNull() });
+const createdAt = (t: PGCB) => ({ createdAt: t.integer().notNull() });
 const txHash = (t: PGCB) => ({ txHash: t.hex().notNull() });
 const txIndex = (t: PGCB) => ({ txIndex: t.integer().notNull() });
 const caller = (t: PGCB) => ({ caller: t.hex().notNull() });
@@ -41,7 +41,7 @@ export const nft = onchainTable(
     ...projectId(t),
     ...createdAt(t),
     hook: t.hex().notNull(),
-    tokenId: t.bigint().notNull(),
+    tokenId: t.integer().notNull(),
     owner: t.hex().notNull(),
     category: t.integer().notNull(),
     tokenUri: t.text(),
@@ -74,7 +74,7 @@ export const nftTier = onchainTable(
     ...chainId(t),
     ...projectId(t),
     hook: t.hex().notNull(),
-    tierId: t.bigint().notNull(),
+    tierId: t.integer().notNull(),
     price: t.bigint().notNull(),
     allowOnwerMint: t.boolean(),
     encodedIpfsUri: t.hex(),
@@ -84,7 +84,7 @@ export const nftTier = onchainTable(
     cannotBeRemoved: t.boolean(),
     transfersPausable: t.boolean(),
     votingUnits: t.bigint(),
-    createdAt: t.bigint().notNull(),
+    createdAt: t.integer().notNull(),
     category: t.integer().notNull(),
     reserveFrequency: t.integer(),
     reserveBeneficiary: t.hex(),
@@ -205,9 +205,9 @@ export const decorateBannyEvent = onchainTable(
   "decorate_banny_event",
   (t) => ({
     ...eventParams(t),
-    bannyBodyId: t.bigint().notNull(),
-    outfitIds: t.bigint().array(),
-    backgroundId: t.bigint(),
+    bannyBodyId: t.integer().notNull(),
+    outfitIds: t.integer().array(),
+    backgroundId: t.integer(),
     tokenUri: t.text(),
   }),
   (t) => ({
@@ -230,8 +230,8 @@ export const sendReservedTokensToSplitsEvent = onchainTable(
   (t) => ({
     ...eventParams(t),
     ...projectId(t),
-    rulesetCycleNumber: t.bigint().notNull(),
-    rulesetId: t.bigint().notNull(),
+    rulesetCycleNumber: t.integer().notNull(),
+    rulesetId: t.integer().notNull(),
     tokenCount: t.bigint().notNull(),
     leftoverAmount: t.bigint().notNull(),
     owner: t.hex().notNull(),
@@ -259,7 +259,7 @@ export const sendReservedTokensToSplitEvent = onchainTable(
   (t) => ({
     ...eventParams(t),
     ...projectId(t),
-    rulesetId: t.bigint().notNull(),
+    rulesetId: t.integer().notNull(),
     tokenCount: t.bigint().notNull(),
     groupId: t.bigint().notNull(),
     beneficiary: t.hex().notNull(),
@@ -267,7 +267,7 @@ export const sendReservedTokensToSplitEvent = onchainTable(
     lockedUntil: t.integer().notNull(),
     percent: t.integer().notNull(),
     preferAddToBalance: t.boolean().notNull(),
-    splitProjectId: t.bigint().notNull(),
+    splitProjectId: t.integer().notNull(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
@@ -299,10 +299,10 @@ export const sendPayoutToSplitEvent = onchainTable(
     lockedUntil: t.integer().notNull(),
     percent: t.integer().notNull(),
     preferAddToBalance: t.boolean().notNull(),
-    splitProjectId: t.bigint().notNull(),
+    splitProjectId: t.integer().notNull(),
     hook: t.hex().notNull(),
     group: t.bigint().notNull(),
-    rulesetId: t.bigint().notNull(),
+    rulesetId: t.integer().notNull(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
@@ -359,8 +359,8 @@ export const sendPayoutsEvent = onchainTable(
     // amountPaidOutUsd: t.bigint().notNull(),
     fee: t.bigint().notNull(),
     // feeUsd: t.bigint().notNull(),
-    rulesetId: t.bigint().notNull(),
-    rulesetCycleNumber: t.bigint().notNull(),
+    rulesetId: t.integer().notNull(),
+    rulesetCycleNumber: t.integer().notNull(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
@@ -418,8 +418,8 @@ export const useAllowanceEvent = onchainTable(
     beneficiary: t.hex().notNull(),
     feeBeneficiary: t.hex().notNull(),
     memo: t.text(),
-    rulesetCycleNumber: t.bigint().notNull(),
-    rulesetId: t.bigint().notNull(),
+    rulesetCycleNumber: t.integer().notNull(),
+    rulesetId: t.integer().notNull(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
@@ -468,8 +468,8 @@ export const mintNftEvent = onchainTable(
     ...projectId(t),
     hook: t.hex().notNull(),
     beneficiary: t.hex().notNull(),
-    tierId: t.bigint().notNull(),
-    tokenId: t.bigint().notNull(),
+    tierId: t.integer().notNull(),
+    tokenId: t.integer().notNull(),
     totalAmountPaid: t.bigint().notNull(),
   }),
   (t) => ({

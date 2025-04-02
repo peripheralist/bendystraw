@@ -15,11 +15,11 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
   const { chainId } = context.network;
 
   await context.db.insert(project).values({
-    projectId,
+    projectId: Number(projectId),
     owner,
     deployer: caller,
     creator: transaction.from,
-    createdAt: block.timestamp,
+    createdAt: Number(block.timestamp),
     chainId,
   });
 });

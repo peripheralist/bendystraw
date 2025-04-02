@@ -5,6 +5,7 @@ import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { BANNY_RETAIL_HOOK } from "./constants";
 import { getBannySvg } from "./util/getBannySvg";
 import { tierOf } from "./util/tierOf";
+import { getEventParams } from "./util/getEventParams";
 
 ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
@@ -27,13 +28,13 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
     });
 
     await context.db.insert(nftTier).values({
-      tierId,
+      tierId: Number(tierId),
       chainId: context.network.chainId,
       price: tier.price,
       hook,
-      projectId: projectIdCall,
+      projectId: Number(projectIdCall),
       allowOwnerMint: tier.allowOwnerMint,
-      createdAt: event.block.timestamp,
+      createdAt: Number(event.block.timestamp),
       cannotBeRemoved: tier.cannotBeRemoved,
       reserveBeneficiary: tier.reserveBeneficiary,
       reserveFrequency: tier.reserveFrequency,
@@ -52,6 +53,7 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
 });
 
 ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
+  const { tokenId, to } = event.args;
   const hook = event.log.address;
 
   try {
@@ -59,7 +61,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
       abi: JB721TiersHookStoreAbi,
       address: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
       functionName: "tierOfTokenId",
-      args: [event.log.address, event.args.tokenId, true],
+      args: [event.log.address, tokenId, true],
     });
 
     await Promise.all([
@@ -68,7 +70,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         .update(nftTier, {
           chainId: context.network.chainId,
           hook,
-          tierId: BigInt(tier.id),
+          tierId: tier.id,
         })
         .set({
           remainingSupply: tier.remainingSupply,
@@ -77,7 +79,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         .find(nft, {
           chainId: context.network.chainId,
           hook,
-          tokenId: event.args.tokenId,
+          tokenId: Number(tokenId),
         })
         .then(async (existingNft) => {
           if (existingNft) {
@@ -85,9 +87,9 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
               .update(nft, {
                 chainId: context.network.chainId,
                 hook: event.log.address,
-                tokenId: event.args.tokenId,
+                tokenId: Number(tokenId),
               })
-              .set({ owner: event.args.to });
+              .set({ owner: to });
           } else {
             const [projectId, tokenUri] = await Promise.all([
               context.client.readContract({
@@ -99,18 +101,18 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
                 abi: JB721TiersHookAbi,
                 address: hook,
                 functionName: "tokenURI",
-                args: [event.args.tokenId],
+                args: [tokenId],
               }),
             ]);
 
             return context.db.insert(nft).values({
               chainId: context.network.chainId,
               hook,
-              tokenId: event.args.tokenId,
+              tokenId: Number(tokenId),
               category: tier.category,
-              owner: event.args.to,
-              projectId,
-              createdAt: event.block.timestamp,
+              owner: to,
+              projectId: Number(projectId),
+              createdAt: Number(event.block.timestamp),
               tokenUri,
               tier: tier.id,
             });
@@ -127,7 +129,7 @@ ponder.on("JB721TiersHook:RemoveTier", async ({ event, context }) => {
     await context.db.delete(nftTier, {
       chainId: context.network.chainId,
       hook: event.log.address,
-      tierId: event.args.tierId,
+      tierId: Number(event.args.tierId),
     });
   } catch (e) {
     console.error("JB721TiersHook:RemoveTier", e);
@@ -136,9 +138,7 @@ ponder.on("JB721TiersHook:RemoveTier", async ({ event, context }) => {
 
 ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
   try {
-    const { beneficiary, caller, tierId, tokenId, totalAmountPaid } =
-      event.args;
-    const { hash, transactionIndex, from } = event.transaction;
+    const { beneficiary, tierId, tokenId, totalAmountPaid } = event.args;
     const hook = event.log.address;
 
     const projectIdCall = await context.client.readContract({
@@ -148,16 +148,11 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
     });
 
     await context.db.insert(mintNftEvent).values({
-      chainId: context.network.chainId,
-      txHash: hash,
-      txIndex: transactionIndex,
-      timestamp: event.block.timestamp,
-      projectId: projectIdCall,
+      ...getEventParams({ event, context }),
+      projectId: Number(projectIdCall),
       hook,
-      tierId,
-      tokenId,
-      caller,
-      from,
+      tierId: Number(tierId),
+      tokenId: Number(tokenId),
       beneficiary,
       totalAmountPaid,
     });

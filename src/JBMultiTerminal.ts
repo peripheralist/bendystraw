@@ -16,7 +16,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       chainId: context.network.chainId,
-      projectId,
+      projectId: Number(projectId),
     });
 
     if (!_project) {
@@ -26,13 +26,13 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
     await context.db
       .update(project, {
         chainId: context.network.chainId,
-        projectId,
+        projectId: Number(projectId),
       })
       .set({ balance: _project.balance + amount });
 
     await context.db.insert(addToBalanceEvent).values({
       ...getEventParams({ event, context }),
-      projectId,
+      projectId: Number(projectId),
       amount,
       memo,
       metadata,
@@ -57,7 +57,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       chainId: context.network.chainId,
-      projectId,
+      projectId: Number(projectId),
     });
 
     if (!_project) {
@@ -67,7 +67,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
     await context.db
       .update(project, {
         chainId: context.network.chainId,
-        projectId,
+        projectId: Number(projectId),
       })
       .set({
         balance: _project.balance - amountPaidOut,
@@ -75,7 +75,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
 
     await context.db.insert(sendPayoutsEvent).values({
       ...getEventParams({ event, context }),
-      projectId,
+      projectId: Number(projectId),
       amount,
       amountPaidOut,
       netLeftoverPayoutAmount,
@@ -83,8 +83,8 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       // amountPaidOutUsd: t.bigint().notNull(),
       fee,
       // feeUsd: t.bigint().notNull(),
-      rulesetId,
-      rulesetCycleNumber,
+      rulesetId: Number(rulesetId),
+      rulesetCycleNumber: Number(rulesetCycleNumber),
     });
   } catch (e) {
     console.error("JBMultiTerminal:SendPayouts", e);
@@ -98,17 +98,17 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
 
     await context.db.insert(sendPayoutToSplitEvent).values({
       ...getEventParams({ event, context }),
-      projectId,
+      projectId: Number(projectId),
       amount,
       netAmount,
-      rulesetId,
+      rulesetId: Number(rulesetId),
       group,
       beneficiary: split.beneficiary,
       lockedUntil: split.lockedUntil,
       hook: split.hook,
       percent: split.percent,
       preferAddToBalance: split.preferAddToBalance,
-      splitProjectId: split.projectId,
+      splitProjectId: Number(split.projectId),
     });
 
     // TODO
@@ -154,7 +154,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       chainId: context.network.chainId,
-      projectId,
+      projectId: Number(projectId),
     });
 
     if (!_project) {
@@ -163,7 +163,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
 
     await context.db
       .update(project, {
-        projectId,
+        projectId: Number(projectId),
         chainId: context.network.chainId,
       })
       .set({
@@ -173,7 +173,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
 
     await context.db.insert(cashOutTokensEvent).values({
       ...getEventParams({ event, context }),
-      projectId,
+      projectId: Number(projectId),
       cashOutCount,
       beneficiary,
       holder,
@@ -204,7 +204,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       chainId: context.network.chainId,
-      projectId,
+      projectId: Number(projectId),
     });
 
     if (!_project) {
@@ -214,7 +214,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
     await context.db
       .update(project, {
         chainId: context.network.chainId,
-        projectId,
+        projectId: Number(projectId),
       })
       .set({
         balance: _project.balance - event.args.amountPaidOut,
@@ -222,15 +222,15 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
 
     await context.db.insert(useAllowanceEvent).values({
       ...getEventParams({ event, context }),
-      projectId,
+      projectId: Number(projectId),
       amount,
       amountPaidOut,
       netAmountPaidOut,
       beneficiary,
       feeBeneficiary,
       memo,
-      rulesetCycleNumber,
-      rulesetId,
+      rulesetCycleNumber: Number(rulesetCycleNumber),
+      rulesetId: Number(rulesetId),
     });
   } catch (e) {
     console.error("JBMultiTerminal:UseAllowance", e);
@@ -239,19 +239,12 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
 
 ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
   try {
-    const {
-      projectId,
-      amount,
-      caller,
-      beneficiary,
-      memo,
-      newlyIssuedTokenCount,
-    } = event.args;
-    const { from, hash, transactionIndex } = event.transaction;
+    const { projectId, amount, beneficiary, memo, newlyIssuedTokenCount } =
+      event.args;
     const { chainId } = context.network;
 
     const _project = await context.db.find(project, {
-      projectId,
+      projectId: Number(projectId),
       chainId,
     });
 
@@ -262,7 +255,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     await Promise.all([
       context.db
         .update(project, {
-          projectId,
+          projectId: Number(projectId),
           chainId,
         })
         .set({
@@ -271,13 +264,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         }),
 
       context.db.insert(payEvent).values({
-        projectId,
-        chainId,
-        caller,
-        from,
-        txHash: hash,
-        txIndex: transactionIndex,
-        timestamp: event.block.timestamp,
+        ...getEventParams({ event, context }),
+        projectId: Number(projectId),
         amount,
         beneficiary,
         memo,
