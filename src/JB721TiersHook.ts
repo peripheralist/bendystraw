@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { mintEvent, nft, nftTier } from "ponder:schema";
+import { mintNftEvent, nft, nftTier } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { BANNY_RETAIL_HOOK } from "./constants";
@@ -147,7 +147,7 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
       functionName: "PROJECT_ID",
     });
 
-    await context.db.insert(mintEvent).values({
+    await context.db.insert(mintNftEvent).values({
       chainId: context.network.chainId,
       txHash: hash,
       txIndex: transactionIndex,

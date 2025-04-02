@@ -172,7 +172,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   cashOutTokensEvents: many(cashOutTokensEvent),
   useAllowanceEvents: many(useAllowanceEvent),
   payEvents: many(payEvent),
-  mintEvents: many(mintEvent),
+  mintNftEvents: many(mintNftEvent),
 }));
 
 export const mintTokensEvent = onchainTable(
@@ -461,8 +461,8 @@ export const payEventRelations = relations(payEvent, ({ one }) => ({
   }),
 }));
 
-export const mintEvent = onchainTable(
-  "mint_event",
+export const mintNftEvent = onchainTable(
+  "mint_nft_event",
   (t) => ({
     ...eventParams(t),
     ...projectId(t),
@@ -477,9 +477,9 @@ export const mintEvent = onchainTable(
   })
 );
 
-export const mintEventRelations = relations(mintEvent, ({ one }) => ({
+export const mintNftEventRelations = relations(mintNftEvent, ({ one }) => ({
   project: one(project, {
-    fields: [mintEvent.projectId, mintEvent.chainId],
+    fields: [mintNftEvent.projectId, mintNftEvent.chainId],
     references: [project.projectId, project.chainId],
   }),
 }));
