@@ -1,4 +1,4 @@
-import { onchainTable, primaryKey } from "ponder";
+import { onchainTable, primaryKey, relations } from "ponder";
 
 // hacky extraction of `PgColumnsBuilders` type that isn't exported by ponder
 type PGCB<
@@ -52,6 +52,22 @@ export const nft = onchainTable(
   })
 );
 
+export const nftRelations = relations(nft, ({ one }) => ({
+  tier: one(nftTier, {
+    fields: [nft.tier, nft.chainId],
+    references: [nftTier.tierId, nftTier.chainId],
+  }),
+  project: one(project, {
+    fields: [nft.projectId, nft.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+  hook: one(nftHook, {
+    fields: [nft.hook, nft.chainId],
+    references: [nftHook.address, nftHook.chainId],
+  }),
+  // owner TODO
+}));
+
 export const nftTier = onchainTable(
   "nft_tier",
   (t) => ({
@@ -79,6 +95,18 @@ export const nftTier = onchainTable(
   })
 );
 
+export const nftTierRelations = relations(nftTier, ({ many, one }) => ({
+  nfts: many(nft),
+  project: one(project, {
+    fields: [nftTier.projectId, nftTier.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+  hook: one(nftHook, {
+    fields: [nftTier.hook, nftTier.chainId],
+    references: [nftHook.address, nftHook.chainId],
+  }),
+}));
+
 export const nftHook = onchainTable(
   "nft_hook",
   (t) => ({
@@ -93,6 +121,15 @@ export const nftHook = onchainTable(
     pk: primaryKey({ columns: [t.chainId, t.address] }),
   })
 );
+
+export const nftHookRelations = relations(nftHook, ({ many, one }) => ({
+  nfts: many(nft),
+  nftTiers: many(nftTier),
+  project: one(project, {
+    fields: [nftHook.projectId, nftHook.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+}));
 
 export const project = onchainTable(
   "project",
@@ -123,6 +160,20 @@ export const project = onchainTable(
   (t) => ({ pk: primaryKey({ columns: [t.chainId, t.projectId] }) })
 );
 
+export const projectRelations = relations(project, ({ many, one }) => ({
+  nfts: many(nft),
+  nftHooks: many(nftHook),
+  mintTokensEvents: many(mintTokensEvent),
+  decorateBannyEvents: many(decorateBannyEvent),
+  sendPayoutsEvents: many(sendPayoutsEvent),
+  sendPayoutToSplitEvents: many(sendPayoutToSplitEvent),
+  sendReservedTokensToSplitsEvents: many(sendReservedTokensToSplitsEvent),
+  sendReservedTokensToSplitEvents: many(sendReservedTokensToSplitEvent),
+  addToBalanceEvents: many(addToBalanceEvent),
+  cashOutTokensEvents: many(cashOutTokensEvent),
+  useAllowanceEvents: many(useAllowanceEvent),
+}));
+
 export const mintTokensEvent = onchainTable(
   "mint_tokens_event",
   (t) => ({
@@ -136,6 +187,16 @@ export const mintTokensEvent = onchainTable(
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+  })
+);
+
+export const mintTokensEventRelations = relations(
+  mintTokensEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [mintTokensEvent.projectId, mintTokensEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
   })
 );
 
@@ -153,6 +214,16 @@ export const decorateBannyEvent = onchainTable(
   })
 );
 
+export const decorateBannyEventRelations = relations(
+  decorateBannyEvent,
+  ({ one }) => ({
+    bannyNft: one(nft, {
+      fields: [decorateBannyEvent.bannyBodyId, decorateBannyEvent.chainId],
+      references: [nft.tokenId, nft.chainId],
+    }),
+  })
+);
+
 export const sendReservedTokensToSplitsEvent = onchainTable(
   "send_reserved_tokens_to_splits_event",
   (t) => ({
@@ -166,6 +237,19 @@ export const sendReservedTokensToSplitsEvent = onchainTable(
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+  })
+);
+
+export const sendReservedTokensToSplitsEventRelations = relations(
+  sendReservedTokensToSplitsEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        sendReservedTokensToSplitsEvent.projectId,
+        sendReservedTokensToSplitsEvent.chainId,
+      ],
+      references: [project.projectId, project.chainId],
+    }),
   })
 );
 
@@ -186,6 +270,19 @@ export const sendReservedTokensToSplitEvent = onchainTable(
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+  })
+);
+
+export const sendReservedTokensToSplitEventRelations = relations(
+  sendReservedTokensToSplitEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        sendReservedTokensToSplitEvent.projectId,
+        sendReservedTokensToSplitEvent.chainId,
+      ],
+      references: [project.projectId, project.chainId],
+    }),
   })
 );
 
@@ -211,6 +308,19 @@ export const sendPayoutToSplitEvent = onchainTable(
   })
 );
 
+export const sendPayoutToSplitEventRelations = relations(
+  sendPayoutToSplitEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        sendPayoutToSplitEvent.projectId,
+        sendPayoutToSplitEvent.chainId,
+      ],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const addToBalanceEvent = onchainTable(
   "add_to_balance_event",
   (t) => ({
@@ -223,6 +333,16 @@ export const addToBalanceEvent = onchainTable(
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+  })
+);
+
+export const addToBalanceEventRelations = relations(
+  addToBalanceEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [addToBalanceEvent.projectId, addToBalanceEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
   })
 );
 
@@ -246,6 +366,16 @@ export const sendPayoutsEvent = onchainTable(
   })
 );
 
+export const sendPayoutsEventRelations = relations(
+  sendPayoutsEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [sendPayoutsEvent.projectId, sendPayoutsEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const cashOutTokensEvent = onchainTable(
   "cash_out_tokens_event",
   (t) => ({
@@ -263,6 +393,16 @@ export const cashOutTokensEvent = onchainTable(
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+  })
+);
+
+export const cashOutTokensEventRelations = relations(
+  cashOutTokensEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [cashOutTokensEvent.projectId, cashOutTokensEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
   })
 );
 
@@ -285,26 +425,12 @@ export const useAllowanceEvent = onchainTable(
   })
 );
 
-// type TypeOfPg = {
-//   ["PgHex"]: `0x${string}`;
-//   ["PgEvmBigint"]: bigint;
-//   ["PgInteger"]: number;
-//   ["PgBytes"]: Buffer;
-//   ["PgText"]: string;
-// };
-
-// export type PgRowType<Table> = {
-//   [ColumnName in keyof Table as Table[ColumnName] extends {
-//     columnType: keyof TypeOfPg;
-//   }
-//     ? ColumnName
-//     : never]: Table[ColumnName] extends {
-//     columnType: keyof TypeOfPg;
-//   }
-//     ? Table[ColumnName] extends { notNull: infer NotNull }
-//       ? NotNull extends true
-//         ? TypeOfPg[Table[ColumnName]["columnType"]]
-//         : TypeOfPg[Table[ColumnName]["columnType"]] | null
-//       : never
-//     : never;
-// };
+export const useAllowanceEventRelations = relations(
+  useAllowanceEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [useAllowanceEvent.projectId, useAllowanceEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
