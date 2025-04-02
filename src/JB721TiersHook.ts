@@ -27,6 +27,10 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
       functionName: "PROJECT_ID",
     });
 
+    if (context.network.chainId !== 1) {
+      console.log("NFTTIER1 chain", context.network.chainId);
+    }
+
     await context.db.insert(nftTier).values({
       tierId: Number(tierId),
       chainId: context.network.chainId,

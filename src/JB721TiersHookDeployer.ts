@@ -44,6 +44,10 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
           svg = await getBannySvg({ context, tierId });
         }
 
+        if (context.network.chainId !== 1) {
+          console.log("NFTTIER2 chain", context.network.chainId);
+        }
+
         return db.insert(nftTier).values({
           tierId: Number(tierId),
           chainId: network.chainId,
