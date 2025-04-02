@@ -79,7 +79,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         .find(nft, {
           chainId: context.network.chainId,
           hook,
-          tokenId: Number(tokenId),
+          tokenId,
         })
         .then(async (existingNft) => {
           if (existingNft) {
@@ -87,7 +87,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
               .update(nft, {
                 chainId: context.network.chainId,
                 hook: event.log.address,
-                tokenId: Number(tokenId),
+                tokenId,
               })
               .set({ owner: to });
           } else {
@@ -108,7 +108,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
             return context.db.insert(nft).values({
               chainId: context.network.chainId,
               hook,
-              tokenId: Number(tokenId),
+              tokenId,
               category: tier.category,
               owner: to,
               projectId: Number(projectId),
@@ -152,7 +152,7 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
       projectId: Number(projectIdCall),
       hook,
       tierId: Number(tierId),
-      tokenId: Number(tokenId),
+      tokenId,
       beneficiary,
       totalAmountPaid,
     });

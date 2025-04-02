@@ -41,7 +41,7 @@ export const nft = onchainTable(
     ...projectId(t),
     ...createdAt(t),
     hook: t.hex().notNull(),
-    tokenId: t.integer().notNull(),
+    tokenId: t.bigint().notNull(),
     owner: t.hex().notNull(),
     category: t.integer().notNull(),
     tokenUri: t.text(),
@@ -469,7 +469,7 @@ export const mintNftEvent = onchainTable(
     hook: t.hex().notNull(),
     beneficiary: t.hex().notNull(),
     tierId: t.integer().notNull(),
-    tokenId: t.integer().notNull(),
+    tokenId: t.bigint().notNull(),
     totalAmountPaid: t.bigint().notNull(),
   }),
   (t) => ({
