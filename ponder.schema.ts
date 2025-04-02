@@ -85,7 +85,7 @@ export const nftTier = onchainTable(
     transfersPausable: t.boolean(),
     votingUnits: t.bigint(),
     createdAt: t.bigint().notNull(),
-    category: t.integer(),
+    category: t.integer().notNull(),
     reserveFrequency: t.integer(),
     reserveBeneficiary: t.hex(),
     svg: t.text(), // only Banny,
