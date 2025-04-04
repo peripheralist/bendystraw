@@ -22,24 +22,23 @@ const unkey = rootKey
 
 export const rateLimitMiddleware = createMiddleware(
   async (c: Context, next: Next) => {
-    if (unkey) {
+    if (!unkey) {
       // unkey will be undefined if no root key
-
-      const info = getConnInfo(c);
-
-      const id = info.remote.address;
-
-      if (!id) return c.text("Something missing", 500);
-
-      const { success } = await unkey.limit(id);
-
-      if (success) {
-        await next();
-      } else {
-        return c.text("Too many requests", 429);
-      }
+      return await next();
     }
 
-    await next();
+    const info = getConnInfo(c);
+
+    const id = info.remote.address;
+
+    if (!id) return c.text("Something missing", 500);
+
+    const { success } = await unkey.limit(id);
+
+    if (success) {
+      await next();
+    } else {
+      return c.text("Too many requests", 429);
+    }
   }
 );
