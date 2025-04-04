@@ -18,10 +18,9 @@ app.use("/graphql", async (c, next) => {
   // only allow requests, not yoga UI (GET)
   if (c.req.method !== "POST") return c.text("Not allowed", 401);
 
-  await cors({ origin: ALLOWED_ORIGINS });
-
   await next();
 });
+app.use("/graphql", cors({ origin: ALLOWED_ORIGINS }));
 app.use("/graphql", graphql({ db, schema }));
 
 // require key (internal dev, external apps)
