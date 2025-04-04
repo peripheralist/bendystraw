@@ -2,7 +2,7 @@ import { ponder } from "ponder:registry";
 import { mintNftEvent, nft, nftTier } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
-import { BANNY_RETAIL_HOOK } from "./constants";
+import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";

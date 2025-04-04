@@ -431,6 +431,11 @@
   resolved "https://registry.yarnpkg.com/@hono/node-server/-/node-server-1.13.3.tgz#6df4fe3db244718299621708702f3858e5b6a3e7"
   integrity sha512-tEo3hcyQ6chvSnJ3tKzfX4z2sd7Q+ZkBwwBdW1Ya8Mz29dukxC2xcWiB/lAMwGJrYMW8QTgknIsLu1AsnMBe7A==
 
+"@hono/node-server@^1.14.0":
+  version "1.14.0"
+  resolved "https://registry.yarnpkg.com/@hono/node-server/-/node-server-1.14.0.tgz#b64f7e6b10dbc0fa0642e8a0a1c03c2abf2b391c"
+  integrity sha512-YUCxJwgHRKSqjrdTk9e4VMGKN27MK5r4+MGPyZTgKH+IYbK+KtYbHeOcPGJ91KGGD6RIQiz2dAHxvjauNhOS8g==
+
 "@humanwhocodes/config-array@^0.13.0":
   version "0.13.0"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.13.0.tgz#fb907624df3256d04b9aa2df50d7aa97ec648748"
@@ -648,6 +653,42 @@
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.3.0.tgz#d06bbb384ebcf6c505fde1c3d0ed4ddffe0aaff8"
   integrity sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==
+
+"@unkey/api@^0.33.1":
+  version "0.33.1"
+  resolved "https://registry.yarnpkg.com/@unkey/api/-/api-0.33.1.tgz#f8cfd88b7e7e6e879a1afa129e273966fde502d2"
+  integrity sha512-HXFQOGjO3S0+N6GMBOz9lkn2Fp41rdgNrafBkjRg8IjOsNv6SNdWrXZSELONinZYycr7Wxc/t7Vhx7xUdb0cdA==
+  dependencies:
+    "@unkey/rbac" "^0.3.1"
+
+"@unkey/api@^0.35.0":
+  version "0.35.0"
+  resolved "https://registry.yarnpkg.com/@unkey/api/-/api-0.35.0.tgz#39ca29ca65db7a12c60b3b20ce3ce7f7224dd12c"
+  integrity sha512-I7KhrOKNQl/0gtjQhrcmrOjLu9dThMlzAOmMO/n5LsJLl/L5CZzafijAEusSkHpLWHLFdDgJ07ynwcdYjYrKuA==
+  dependencies:
+    "@unkey/rbac" "^0.3.1"
+
+"@unkey/error@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@unkey/error/-/error-0.2.0.tgz#721c17db9488b0cb17c4ae145a172d1bced00ce0"
+  integrity sha512-DFGb4A7SrusZPP0FYuRIF0CO+Gi4etLUAEJ6EKc+TKYmscL0nEJ2Pr38FyX9MvjI4Wx5l35Wc9KsBjMm9Ybh7w==
+  dependencies:
+    zod "^3.23.5"
+
+"@unkey/ratelimit@^0.5.5":
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/@unkey/ratelimit/-/ratelimit-0.5.5.tgz#334609560fde5bd49ef763ef6a8cd7b8e7ce498e"
+  integrity sha512-79Xv7lZFHqScGzBQpO3hh2SZBhujXDDkyH/izWzeXcJ5sFYO+PsC+VaAFagEinbHbrx116RkIRIqbDrfZfRpxA==
+  dependencies:
+    "@unkey/api" "^0.33.1"
+
+"@unkey/rbac@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@unkey/rbac/-/rbac-0.3.1.tgz#d8e4f6ec20376691e29df18701a8bb8fc7c93f6a"
+  integrity sha512-Hj+52XRIlBBl3/qOUq9K71Fwy3PWExBQOpOClVYHdrcmbgqNL6L4EdW/BzliLhqPCdwZTPVSJTnZ3Hw4ZYixsQ==
+  dependencies:
+    "@unkey/error" "^0.2.0"
+    zod "^3.23.5"
 
 "@whatwg-node/disposablestack@^0.0.6":
   version "0.0.6"
@@ -2375,3 +2416,8 @@ yocto-queue@^0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/yocto-queue/-/yocto-queue-0.1.0.tgz#0294eb3dee05028d31ee1a5fa2c556a6aaf10a1b"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
+
+zod@^3.23.5:
+  version "3.24.2"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-3.24.2.tgz#8efa74126287c675e92f46871cfc8d15c34372b3"
+  integrity sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==

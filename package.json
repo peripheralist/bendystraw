@@ -12,6 +12,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@unkey/api": "^0.35.0",
+    "@unkey/ratelimit": "^0.5.5",
     "hono": "^4.5.0",
     "ponder": "^0.9.27",
     "viem": "^2.21.3"

@@ -2,7 +2,7 @@ import { and, eq, or } from "ponder";
 import { ponder } from "ponder:registry";
 import { decorateBannyEvent, nft, nftTier } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
-import { BANNY_RETAIL_HOOK } from "./constants";
+import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";

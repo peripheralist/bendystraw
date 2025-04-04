@@ -12,10 +12,10 @@ const transportUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 
 export default createConfig({
-  database: {
-    kind: "postgres",
-    connectionString: process.env.DATABASE_URL,
-  },
+  // database: {
+  //   kind: "postgres",
+  //   connectionString: process.env.DATABASE_URL,
+  // },
   networks: {
     ethereum: { chainId: 1, transport: transportUrl("eth-mainnet") },
     arbitrum: { chainId: 42161, transport: transportUrl("arb-mainnet") },

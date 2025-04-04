@@ -473,7 +473,7 @@ export const mintNftEvent = onchainTable(
     totalAmountPaid: t.bigint().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.caller] }),
+    pk: primaryKey({ columns: [t.chainId, t.txHash, t.tokenId] }),
   })
 );
 

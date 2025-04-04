@@ -1,6 +1,6 @@
 import { Context } from "ponder:registry";
 import { Banny721TokenUriResolverAbi } from "../../abis/Banny721TokenUriResolverAbi";
-import { BANNY_RETAIL_HOOK } from "../constants";
+import { BANNY_RETAIL_HOOK } from "../constants/bannyHook";
 
 export function getBannySvg({
   context,
