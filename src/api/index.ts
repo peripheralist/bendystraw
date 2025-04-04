@@ -19,8 +19,6 @@ app.use("/graphql", async (c, next) => {
   if (c.req.method !== "POST") return c.text("Not allowed", 401);
 
   await cors({ origin: ALLOWED_ORIGINS });
-
-  await next();
 });
 app.use("/graphql", graphql({ db, schema }));
 
