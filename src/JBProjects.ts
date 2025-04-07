@@ -1,19 +1,27 @@
 import { ponder } from "ponder:registry";
-import { project } from "ponder:schema";
+import { project, projectCreateEvent } from "ponder:schema";
+import { getEventParams } from "./util/getEventParams";
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
   const { args, transaction, block } = event;
-  const { projectId, owner, caller } = args;
+  const { projectId: _projectId, owner, caller } = args;
   const { chainId } = context.network;
+  const projectId = Number(_projectId);
 
-  await context.db.insert(project).values({
-    projectId: Number(projectId),
-    owner,
-    deployer: caller,
-    creator: transaction.from,
-    createdAt: Number(block.timestamp),
-    chainId,
-  });
+  await Promise.all([
+    context.db.insert(project).values({
+      projectId,
+      owner,
+      deployer: caller,
+      creator: transaction.from,
+      createdAt: Number(block.timestamp),
+      chainId,
+    }),
+    context.db.insert(projectCreateEvent).values({
+      ...getEventParams({ event, context }),
+      projectId,
+    }),
+  ]);
 });
 
 ponder.on("JBProjects:Transfer", async ({ event, context }) => {

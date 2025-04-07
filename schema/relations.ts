@@ -1,7 +1,8 @@
 import { relations } from "ponder";
 
-import { permissionHolder } from "ponder:schema";
+import { permissionHolder, projectCreateEvent } from "ponder:schema";
 import { addToBalanceEvent } from "./addToBalanceEvent";
+import { autoIssueEvent } from "./autoIssueEvent";
 import { burnEvent } from "./burnEvent";
 import { cashOutTokensEvent } from "./cashoutTokensEvent";
 import { decorateBannyEvent } from "./decorateBannyEvent";
@@ -18,6 +19,7 @@ import { sendPayoutsEvent } from "./sendPayoutsEvent";
 import { sendPayoutToSplitEvent } from "./sendPayoutToSplitEvent";
 import { sendReservedTokensToSplitEvent } from "./sendReservedTokensToSplitEvent";
 import { sendReservedTokensToSplitsEvent } from "./sendReservedTokensToSplitsEvent";
+import { storeAutoIssuanceAmountEvent } from "./storeAutoIssuanceAmountEvent";
 import { useAllowanceEvent } from "./useAllowanceEvent";
 import { wallet } from "./wallet";
 
@@ -80,7 +82,18 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   mintNftEvents: many(mintNftEvent),
   burnEvents: many(burnEvent),
   deployErc20Events: many(deployErc20Event),
+  permissionHolders: many(permissionHolder),
 }));
+
+export const projectCreateEventRelations = relations(
+  projectCreateEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [projectCreateEvent.projectId, projectCreateEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
 
 export const mintTokensEventRelations = relations(
   mintTokensEvent,
@@ -242,3 +255,23 @@ export const permissionHolderRelations = relations(
     }),
   })
 );
+
+export const storeAutoIssuanceAmountEventRelations = relations(
+  storeAutoIssuanceAmountEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        storeAutoIssuanceAmountEvent.chainId,
+        storeAutoIssuanceAmountEvent.projectId,
+      ],
+      references: [project.chainId, project.projectId],
+    }),
+  })
+);
+
+export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [autoIssueEvent.chainId, autoIssueEvent.projectId],
+    references: [project.chainId, project.projectId],
+  }),
+}));

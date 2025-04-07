@@ -9,6 +9,7 @@ import { JBMultiTerminalAbi } from "./abis/JBMultiTerminalAbi";
 import { JBProjectsAbi } from "./abis/JBProjectsAbi";
 import { JBTokensAbi } from "./abis/JBTokensAbi";
 import { JBPermissionsAbi } from "./abis/JBPermissionsAbi";
+import { REVDeployerAbi } from "./abis/REVDeployerAbi";
 
 const transportUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
@@ -28,9 +29,6 @@ export default createConfig({
         ethereum: {
           startBlock: 21863142,
         },
-        // sepolia: {
-        //   startBlock: 7724105,
-        // },
         arbitrum: {
           startBlock: 306857479,
         },
@@ -49,9 +47,6 @@ export default createConfig({
         ethereum: {
           startBlock: 21863191,
         },
-        // sepolia: {
-        //   startBlock: 7724149,
-        // },
         arbitrum: {
           startBlock: 306857842,
         },
@@ -70,9 +65,6 @@ export default createConfig({
         ethereum: {
           startBlock: 21863215,
         },
-        // sepolia: {
-        //   startBlock: 7724161,
-        // },
         arbitrum: {
           startBlock: 306858028,
         },
@@ -109,9 +101,6 @@ export default createConfig({
         ethereum: {
           startBlock: 21863981,
         },
-        // sepolia: {
-        //   startBlock: 7724790,
-        // },
         arbitrum: {
           startBlock: 306898627,
         },
@@ -136,16 +125,6 @@ export default createConfig({
           }),
           startBlock: 21863215,
         },
-        // sepolia: {
-        //   address: factory({
-        //     address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
-        //     event: parseAbiItem(
-        //       "event HookDeployed(uint256 projectId, address hook, address caller)"
-        //     ),
-        //     parameter: "projectId",
-        //   }),
-        //   startBlock: 7724790,
-        // },
         arbitrum: {
           address: factory({
             address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
@@ -248,9 +227,6 @@ export default createConfig({
         ethereum: {
           startBlock: 22039034,
         },
-        // sepolia: {
-        //   startBlock: 7894609,
-        // },
         arbitrum: {
           startBlock: 315299005,
         },
@@ -262,11 +238,23 @@ export default createConfig({
         },
       },
     },
-    // RevDeployer: {
-    //   network: "ethereum",
-    //   address: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
-    //   abi: REVDeployerAbi,
-    //   startBlock: 21869094,
-    // },
+    RevDeployer: {
+      abi: REVDeployerAbi,
+      address: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
+      network: {
+        ethereum: {
+          startBlock: 21869094,
+        },
+        arbitrum: {
+          startBlock: 307144912,
+        },
+        base: {
+          startBlock: 26521040,
+        },
+        optimism: {
+          startBlock: 132116325,
+        },
+      },
+    },
   },
 });

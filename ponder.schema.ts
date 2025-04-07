@@ -13,6 +13,7 @@ export * from "./schema/participant";
 export * from "./schema/payEvent";
 export * from "./schema/permissionHolder";
 export * from "./schema/project";
+export * from "./schema/projectCreateEvent";
 export * from "./schema/relations";
 export * from "./schema/sendPayoutsEvent";
 export * from "./schema/sendPayoutToSplitEvent";
