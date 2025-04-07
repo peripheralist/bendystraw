@@ -4,6 +4,8 @@ import { zeroAddress } from "viem";
 
 ponder.on("ERC20:Transfer", async ({ event, context }) => {
   try {
+    console.log("asdf ERC20 transfer", event, context.network);
+
     const { from, to, value } = event.args;
     const { address: token } = event.log;
     const { chainId } = context.network;
