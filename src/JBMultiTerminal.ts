@@ -11,6 +11,7 @@ import {
   wallet,
 } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
+import { usdPriceForEth } from "./util/usdPrice";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
@@ -43,7 +44,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
 ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
   try {
     const {
-      projectId,
+      projectId: _projectId,
       amount,
       amountPaidOut,
       netLeftoverPayoutAmount,
@@ -52,26 +53,42 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       rulesetId,
     } = event.args;
 
+    const projectId = Number(_projectId);
+
     await Promise.all([
+      // update project
       context.db
         .update(project, {
           chainId: context.network.chainId,
-          projectId: Number(projectId),
+          projectId: projectId,
         })
         .set((p) => ({
           balance: p.balance - amountPaidOut,
         })),
 
+      // create sendPayoutsEvent
       context.db.insert(sendPayoutsEvent).values({
         ...getEventParams({ event, context }),
         projectId: Number(projectId),
         amount,
+        amountUsd: await usdPriceForEth({
+          context,
+          projectId: _projectId,
+          ethAmount: amount,
+        }),
         amountPaidOut,
+        amountPaidOutUsd: await usdPriceForEth({
+          context,
+          projectId: _projectId,
+          ethAmount: amountPaidOut,
+        }),
         netLeftoverPayoutAmount,
-        // amountUsd: t.bigint().notNull(),
-        // amountPaidOutUsd: t.bigint().notNull(),
         fee,
-        // feeUsd: t.bigint().notNull(),
+        feeUsd: await usdPriceForEth({
+          context,
+          projectId: _projectId,
+          ethAmount: fee,
+        }),
         rulesetId: Number(rulesetId),
         rulesetCycleNumber: Number(rulesetCycleNumber),
       }),
@@ -90,6 +107,11 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       ...getEventParams({ event, context }),
       projectId: Number(projectId),
       amount,
+      amountUsd: await usdPriceForEth({
+        context,
+        projectId: projectId,
+        ethAmount: amount,
+      }),
       netAmount,
       rulesetId: Number(rulesetId),
       group,
@@ -131,7 +153,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
 ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
   try {
     const {
-      projectId,
+      projectId: _projectId,
       cashOutCount,
       beneficiary,
       cashOutTaxRate,
@@ -141,25 +163,47 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       rulesetCycleNumber,
       rulesetId,
     } = event.args;
+    const { chainId } = context.network;
+
+    const projectId = Number(_projectId);
+
+    const _project = await context.db.find(project, {
+      chainId,
+      projectId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
+    const reclaimAmountUsd = await usdPriceForEth({
+      context,
+      projectId: _projectId,
+      ethAmount: reclaimAmount,
+    });
 
     await Promise.all([
+      // update project
       context.db
         .update(project, {
-          projectId: Number(projectId),
-          chainId: context.network.chainId,
+          projectId,
+          chainId,
         })
-        .set((p) => ({
-          totalRedeemed: p.totalRedeemed + reclaimAmount,
-          balance: p.balance - reclaimAmount,
-        })),
+        .set({
+          redeemVolume: _project.redeemVolume + reclaimAmount,
+          redeemVolumeUsd: _project.redeemVolumeUsd + reclaimAmountUsd,
+          balance: _project.balance - reclaimAmount,
+        }),
 
+      // create cashOutTokensEvent
       context.db.insert(cashOutTokensEvent).values({
         ...getEventParams({ event, context }),
-        projectId: Number(projectId),
+        projectId,
         cashOutCount,
         beneficiary,
         holder,
         reclaimAmount,
+        reclaimAmountUsd,
         metadata,
         cashOutTaxRate,
         rulesetCycleNumber,
@@ -186,6 +230,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
     } = event.args;
 
     await Promise.all([
+      // update project
       context.db
         .update(project, {
           chainId: context.network.chainId,
@@ -195,6 +240,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
           balance: p.balance - event.args.amountPaidOut,
         })),
 
+      // create useAllowanceEvent
       context.db.insert(useAllowanceEvent).values({
         ...getEventParams({ event, context }),
         projectId: Number(projectId),
@@ -227,26 +273,14 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
-    await Promise.all([
-      context.db
-        .update(project, {
-          projectId,
-          chainId,
-        })
-        .set((p) => ({
-          balance: p.balance + amount,
-          totalPaid: p.totalPaid + amount,
-        })),
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId,
+    });
 
-      context.db.insert(payEvent).values({
-        ...getEventParams({ event, context }),
-        projectId,
-        amount,
-        beneficiary,
-        memo,
-        newlyIssuedTokenCount,
-      }),
-    ]);
+    if (!_project) {
+      throw new Error("Missing project");
+    }
 
     const [payerParticipant, payerWallet] = await Promise.all([
       context.db.find(participant, {
@@ -259,34 +293,76 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       }),
     ]);
 
-    if (payerParticipant) {
-      // update participant
-      await context.db
-        .update(participant, {
-          address: payer,
-          chainId,
+    const amountUsd = await usdPriceForEth({
+      context,
+      projectId: _projectId,
+      ethAmount: amount,
+    });
+
+    await Promise.all([
+      // update project
+      context.db
+        .update(project, {
           projectId,
+          chainId,
         })
         .set({
-          volume: payerParticipant.volume + amount,
-          lastPaidTimestamp: Number(event.block.timestamp),
-        });
-    } else {
-      // create participant if none exists
-      await context.db.insert(participant).values({
-        address: payer,
-        chainId,
+          balance: _project.balance + amount,
+          volume: _project.volume + amount,
+          volumeUsd: _project.volumeUsd + amountUsd,
+        }),
+
+      // create pay event
+      context.db.insert(payEvent).values({
+        ...getEventParams({ event, context }),
         projectId,
-        volume: amount,
-        lastPaidTimestamp: Number(event.block.timestamp),
-      });
-    }
+        amount,
+        amountUsd,
+        beneficiary,
+        memo,
+        newlyIssuedTokenCount,
+      }),
 
-    if (!payerWallet) {
-      await context.db.insert(wallet).values({ address: payer });
-    }
+      // update or create payer participant
+      payerParticipant
+        ? await context.db
+            .update(participant, {
+              address: payer,
+              chainId,
+              projectId,
+            })
+            .set({
+              volume: payerParticipant.volume + amount,
+              volumeUsd: payerParticipant.volumeUsd + amountUsd,
+              lastPaidTimestamp: Number(event.block.timestamp),
+            })
+        : context.db.insert(participant).values({
+            address: payer,
+            chainId,
+            projectId,
+            volume: amount,
+            volumeUsd: amountUsd,
+            lastPaidTimestamp: Number(event.block.timestamp),
+          }),
 
-    // handle beneficiary participant / wallet on token mint
+      // update or create payer wallet
+      payerWallet
+        ? context.db
+            .update(wallet, {
+              address: payer,
+            })
+            .set({
+              volume: payerWallet.volume + amount,
+              volumeUsd: payerWallet.volumeUsd + amountUsd,
+            })
+        : context.db.insert(wallet).values({
+            address: payer,
+            volume: amount,
+            volumeUsd: amountUsd,
+          }),
+    ]);
+
+    // beneficiary participant / wallet will be handled on token mint
   } catch (e) {
     console.error("JBMultiTerminal:Pay", e);
   }

@@ -24,15 +24,17 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
 });
 
 ponder.on("JBController:LaunchProject", async ({ event, context }) => {
+  // Emitted after JBProjects:Create. This is only needed to set deployer + metadataUri
+  // If the controller emits a launchProject event, the project launch tx was called via the JBController, and we want to prefer its `caller` param over any existing value
   try {
-    // Emitted after JBProjects:Create. This is only needed to set deployer + metadataUri
-    // If the controller emits a launchProject event, the project launch tx was called via the JBController, and we want to prefer its `caller` param over any existing value
+    const { projectId, caller, projectUri } = event.args;
+
     await context.db
       .update(project, {
         chainId: context.network.chainId,
-        projectId: Number(event.args.projectId),
+        projectId: Number(projectId),
       })
-      .set({ deployer: event.args.caller, metadataUri: event.args.projectUri });
+      .set({ deployer: caller, metadataUri: projectUri });
   } catch (e) {
     console.error("JBController:LaunchProject", e);
   }
@@ -40,12 +42,14 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
 
 ponder.on("JBController:SetUri", async ({ event, context }) => {
   try {
+    const { projectId, uri } = event.args;
+
     await context.db
       .update(project, {
         chainId: context.network.chainId,
-        projectId: Number(event.args.projectId),
+        projectId: Number(projectId),
       })
-      .set({ metadataUri: event.args.uri });
+      .set({ metadataUri: uri });
   } catch (e) {
     console.error("JBController:SetUri", e);
   }
@@ -55,15 +59,24 @@ ponder.on(
   "JBController:SendReservedTokensToSplits",
   async ({ event, context }) => {
     try {
+      const {
+        projectId,
+        tokenCount,
+        leftoverAmount,
+        owner,
+        rulesetId,
+        rulesetCycleNumber,
+      } = event.args;
+
       await context.db.insert(sendReservedTokensToSplitsEvent).values({
         ...getEventParams({ event, context }),
-        projectId: Number(event.args.projectId),
+        projectId: Number(projectId),
         from: event.transaction.from,
-        tokenCount: event.args.tokenCount,
-        leftoverAmount: event.args.leftoverAmount,
-        owner: event.args.owner,
-        rulesetId: Number(event.args.rulesetId),
-        rulesetCycleNumber: Number(event.args.rulesetCycleNumber),
+        tokenCount: tokenCount,
+        leftoverAmount: leftoverAmount,
+        owner: owner,
+        rulesetId: Number(rulesetId),
+        rulesetCycleNumber: Number(rulesetCycleNumber),
       });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplits", e);

@@ -11,7 +11,7 @@ export const cashOutTokensEvent = onchainTable(
     holder: t.hex().notNull(),
     reclaimAmount: t.bigint().notNull(),
     cashOutTaxRate: t.bigint().notNull(),
-    // reclaimAmountUsd: t.bigint().notNull(),
+    reclaimAmountUsd: t.bigint().notNull(),
     metadata: t.hex().notNull(),
     rulesetCycleNumber: t.bigint().notNull(),
     rulesetId: t.bigint().notNull(),

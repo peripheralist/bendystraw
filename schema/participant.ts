@@ -8,7 +8,7 @@ export const participant = onchainTable(
     ...projectId(t),
     address: t.hex().notNull(),
     volume: t.bigint().notNull().default(BigInt(0)),
-    // volumeUSD: t.bigint().notNull().default(BigInt(0)),
+    volumeUsd: t.bigint().notNull().default(BigInt(0)),
     lastPaidTimestamp: t.integer().notNull().default(0),
     paymentsCount: t.integer().notNull().default(0),
     balance: t.bigint().notNull().default(BigInt(0)),

@@ -8,7 +8,7 @@ export const sendPayoutToSplitEvent = onchainTable(
     ...projectId(t),
     amount: t.bigint().notNull(),
     netAmount: t.bigint().notNull(),
-    // amountUsd: t.bigint().notNull(),
+    amountUsd: t.bigint().notNull(),
     beneficiary: t.hex().notNull(),
     lockedUntil: t.integer().notNull(),
     percent: t.integer().notNull(),

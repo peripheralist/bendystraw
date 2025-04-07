@@ -9,7 +9,7 @@ export const payEvent = onchainTable(
     distributionFromProjectId: t.integer(),
     beneficiary: t.hex().notNull(),
     amount: t.bigint().notNull(),
-    // amountUSD: BigInt
+    amountUsd: t.bigint().notNull(),
     memo: t.text(),
     feeFromProject: t.integer(), // Int # Indicates payment is a fee from project with this ID
     newlyIssuedTokenCount: t.bigint().notNull(),
