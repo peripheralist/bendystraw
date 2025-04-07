@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { mintNftEvent, nft, nftTier } from "ponder:schema";
+import { mintNftEvent, nft, nftTier, participant } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
@@ -55,6 +55,7 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
 ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
   const { tokenId, to } = event.args;
   const hook = event.log.address;
+  const chainId = context.network.chainId;
 
   try {
     const tier = await context.client.readContract({
@@ -64,20 +65,33 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
       args: [event.log.address, tokenId, true],
     });
 
+    const _projectId = await context.client.readContract({
+      abi: JB721TiersHookAbi,
+      address: hook,
+      functionName: "PROJECT_ID",
+    });
+
+    if (!_projectId) {
+      throw new Error("Missing projectId");
+    }
+
+    const projectId = Number(_projectId);
+
     await Promise.all([
       // update remainingSupply of tier, in case this is a mint
       context.db
         .update(nftTier, {
-          chainId: context.network.chainId,
+          chainId,
           hook,
           tierId: tier.id,
         })
         .set({
           remainingSupply: tier.remainingSupply,
         }),
+
       context.db
         .find(nft, {
-          chainId: context.network.chainId,
+          chainId,
           hook,
           tokenId,
         })
@@ -85,8 +99,8 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           if (existingNft) {
             return context.db
               .update(nft, {
-                chainId: context.network.chainId,
-                hook: event.log.address,
+                chainId,
+                hook,
                 tokenId,
               })
               .set({ owner: to });
@@ -106,7 +120,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
             ]);
 
             return context.db.insert(nft).values({
-              chainId: context.network.chainId,
+              chainId,
               hook,
               tokenId,
               category: tier.category,
@@ -119,6 +133,21 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           }
         }),
     ]);
+
+    const _participant = await context.db.find(participant, {
+      address: to,
+      chainId,
+      projectId,
+    });
+
+    if (!_participant) {
+      // create participant if none exists
+      await context.db.insert(participant).values({
+        address: to,
+        chainId,
+        projectId,
+      });
+    }
   } catch (e) {
     console.error("JB721TiersHook:Transfer", e);
   }

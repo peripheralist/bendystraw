@@ -2,11 +2,13 @@ import { ponder } from "ponder:registry";
 import {
   addToBalanceEvent,
   cashOutTokensEvent,
+  participant,
   payEvent,
   project,
   sendPayoutsEvent,
   sendPayoutToSplitEvent,
   useAllowanceEvent,
+  wallet,
 } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
 
@@ -14,30 +16,25 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
     const { projectId, amount, memo, metadata, returnedFees } = event.args;
 
-    const _project = await context.db.find(project, {
-      chainId: context.network.chainId,
-      projectId: Number(projectId),
-    });
+    await Promise.all([
+      context.db
+        .update(project, {
+          chainId: context.network.chainId,
+          projectId: Number(projectId),
+        })
+        .set((p) => ({
+          balance: p.balance + amount,
+        })),
 
-    if (!_project) {
-      throw new Error("Missing project");
-    }
-
-    await context.db
-      .update(project, {
-        chainId: context.network.chainId,
+      context.db.insert(addToBalanceEvent).values({
+        ...getEventParams({ event, context }),
         projectId: Number(projectId),
-      })
-      .set({ balance: _project.balance + amount });
-
-    await context.db.insert(addToBalanceEvent).values({
-      ...getEventParams({ event, context }),
-      projectId: Number(projectId),
-      amount,
-      memo,
-      metadata,
-      returnedFees,
-    });
+        amount,
+        memo,
+        metadata,
+        returnedFees,
+      }),
+    ]);
   } catch (e) {
     console.error("JBMultiTerminal:AddToBalance", e);
   }
@@ -55,37 +52,30 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       rulesetId,
     } = event.args;
 
-    const _project = await context.db.find(project, {
-      chainId: context.network.chainId,
-      projectId: Number(projectId),
-    });
+    await Promise.all([
+      context.db
+        .update(project, {
+          chainId: context.network.chainId,
+          projectId: Number(projectId),
+        })
+        .set((p) => ({
+          balance: p.balance - amountPaidOut,
+        })),
 
-    if (!_project) {
-      throw new Error("Missing project");
-    }
-
-    await context.db
-      .update(project, {
-        chainId: context.network.chainId,
+      context.db.insert(sendPayoutsEvent).values({
+        ...getEventParams({ event, context }),
         projectId: Number(projectId),
-      })
-      .set({
-        balance: _project.balance - amountPaidOut,
-      });
-
-    await context.db.insert(sendPayoutsEvent).values({
-      ...getEventParams({ event, context }),
-      projectId: Number(projectId),
-      amount,
-      amountPaidOut,
-      netLeftoverPayoutAmount,
-      // amountUsd: t.bigint().notNull(),
-      // amountPaidOutUsd: t.bigint().notNull(),
-      fee,
-      // feeUsd: t.bigint().notNull(),
-      rulesetId: Number(rulesetId),
-      rulesetCycleNumber: Number(rulesetCycleNumber),
-    });
+        amount,
+        amountPaidOut,
+        netLeftoverPayoutAmount,
+        // amountUsd: t.bigint().notNull(),
+        // amountPaidOutUsd: t.bigint().notNull(),
+        fee,
+        // feeUsd: t.bigint().notNull(),
+        rulesetId: Number(rulesetId),
+        rulesetCycleNumber: Number(rulesetCycleNumber),
+      }),
+    ]);
   } catch (e) {
     console.error("JBMultiTerminal:SendPayouts", e);
   }
@@ -152,37 +142,30 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       rulesetId,
     } = event.args;
 
-    const _project = await context.db.find(project, {
-      chainId: context.network.chainId,
-      projectId: Number(projectId),
-    });
+    await Promise.all([
+      context.db
+        .update(project, {
+          projectId: Number(projectId),
+          chainId: context.network.chainId,
+        })
+        .set((p) => ({
+          totalRedeemed: p.totalRedeemed + reclaimAmount,
+          balance: p.balance - reclaimAmount,
+        })),
 
-    if (!_project) {
-      throw new Error("Missing project");
-    }
-
-    await context.db
-      .update(project, {
+      context.db.insert(cashOutTokensEvent).values({
+        ...getEventParams({ event, context }),
         projectId: Number(projectId),
-        chainId: context.network.chainId,
-      })
-      .set({
-        totalRedeemed: _project.totalRedeemed + reclaimAmount,
-        balance: _project.balance - reclaimAmount,
-      });
-
-    await context.db.insert(cashOutTokensEvent).values({
-      ...getEventParams({ event, context }),
-      projectId: Number(projectId),
-      cashOutCount,
-      beneficiary,
-      holder,
-      reclaimAmount,
-      metadata,
-      cashOutTaxRate,
-      rulesetCycleNumber,
-      rulesetId,
-    });
+        cashOutCount,
+        beneficiary,
+        holder,
+        reclaimAmount,
+        metadata,
+        cashOutTaxRate,
+        rulesetCycleNumber,
+        rulesetId,
+      }),
+    ]);
   } catch (e) {
     console.error("JBMultiTerminal:CashOutTokens", e);
   }
@@ -202,36 +185,29 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       rulesetId,
     } = event.args;
 
-    const _project = await context.db.find(project, {
-      chainId: context.network.chainId,
-      projectId: Number(projectId),
-    });
+    await Promise.all([
+      context.db
+        .update(project, {
+          chainId: context.network.chainId,
+          projectId: Number(projectId),
+        })
+        .set((p) => ({
+          balance: p.balance - event.args.amountPaidOut,
+        })),
 
-    if (!_project) {
-      throw new Error("Missing project");
-    }
-
-    await context.db
-      .update(project, {
-        chainId: context.network.chainId,
+      context.db.insert(useAllowanceEvent).values({
+        ...getEventParams({ event, context }),
         projectId: Number(projectId),
-      })
-      .set({
-        balance: _project.balance - event.args.amountPaidOut,
-      });
-
-    await context.db.insert(useAllowanceEvent).values({
-      ...getEventParams({ event, context }),
-      projectId: Number(projectId),
-      amount,
-      amountPaidOut,
-      netAmountPaidOut,
-      beneficiary,
-      feeBeneficiary,
-      memo,
-      rulesetCycleNumber: Number(rulesetCycleNumber),
-      rulesetId: Number(rulesetId),
-    });
+        amount,
+        amountPaidOut,
+        netAmountPaidOut,
+        beneficiary,
+        feeBeneficiary,
+        memo,
+        rulesetCycleNumber: Number(rulesetCycleNumber),
+        rulesetId: Number(rulesetId),
+      }),
+    ]);
   } catch (e) {
     console.error("JBMultiTerminal:UseAllowance", e);
   }
@@ -239,39 +215,78 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
 
 ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
   try {
-    const { projectId, amount, beneficiary, memo, newlyIssuedTokenCount } =
-      event.args;
+    const {
+      projectId: _projectId,
+      amount,
+      beneficiary,
+      memo,
+      newlyIssuedTokenCount,
+      payer,
+    } = event.args;
     const { chainId } = context.network;
 
-    const _project = await context.db.find(project, {
-      projectId: Number(projectId),
-      chainId,
-    });
-
-    if (!_project) {
-      throw new Error("Missing project");
-    }
+    const projectId = Number(_projectId);
 
     await Promise.all([
       context.db
         .update(project, {
-          projectId: Number(projectId),
+          projectId,
           chainId,
         })
-        .set({
-          balance: _project.balance + amount,
-          totalPaid: _project.totalPaid + amount,
-        }),
+        .set((p) => ({
+          balance: p.balance + amount,
+          totalPaid: p.totalPaid + amount,
+        })),
 
       context.db.insert(payEvent).values({
         ...getEventParams({ event, context }),
-        projectId: Number(projectId),
+        projectId,
         amount,
         beneficiary,
         memo,
         newlyIssuedTokenCount,
       }),
     ]);
+
+    const [payerParticipant, payerWallet] = await Promise.all([
+      context.db.find(participant, {
+        address: payer,
+        chainId,
+        projectId,
+      }),
+      context.db.find(wallet, {
+        address: payer,
+      }),
+    ]);
+
+    if (payerParticipant) {
+      // update participant
+      await context.db
+        .update(participant, {
+          address: payer,
+          chainId,
+          projectId,
+        })
+        .set({
+          volume: payerParticipant.volume + amount,
+          lastPaidTimestamp: Number(event.block.timestamp),
+        });
+    } else {
+      // create participant if none exists
+      await context.db.insert(participant).values({
+        address: payer,
+        chainId,
+        projectId,
+        volume: amount,
+        lastPaidTimestamp: Number(event.block.timestamp),
+      });
+    }
+
+    if (!payerWallet) {
+      await context.db.insert(wallet).values({ address: payer });
+    }
+
+    // handle beneficiary participant / wallet on token mint
   } catch (e) {
     console.error("JBMultiTerminal:Pay", e);
   }

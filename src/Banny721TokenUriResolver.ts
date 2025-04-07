@@ -27,9 +27,7 @@ ponder.on(
             hook: BANNY_RETAIL_HOOK,
             tokenId: event.args.bannyBodyId,
           })
-          .set({
-            tokenUri,
-          }),
+          .set({ tokenUri }),
         // store decorate event
         await context.db.insert(decorateBannyEvent).values({
           ...getEventParams({ event, context }),
@@ -49,19 +47,27 @@ ponder.on(
   "Banny721TokenUriResolver:SetSvgContent",
   async ({ event, context }) => {
     try {
+      const hook = BANNY_RETAIL_HOOK;
+      const { chainId } = context.network;
+      const tierId = Number(event.args.upc);
+
       const svg = await getBannySvg({ context, tierId: event.args.upc });
 
       const _nftTier = await context.db.find(nftTier, {
-        chainId: context.network.chainId,
-        hook: BANNY_RETAIL_HOOK,
-        tierId: Number(event.args.upc),
+        chainId,
+        hook,
+        tierId,
       });
+
+      if (!_nftTier) {
+        throw new Error("Missing NFT tier");
+      }
 
       await context.db
         .update(nftTier, {
-          chainId: context.network.chainId,
-          hook: BANNY_RETAIL_HOOK,
-          tierId: Number(event.args.upc),
+          chainId,
+          hook,
+          tierId,
         })
         .set({ svg });
 
@@ -72,9 +78,9 @@ ponder.on(
         .from(nft)
         .where(
           and(
-            eq(nft.chainId, context.network.chainId),
-            eq(nft.hook, BANNY_RETAIL_HOOK),
-            or(eq(nft.category, 1), eq(nft.category, _nftTier?.category || 0))
+            eq(nft.chainId, chainId),
+            eq(nft.hook, hook),
+            or(eq(nft.category, 1), eq(nft.category, _nftTier.category))
           )
         );
 
@@ -82,15 +88,15 @@ ponder.on(
         tokenIdsToUpdate.map(async ({ tokenId }) => {
           const tokenUri = await context.client.readContract({
             abi: JB721TiersHookAbi,
-            address: BANNY_RETAIL_HOOK,
+            address: hook,
             functionName: "tokenURI",
             args: [tokenId],
           });
 
           return context.db
             .update(nft, {
-              chainId: context.network.chainId,
-              hook: BANNY_RETAIL_HOOK,
+              chainId,
+              hook: hook,
               tokenId,
             })
             .set({ tokenUri });

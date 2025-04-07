@@ -65,7 +65,14 @@ export const nftRelations = relations(nft, ({ one }) => ({
     fields: [nft.hook, nft.chainId],
     references: [nftHook.address, nftHook.chainId],
   }),
-  // owner TODO
+  owner: one(participant, {
+    fields: [nft.owner, nft.chainId],
+    references: [participant.address, participant.chainId],
+  }),
+  wallet: one(wallet, {
+    fields: [nft.owner],
+    references: [wallet.address],
+  }),
 }));
 
 export const nftTier = onchainTable(
@@ -187,7 +194,7 @@ export const mintTokensEvent = onchainTable(
     memo: t.text(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -211,7 +218,7 @@ export const decorateBannyEvent = onchainTable(
     tokenUri: t.text(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -237,7 +244,7 @@ export const sendReservedTokensToSplitsEvent = onchainTable(
     owner: t.hex().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -270,7 +277,7 @@ export const sendReservedTokensToSplitEvent = onchainTable(
     splitProjectId: t.integer().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -305,7 +312,7 @@ export const sendPayoutToSplitEvent = onchainTable(
     rulesetId: t.integer().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -333,7 +340,7 @@ export const addToBalanceEvent = onchainTable(
     returnedFees: t.bigint().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -363,7 +370,7 @@ export const sendPayoutsEvent = onchainTable(
     rulesetCycleNumber: t.integer().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -393,7 +400,7 @@ export const cashOutTokensEvent = onchainTable(
     rulesetId: t.bigint().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -422,7 +429,7 @@ export const useAllowanceEvent = onchainTable(
     rulesetId: t.integer().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -450,7 +457,7 @@ export const payEvent = onchainTable(
     newlyIssuedTokenCount: t.bigint().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.txIndex] }),
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -460,6 +467,55 @@ export const payEventRelations = relations(payEvent, ({ one }) => ({
     references: [project.projectId, project.chainId],
   }),
 }));
+
+export const burnEvent = onchainTable(
+  "burn_event",
+  (t) => ({
+    ...chainId(t),
+    ...from(t),
+    ...timestamp(t),
+    ...txHash(t),
+    ...txIndex(t),
+    ...projectId(t),
+    amount: t.bigint().notNull(),
+    creditAmount: t.bigint().notNull(),
+    erc20Amount: t.bigint().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
+  })
+);
+
+export const burnEventRelations = relations(burnEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [burnEvent.projectId, burnEvent.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+}));
+
+export const deployErc20Event = onchainTable(
+  "deploy_erc20_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    symbol: t.text().notNull(),
+    name: t.text().notNull(),
+    token: t.hex().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.token] }),
+  })
+);
+
+export const deployErc20EventRelations = relations(
+  deployErc20Event,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [deployErc20Event.projectId, deployErc20Event.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
 
 export const mintNftEvent = onchainTable(
   "mint_nft_event",
@@ -473,7 +529,7 @@ export const mintNftEvent = onchainTable(
     totalAmountPaid: t.bigint().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.txHash, t.tokenId] }),
+    pk: primaryKey({ columns: [t.txHash, t.tokenId] }),
   })
 );
 
@@ -482,4 +538,51 @@ export const mintNftEventRelations = relations(mintNftEvent, ({ one }) => ({
     fields: [mintNftEvent.projectId, mintNftEvent.chainId],
     references: [project.projectId, project.chainId],
   }),
+  tier: one(nftTier, {
+    fields: [mintNftEvent.tierId, mintNftEvent.chainId],
+    references: [nftTier.tierId, nftTier.chainId],
+  }),
+  nft: one(nft, {
+    fields: [mintNftEvent.tokenId, mintNftEvent.chainId],
+    references: [nft.tokenId, nft.chainId],
+  }),
+}));
+
+export const wallet = onchainTable("wallet", (t) => ({
+  address: t.hex().notNull().primaryKey(),
+  volume: t.bigint().notNull().default(BigInt(0)),
+  // volumeUSD: t.bigint().notNull().default(BigInt(0)),
+  lastPaidTimestamp: t.integer().notNull().default(0),
+}));
+
+export const walletRelations = relations(wallet, ({ many }) => ({
+  participants: many(participant),
+  nfts: many(nft),
+}));
+
+export const participant = onchainTable(
+  "participant",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    address: t.hex().notNull(),
+    volume: t.bigint().notNull().default(BigInt(0)),
+    // volumeUSD: t.bigint().notNull().default(BigInt(0)),
+    lastPaidTimestamp: t.integer().notNull().default(0),
+    paymentsCount: t.integer().notNull().default(0),
+    balance: t.bigint().notNull().default(BigInt(0)),
+    creditBalance: t.bigint().notNull().default(BigInt(0)),
+    erc20Balance: t.bigint().notNull().default(BigInt(0)),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.address] }),
+  })
+);
+
+export const participantRelations = relations(participant, ({ one, many }) => ({
+  wallet: one(wallet, {
+    fields: [participant.address],
+    references: [wallet.address],
+  }),
+  nfts: many(nft),
 }));

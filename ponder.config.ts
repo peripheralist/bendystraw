@@ -1,5 +1,5 @@
 import { createConfig, factory } from "ponder";
-import { http, parseAbiItem } from "viem";
+import { erc20Abi, http, parseAbiItem } from "viem";
 
 import { Banny721TokenUriResolverAbi } from "./abis/Banny721TokenUriResolverAbi";
 import { JB721TiersHookAbi } from "./abis/JB721TiersHookAbi";
@@ -7,6 +7,7 @@ import { JB721TiersHookDeployerAbi } from "./abis/JB721TiersHookDeployerAbi";
 import { JBControllerAbi } from "./abis/JBControllerAbi";
 import { JBMultiTerminalAbi } from "./abis/JBMultiTerminalAbi";
 import { JBProjectsAbi } from "./abis/JBProjectsAbi";
+import { JBTokensAbi } from "./abis/JBTokensAbi";
 
 const transportUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
@@ -86,12 +87,24 @@ export default createConfig({
         },
       },
     },
-    // JBTokens: {
-    //   network: "ethereum",
-    //   address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
-    //   abi: JBTokensAbi,
-    //   startBlock: 21863179,
-    // },
+    JBTokens: {
+      abi: JBTokensAbi,
+      address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
+      network: {
+        ethereum: {
+          startBlock: 21863179,
+        },
+        arbitrum: {
+          startBlock: 306857750,
+        },
+        base: {
+          startBlock: 26485001,
+        },
+        optimism: {
+          startBlock: 132080297,
+        },
+      },
+    },
     JB721TiersHookDeployer: {
       abi: JB721TiersHookDeployerAbi,
       address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
@@ -122,7 +135,7 @@ export default createConfig({
             event: parseAbiItem(
               "event HookDeployed(uint256 projectId, address hook, address caller)"
             ),
-            parameter: "projectId",
+            parameter: "hook",
           }),
           startBlock: 21863215,
         },
@@ -142,7 +155,7 @@ export default createConfig({
             event: parseAbiItem(
               "event HookDeployed(uint256 projectId, address hook, address caller)"
             ),
-            parameter: "projectId",
+            parameter: "hook",
           }),
           startBlock: 306898627,
         },
@@ -152,7 +165,7 @@ export default createConfig({
             event: parseAbiItem(
               "event HookDeployed(uint256 projectId, address hook, address caller)"
             ),
-            parameter: "projectId",
+            parameter: "hook",
           }),
           startBlock: 26490148,
         },
@@ -162,9 +175,54 @@ export default createConfig({
             event: parseAbiItem(
               "event HookDeployed(uint256 projectId, address hook, address caller)"
             ),
-            parameter: "projectId",
+            parameter: "hook",
           }),
           startBlock: 132085433,
+        },
+      },
+    },
+    ERC20: {
+      abi: erc20Abi,
+      network: {
+        ethereum: {
+          address: factory({
+            address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
+            event: parseAbiItem(
+              "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
+            ),
+            parameter: "token",
+          }),
+          startBlock: 21863179,
+        },
+        arbitrum: {
+          address: factory({
+            address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
+            event: parseAbiItem(
+              "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
+            ),
+            parameter: "token",
+          }),
+          startBlock: 306857750,
+        },
+        base: {
+          address: factory({
+            address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
+            event: parseAbiItem(
+              "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
+            ),
+            parameter: "token",
+          }),
+          startBlock: 26485001,
+        },
+        optimism: {
+          address: factory({
+            address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
+            event: parseAbiItem(
+              "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
+            ),
+            parameter: "token",
+          }),
+          startBlock: 132080297,
         },
       },
     },
