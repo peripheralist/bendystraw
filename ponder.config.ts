@@ -8,6 +8,7 @@ import { JBControllerAbi } from "./abis/JBControllerAbi";
 import { JBMultiTerminalAbi } from "./abis/JBMultiTerminalAbi";
 import { JBProjectsAbi } from "./abis/JBProjectsAbi";
 import { JBTokensAbi } from "./abis/JBTokensAbi";
+import { JBPermissionsAbi } from "./abis/JBPermissionsAbi";
 
 const transportUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
@@ -226,12 +227,24 @@ export default createConfig({
         },
       },
     },
-    // JBPermissions: {
-    //   network: "ethereum",
-    //   address: "0xf5ca295dc286a176e35ebb7833031fd95550eb14",
-    //   abi: JBPermissionsAbi,
-    //   startBlock: 21863136,
-    // },
+    JBPermissions: {
+      address: "0xf5ca295dc286a176e35ebb7833031fd95550eb14",
+      abi: JBPermissionsAbi,
+      network: {
+        ethereum: {
+          startBlock: 21863136,
+        },
+        arbitrum: {
+          startBlock: 306857433,
+        },
+        base: {
+          startBlock: 26484945,
+        },
+        optimism: {
+          startBlock: 132080233,
+        },
+      },
+    },
     Banny721TokenUriResolver: {
       abi: Banny721TokenUriResolverAbi,
       address: "0xa5f8911d4cfd60a6697479f078409434424fe666",
