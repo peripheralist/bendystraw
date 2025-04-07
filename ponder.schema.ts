@@ -1,6 +1,6 @@
 export * from "./schema/addToBalanceEvent";
 export * from "./schema/burnEvent";
-export * from "./schema/cashoutTokensEvent";
+export * from "./schema/cashOutTokensEvent";
 export * from "./schema/decorateBannyEvent";
 export * from "./schema/deployErc20Event";
 export * from "./schema/internal";

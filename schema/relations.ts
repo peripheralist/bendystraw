@@ -4,7 +4,7 @@ import { permissionHolder, projectCreateEvent } from "ponder:schema";
 import { addToBalanceEvent } from "./addToBalanceEvent";
 import { autoIssueEvent } from "./autoIssueEvent";
 import { burnEvent } from "./burnEvent";
-import { cashOutTokensEvent } from "./cashoutTokensEvent";
+import { cashOutTokensEvent } from "./cashOutTokensEvent";
 import { decorateBannyEvent } from "./decorateBannyEvent";
 import { deployErc20Event } from "./deployErc20Event";
 import { mintNftEvent } from "./mintNftEvent";
