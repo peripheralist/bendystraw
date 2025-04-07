@@ -11,6 +11,7 @@ import {
   wallet,
 } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
+import { getLatestPayEvent } from "./util/getLatestPayEvent";
 import { usdPriceForEth } from "./util/usdPrice";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
@@ -100,16 +101,23 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
 
 ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
   try {
-    const { projectId, amount, netAmount, rulesetId, split, group } =
-      event.args;
+    const {
+      projectId: _projectId,
+      amount,
+      netAmount,
+      rulesetId,
+      split,
+      group,
+    } = event.args;
+    const projectId = Number(_projectId);
 
     await context.db.insert(sendPayoutToSplitEvent).values({
       ...getEventParams({ event, context }),
-      projectId: Number(projectId),
+      projectId: projectId,
       amount,
       amountUsd: await usdPriceForEth({
         context,
-        projectId: projectId,
+        projectId: _projectId,
         ethAmount: amount,
       }),
       netAmount,
@@ -123,28 +131,18 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       splitProjectId: Number(split.projectId),
     });
 
-    // TODO
-    // // DistributeToPayoutSplitEvent always occurs right after the Pay event, in the case of split payments to projects
-    // if (event.params.split.projectId.gt(BIGINT_0)) {
-    //   const payEvent = PayEvent.loadInBlock(idForPrevPayEvent());
+    // DistributeToPayoutSplitEvent always occurs right after the Pay event, in the case of split payments to projects
+    if (split.projectId > 0) {
+      const latestPayEvent = await getLatestPayEvent({ context });
 
-    //   if (
-    //     !payEvent ||
-    //     payEvent.projectId != event.params.split.projectId.toI32()
-    //   ) {
-    //     log.warning(
-    //       "[handleDistributeToPayoutSplit] Missing or mismatched pay event. splitProjectId: {}, payEvent projectId: {}",
-    //       [
-    //         event.params.split.projectId.toString(),
-    //         payEvent ? payEvent.projectId.toString() : "missing",
-    //       ]
-    //     );
-    //     return;
-    //   } else {
-    //     payEvent.distributionFromProjectId = projectId.toI32();
-    //     payEvent.save();
-    //   }
-    // }
+      if (latestPayEvent?.projectId !== Number(split.projectId)) {
+        throw new Error("Mismatched latest pay event");
+      }
+
+      await context.db.update(payEvent, latestPayEvent).set({
+        distributionFromProjectId: projectId,
+      });
+    }
   } catch (e) {
     console.error("JBMultiTerminal:SendPayoutToSplit", e);
   }
@@ -310,6 +308,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           balance: _project.balance + amount,
           volume: _project.volume + amount,
           volumeUsd: _project.volumeUsd + amountUsd,
+          contributorsCount:
+            _project.contributorsCount + (payerParticipant ? 0 : 1),
         }),
 
       // create pay event
@@ -335,6 +335,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
               volume: payerParticipant.volume + amount,
               volumeUsd: payerParticipant.volumeUsd + amountUsd,
               lastPaidTimestamp: Number(event.block.timestamp),
+              paymentsCount: payerParticipant.paymentsCount + 1,
             })
         : context.db.insert(participant).values({
             address: payer,
@@ -366,68 +367,18 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
   } catch (e) {
     console.error("JBMultiTerminal:Pay", e);
   }
-
-  // handleTrendingPayment(event.block.timestamp, pay.id);
-
-  // // if (!isDistribution) {
-  // const lastPaidTimestamp = event.block.timestamp.toI32();
-
-  // const payer = event.params.payer;
-
-  // const participantId = idForParticipant(projectId, payer);
-
-  // let participant = Participant.load(participantId);
-
-  // // update contributorsCount
-  // if (!participant || participant.volume.isZero()) {
-  //   project.contributorsCount = project.contributorsCount + 1;
-  // }
-
-  // if (!participant) {
-  //   participant = newParticipant(projectId, payer);
-  // }
-
-  // participant.volume = participant.volume.plus(amount);
-  // if (amountUSD) {
-  //   participant.volumeUSD = participant.volumeUSD.plus(amountUSD);
-  // }
-  // participant.lastPaidTimestamp = lastPaidTimestamp;
-  // participant.paymentsCount = participant.paymentsCount + 1;
-  // participant.save();
-
-  // // Update wallet, create if needed
-  // const walletId = toHexLowercase(payer);
-  // let wallet = Wallet.load(walletId);
-  // if (!wallet) {
-  //   wallet = newWallet(walletId);
-  // }
-  // wallet.volume = wallet.volume.plus(amount);
-  // if (amountUSD) {
-  //   wallet.volumeUSD = wallet.volumeUSD.plus(amountUSD);
-  // }
-  // wallet.lastPaidTimestamp = lastPaidTimestamp;
-  // wallet.save();
-  // // }
-
-  // const protocolLog = ProtocolLog.load(PROTOCOL_ID);
-  // if (protocolLog) {
-  //   if (amountUSD) {
-  //     protocolLog.volumeUSD = protocolLog.volumeUSD.plus(amountUSD);
-  //   }
-  //   protocolLog.paymentsCount = protocolLog.paymentsCount + 1;
-  //   protocolLog.save();
-  // }
 });
 
 ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
-  // const id = idForPrevPayEvent();
-  // const pay = PayEvent.loadInBlock(id);
-  // if (!pay) {
-  //   log.error("[handleProcessFee] Missing PayEvent. ID:{}", [id]);
-  //   return;
-  // }
-  // // Sanity check to ensure pay event was to juicebox project
-  // if (pay.projectId != 1) return;
-  // pay.feeFromProject = projectId.toI32();
-  // pay.save();
+  const latestPayEvent = await getLatestPayEvent({
+    context,
+  });
+
+  if (latestPayEvent?.projectId !== 1) {
+    throw new Error("Latest PayEvent projectId != 1");
+  }
+
+  await context.db
+    .update(payEvent, latestPayEvent)
+    .set({ feeFromProject: Number(event.args.projectId) });
 });

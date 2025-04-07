@@ -108,11 +108,3 @@ ponder.on(
     }
   }
 );
-
-// ponder.on("JBController:LaunchRulesets", async ({ event, context }) => {
-//   console.log(event.args);
-// });
-
-// ponder.on("JBController:Migrate", async ({ event, context }) => {
-//   console.log(event.args);
-// });
