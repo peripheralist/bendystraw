@@ -3,9 +3,9 @@ import { burnEvent, deployErc20Event, participant } from "ponder:schema";
 import { zeroAddress } from "viem";
 
 ponder.on("ERC20:Transfer", async ({ event, context }) => {
-  try {
-    console.log("asdf ERC20 transfer", event, context.network);
+  console.log("ASDF ERC20 transfer", event, context.network);
 
+  try {
     const { from, to, value } = event.args;
     const { address: token } = event.log;
     const { chainId } = context.network;

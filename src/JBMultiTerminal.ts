@@ -280,16 +280,15 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const [payerParticipant, payerWallet] = await Promise.all([
-      context.db.find(participant, {
-        address: payer,
-        chainId,
-        projectId,
-      }),
-      context.db.find(wallet, {
-        address: payer,
-      }),
-    ]);
+    // const payerWallet = await context.db.find(wallet, {
+    //   address: payer,
+    // });
+
+    const payerParticipant = await context.db.find(participant, {
+      address: payer,
+      chainId,
+      projectId,
+    });
 
     const amountUsd = await usdPriceForEth({
       context,
@@ -325,7 +324,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
       // update or create payer participant
       payerParticipant
-        ? await context.db
+        ? context.db
             .update(participant, {
               address: payer,
               chainId,
@@ -346,26 +345,30 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
             lastPaidTimestamp: Number(event.block.timestamp),
           }),
 
-      // update or create payer wallet
-      payerWallet
-        ? context.db
-            .update(wallet, {
-              address: payer,
-            })
-            .set({
-              volume: payerWallet.volume + amount,
-              volumeUsd: payerWallet.volumeUsd + amountUsd,
-            })
-        : context.db.insert(wallet).values({
-            address: payer,
-            volume: amount,
-            volumeUsd: amountUsd,
-          }),
+      // // update or create payer wallet
+      // payerWallet
+      //   ? context.db
+      //       .update(test, {
+      //         address: payer,
+      //       })
+      //       .set({
+      //         volume: payerWallet.volume + amount,
+      //         volumeUsd: payerWallet.volumeUsd + amountUsd,
+      //       })
+      //   : context.db.insert(test).values({
+      //       address: payer,
+      //       volume: amount,
+      //       volumeUsd: amountUsd,
+      //     }),
     ]);
 
     // beneficiary participant / wallet will be handled on token mint
-  } catch (e) {
-    console.error("JBMultiTerminal:Pay", e);
+  } catch (error) {
+    console.error("JBMultiTerminal:Pay", {
+      chain: context.network.chainId,
+      tx: event.transaction.hash,
+      error,
+    });
   }
 });
 
@@ -375,7 +378,9 @@ ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
   });
 
   if (latestPayEvent?.projectId !== 1) {
-    throw new Error("Latest PayEvent projectId != 1");
+    throw new Error(
+      "Latest PayEvent projectId != 1" + `(${latestPayEvent?.projectId})`
+    );
   }
 
   await context.db

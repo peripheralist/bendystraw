@@ -1118,10 +1118,10 @@ escape-string-regexp@^4.0.0:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz#14ba83a5d373e3d311e5afca29cf5bfad965bf34"
   integrity sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==
 
-eslint-config-ponder@^0.9.27:
-  version "0.9.27"
-  resolved "https://registry.yarnpkg.com/eslint-config-ponder/-/eslint-config-ponder-0.9.27.tgz#5d228151c94f0ec7eceaa10e2956d97af0df49df"
-  integrity sha512-qkEdsa5rPRqBH4j7SrLdAOBcwksm4dBvVMarIjNqXTCVbCHHldFiJ6cm4W5uVpKlKO98bhdDqqnibbHGfsTI+A==
+eslint-config-ponder@^0.10.9:
+  version "0.10.9"
+  resolved "https://registry.yarnpkg.com/eslint-config-ponder/-/eslint-config-ponder-0.10.9.tgz#2c86dc4ff11ff46ccc9d51e2a0dd0ed18d2bbb71"
+  integrity sha512-wG1rG9lcAzGjK4tAvND2oY9eJ1VLGbTEzAqUh7oal61el4dHWqyDXkUYdH/BdKtMaMb45URl0zC+1xblnHJrsg==
 
 eslint-scope@^7.2.2:
   version "7.2.2"
@@ -1871,10 +1871,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@^0.9.27:
-  version "0.9.27"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.9.27.tgz#1b5d8d22ac89159e22d8179d9ecb5fe41fcab079"
-  integrity sha512-2lP1TqTrISyvdqPj+8HM5Ykxd4EzoYoEAyav+ImYTZrKv+o9ltZ32c3gg4SA569BGqxvPYroduoG/SvSwvJmbw==
+ponder@^0.10.9:
+  version "0.10.9"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.10.9.tgz#19f781b7623548f9bc1e542fbc987ffacb7a7068"
+  integrity sha512-gzfhivZ+GvBizRhtmNIQFXlcn6bjvJwIBz75s35iPOvdkHZAnSVut8wmi5V8dWhPxVnQBJjM6XSWnA8zESCMYQ==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"

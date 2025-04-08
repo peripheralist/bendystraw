@@ -14,7 +14,18 @@ import { REVDeployerAbi } from "./abis/REVDeployerAbi";
 const transportUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 
+const jbTokensAddress = "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36";
+
+const deployErc20FactoryConfig = factory({
+  address: jbTokensAddress,
+  event: parseAbiItem(
+    "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
+  ),
+  parameter: "token",
+});
+
 export default createConfig({
+  ordering: "multichain",
   networks: {
     ethereum: { chainId: 1, transport: transportUrl("eth-mainnet") },
     arbitrum: { chainId: 42161, transport: transportUrl("arb-mainnet") },
@@ -78,7 +89,7 @@ export default createConfig({
     },
     JBTokens: {
       abi: JBTokensAbi,
-      address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
+      address: jbTokensAddress,
       network: {
         ethereum: {
           startBlock: 21863179,
@@ -161,43 +172,19 @@ export default createConfig({
       abi: erc20Abi,
       network: {
         ethereum: {
-          address: factory({
-            address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
-            event: parseAbiItem(
-              "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
-            ),
-            parameter: "token",
-          }),
+          address: deployErc20FactoryConfig,
           startBlock: 21863179,
         },
         arbitrum: {
-          address: factory({
-            address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
-            event: parseAbiItem(
-              "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
-            ),
-            parameter: "token",
-          }),
+          address: deployErc20FactoryConfig,
           startBlock: 306857750,
         },
         base: {
-          address: factory({
-            address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
-            event: parseAbiItem(
-              "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
-            ),
-            parameter: "token",
-          }),
+          address: deployErc20FactoryConfig,
           startBlock: 26485001,
         },
         optimism: {
-          address: factory({
-            address: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
-            event: parseAbiItem(
-              "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
-            ),
-            parameter: "token",
-          }),
+          address: deployErc20FactoryConfig,
           startBlock: 132080297,
         },
       },

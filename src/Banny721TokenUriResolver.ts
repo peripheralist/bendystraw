@@ -103,7 +103,7 @@ ponder.on(
         })
       );
     } catch (e) {
-      console.error("Banny721TokenUriResolver:DecorateBanny", e);
+      console.error("Banny721TokenUriResolver:SetSvgContent", e);
     }
   }
 );
