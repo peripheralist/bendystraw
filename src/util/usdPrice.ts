@@ -14,12 +14,12 @@ export async function usdPriceForEth({
   projectId: bigint;
   ethAmount: bigint;
 }) {
-  const usdAmount = await context.client.readContract({
+  const usdPrice = await context.client.readContract({
     abi: JBPricesAbi,
     address: "0xe712d14b04f1a1fe464be930e3ea72b9b0a141d7",
     functionName: "pricePerUnitOf",
-    args: [projectId, CURRENCY_USD, CURRENCY_NATIVE, BigInt(18)],
+    args: [projectId, CURRENCY_NATIVE, CURRENCY_USD, BigInt(18)],
   });
 
-  return (ethAmount * usdAmount) / BigInt(1e18);
+  return (ethAmount * usdPrice) / BigInt(1e18);
 }
