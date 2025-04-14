@@ -7,7 +7,7 @@ export async function getLatestPayEvent({ context }: { context: Context }) {
     .select()
     .from(payEvent)
     .where(eq(payEvent.chainId, context.network.chainId))
-    .orderBy(desc(payEvent.timestamp), desc(payEvent.txIndex))
+    .orderBy(desc(payEvent.timestamp), desc(payEvent.logIndex))
     .limit(1);
 
   return latestPayEvent;

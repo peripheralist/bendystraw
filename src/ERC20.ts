@@ -43,7 +43,6 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
             id: event.id,
             chainId,
             txHash: event.transaction.hash,
-            txIndex: event.transaction.transactionIndex,
             timestamp: Number(event.block.timestamp),
             from,
             projectId,
