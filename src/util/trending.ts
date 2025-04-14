@@ -1,4 +1,5 @@
 import { gt, gte, or } from "ponder";
+import { config } from "ponder:api";
 import { Context } from "ponder:registry";
 import { payEvent, project } from "ponder:schema";
 
@@ -13,6 +14,8 @@ export async function handleTrendingPayment(
 
     const oldestValidTimestampSecs =
       Number(timestamp) - TRENDING_WINDOW_DAYS * 24 * 60 * 60;
+
+    console.log("ASDF handle trending", timestamp, oldestValidTimestampSecs);
 
     const [trendingProjects, trendingWindowPayments] = await Promise.all([
       context.db.sql
@@ -30,6 +33,12 @@ export async function handleTrendingPayment(
         .from(payEvent)
         .where(gte(payEvent.timestamp, oldestValidTimestampSecs)),
     ]);
+
+    console.log(
+      "ASDF handle trending2",
+      trendingProjects,
+      trendingWindowPayments
+    );
 
     /**
      * We first reset the trending stats for all trending projects
@@ -50,24 +59,22 @@ export async function handleTrendingPayment(
      *
      * We iterate over all payments in the trending window. Then for each payment, update the trending stats of the project that received it.
      */
-    await Promise.all(
-      trendingWindowPayments.map((twp) =>
-        context.db.update(project, twp).set((p) => {
-          const trendingPaymentsCount = p.trendingPaymentsCount + 1;
-          const trendingVolume = p.trendingVolume + twp.amount;
-          const trendingScore =
-            trendingVolume * BigInt(trendingPaymentsCount) ** BigInt(2);
+    // TODO we can probably reduce this to one db update per project. Unclear how it may affect performance. We cannot `await Promise.all` because state updates depend on each other
+    for (const twp of trendingWindowPayments) {
+      await context.db.update(project, twp).set((p) => {
+        const trendingPaymentsCount = p.trendingPaymentsCount + 1;
+        const trendingVolume = p.trendingVolume + twp.amount;
+        const trendingScore =
+          trendingVolume * BigInt(trendingPaymentsCount) ** BigInt(2);
 
-          return {
-            trendingPaymentsCount,
-            trendingVolume,
-            trendingScore,
-            createdWithinTrendingWindow:
-              p.createdAt >= oldestValidTimestampSecs,
-          };
-        })
-      )
-    );
+        return {
+          trendingPaymentsCount,
+          trendingVolume,
+          trendingScore,
+          createdWithinTrendingWindow: p.createdAt >= oldestValidTimestampSecs,
+        };
+      });
+    }
   } catch (e) {
     console.warn("Error updating trending projects", e);
   }
