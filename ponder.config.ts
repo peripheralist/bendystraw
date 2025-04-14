@@ -1,14 +1,14 @@
 import { createConfig, factory } from "ponder";
-import { erc20Abi, getAbiItem, http, parseAbiItem } from "viem";
+import { erc20Abi, getAbiItem, http } from "viem";
 
 import { Banny721TokenUriResolverAbi } from "./abis/Banny721TokenUriResolverAbi";
 import { JB721TiersHookAbi } from "./abis/JB721TiersHookAbi";
 import { JB721TiersHookDeployerAbi } from "./abis/JB721TiersHookDeployerAbi";
 import { JBControllerAbi } from "./abis/JBControllerAbi";
 import { JBMultiTerminalAbi } from "./abis/JBMultiTerminalAbi";
+import { JBPermissionsAbi } from "./abis/JBPermissionsAbi";
 import { JBProjectsAbi } from "./abis/JBProjectsAbi";
 import { JBTokensAbi } from "./abis/JBTokensAbi";
-import { JBPermissionsAbi } from "./abis/JBPermissionsAbi";
 import { REVDeployerAbi } from "./abis/REVDeployerAbi";
 
 const transportUrl = (prefix: string) =>
