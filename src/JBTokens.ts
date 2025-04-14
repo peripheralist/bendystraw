@@ -131,12 +131,6 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
 });
 
 ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
-  console.log(
-    "ASDF DeployERC20",
-    context.network.chainId,
-    event.args.projectId
-  );
-
   try {
     const { symbol, token, name, projectId } = event.args;
 

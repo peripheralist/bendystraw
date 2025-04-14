@@ -1,3 +1,5 @@
+import { onchainTable } from "ponder";
+
 export * from "./schema/addToBalanceEvent";
 export * from "./schema/autoIssueEvent";
 export * from "./schema/burnEvent";
@@ -22,4 +24,16 @@ export * from "./schema/sendReservedTokensToSplitsEvent";
 export * from "./schema/stats";
 export * from "./schema/storeAutoIssuanceAmountEvent";
 export * from "./schema/useAllowanceEvent";
-export * from "./schema/wallet";
+// export * from "./schema/wallet";
+
+export const wallet = onchainTable("wallet", (t) => ({
+  address: t.hex().primaryKey(),
+  volume: t.bigint().notNull().default(BigInt(0)),
+  volumeUsd: t.bigint().notNull().default(BigInt(0)),
+  lastPaidTimestamp: t.integer().notNull().default(0),
+}));
+
+// export const walletRelations = relations(wallet, ({ many }) => ({
+//   participants: many(participant),
+//   nfts: many(nft),
+// }));

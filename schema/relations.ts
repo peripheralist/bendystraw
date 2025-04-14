@@ -40,10 +40,10 @@ export const nftRelations = relations(nft, ({ one }) => ({
     fields: [nft.owner, nft.chainId],
     references: [participant.address, participant.chainId],
   }),
-  wallet: one(wallet, {
-    fields: [nft.owner],
-    references: [wallet.address],
-  }),
+  // wallet: one(wallet, {
+  //   fields: [nft.owner],
+  //   references: [wallet.address],
+  // }),
 }));
 
 export const nftTierRelations = relations(nftTier, ({ many, one }) => ({
@@ -233,16 +233,16 @@ export const mintNftEventRelations = relations(mintNftEvent, ({ one }) => ({
   }),
 }));
 
-export const walletRelations = relations(wallet, ({ many }) => ({
-  participants: many(participant),
-  nfts: many(nft),
-}));
+// export const walletRelations = relations(wallet, ({ many }) => ({
+//   participants: many(participant),
+//   nfts: many(nft),
+// }));
 
 export const participantRelations = relations(participant, ({ one, many }) => ({
-  wallet: one(wallet, {
-    fields: [participant.address],
-    references: [wallet.address],
-  }),
+  // wallet: one(wallet, {
+  //   fields: [participant.address],
+  //   references: [wallet.address],
+  // }),
   nfts: many(nft),
 }));
 
