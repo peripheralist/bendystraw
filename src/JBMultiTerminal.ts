@@ -373,19 +373,21 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 });
 
 ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
-  // TODO
-  console.log("ASDF processFee", event.transaction.hash);
-  // const latestPayEvent = await getLatestPayEvent({
-  //   context,
-  // });
+  try {
+    const latestPayEvent = await getLatestPayEvent({
+      context,
+    });
 
-  // if (latestPayEvent?.projectId !== 1) {
-  //   throw new Error(
-  //     "Latest PayEvent projectId != 1" + `(${latestPayEvent?.projectId})`
-  //   );
-  // }
+    if (latestPayEvent?.projectId !== 1) {
+      throw new Error(
+        "Latest PayEvent projectId != 1" + `(${latestPayEvent?.projectId})`
+      );
+    }
 
-  // await context.db
-  //   .update(payEvent, latestPayEvent)
-  //   .set({ feeFromProject: Number(event.args.projectId) });
+    await context.db
+      .update(payEvent, latestPayEvent)
+      .set({ feeFromProject: Number(event.args.projectId) });
+  } catch (e) {
+    console.error("JBMultiTerminal:ProcessFee", e);
+  }
 });
