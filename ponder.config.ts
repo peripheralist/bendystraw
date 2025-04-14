@@ -16,10 +16,19 @@ const transportUrl = (prefix: string) =>
 
 const jbTokensAddress = "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36";
 
+const jb721TiersHookDeployerAddress =
+  "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206";
+
 const deployErc20FactoryConfig = factory({
   address: jbTokensAddress,
   event: getAbiItem({ abi: JBTokensAbi, name: "DeployERC20" }),
   parameter: "token",
+});
+
+const hookDeployedFactoryConfig = factory({
+  address: jb721TiersHookDeployerAddress,
+  event: getAbiItem({ abi: JB721TiersHookDeployerAbi, name: "HookDeployed" }),
+  parameter: "hook",
 });
 
 export default createConfig({
@@ -105,7 +114,7 @@ export default createConfig({
     },
     JB721TiersHookDeployer: {
       abi: JB721TiersHookDeployerAbi,
-      address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
+      address: jb721TiersHookDeployerAddress,
       network: {
         ethereum: {
           startBlock: 21863981,
@@ -125,43 +134,19 @@ export default createConfig({
       abi: JB721TiersHookAbi,
       network: {
         ethereum: {
-          address: factory({
-            address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
-            event: parseAbiItem(
-              "event HookDeployed(uint256 projectId, address hook, address caller)"
-            ),
-            parameter: "hook",
-          }),
+          address: hookDeployedFactoryConfig,
           startBlock: 21863215,
         },
         arbitrum: {
-          address: factory({
-            address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
-            event: parseAbiItem(
-              "event HookDeployed(uint256 projectId, address hook, address caller)"
-            ),
-            parameter: "hook",
-          }),
+          address: hookDeployedFactoryConfig,
           startBlock: 306898627,
         },
         base: {
-          address: factory({
-            address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
-            event: parseAbiItem(
-              "event HookDeployed(uint256 projectId, address hook, address caller)"
-            ),
-            parameter: "hook",
-          }),
+          address: hookDeployedFactoryConfig,
           startBlock: 26490148,
         },
         optimism: {
-          address: factory({
-            address: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
-            event: parseAbiItem(
-              "event HookDeployed(uint256 projectId, address hook, address caller)"
-            ),
-            parameter: "hook",
-          }),
+          address: hookDeployedFactoryConfig,
           startBlock: 132085433,
         },
       },
