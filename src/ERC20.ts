@@ -3,8 +3,6 @@ import { burnEvent, deployErc20Event, participant } from "ponder:schema";
 import { zeroAddress } from "viem";
 
 ponder.on("ERC20:Transfer", async ({ event, context }) => {
-  console.log("ASDF ERC20 transfer", event, context.network);
-
   try {
     const { from, to, value } = event.args;
     const { address: token } = event.log;
@@ -22,14 +20,22 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
 
     const { projectId } = _deployErc20Event;
 
+    const toParticipant = await context.db.find(participant, {
+      chainId,
+      projectId,
+      address: to,
+    });
+
     await Promise.all([
       // update from participant
-      context.db
-        .update(participant, { chainId, projectId, address: from })
-        .set((p) => ({
-          erc20Balance: p.erc20Balance - value,
-          balance: p.erc20Balance - value + p.creditBalance,
-        })),
+      from === zeroAddress
+        ? Promise.resolve()
+        : context.db
+            .update(participant, { chainId, projectId, address: from })
+            .set((p) => ({
+              erc20Balance: p.erc20Balance - value,
+              balance: p.erc20Balance - value + p.creditBalance,
+            })),
 
       to === zeroAddress
         ? // create burn event
@@ -46,18 +52,27 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
             creditAmount: BigInt(0),
           })
         : // update `to` participant
-          context.db
+        toParticipant
+        ? context.db
             .update(participant, { chainId, projectId, address: to })
             .set((p) => ({
               erc20Balance: p.erc20Balance + value,
               balance: p.erc20Balance + value + p.creditBalance,
-            })),
+            }))
+        : context.db.insert(participant).values({
+            chainId,
+            projectId,
+            address: to,
+            erc20Balance: value,
+            balance: value,
+          }),
     ]);
   } catch (e) {
     console.error(
       "ERC20: Transfer",
       context.network.chainId,
       event.log.address,
+      event.transaction.hash,
       e
     );
   }

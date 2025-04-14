@@ -1,5 +1,5 @@
 import { createConfig, factory } from "ponder";
-import { erc20Abi, http, parseAbiItem } from "viem";
+import { erc20Abi, getAbiItem, http, parseAbiItem } from "viem";
 
 import { Banny721TokenUriResolverAbi } from "./abis/Banny721TokenUriResolverAbi";
 import { JB721TiersHookAbi } from "./abis/JB721TiersHookAbi";
@@ -18,9 +18,7 @@ const jbTokensAddress = "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36";
 
 const deployErc20FactoryConfig = factory({
   address: jbTokensAddress,
-  event: parseAbiItem(
-    "event DeployERC20(uint256 projectId, address token, string name, string symbol, bytes32 salt, address caller)"
-  ),
+  event: getAbiItem({ abi: JBTokensAbi, name: "DeployERC20" }),
   parameter: "token",
 });
 

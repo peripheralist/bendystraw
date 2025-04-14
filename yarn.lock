@@ -1020,10 +1020,10 @@ dotenv@^16.3.1:
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.7.tgz#0e20c5b82950140aa99be360a8a5f52335f53c26"
   integrity sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==
 
-drizzle-orm@0.39.3:
-  version "0.39.3"
-  resolved "https://registry.yarnpkg.com/drizzle-orm/-/drizzle-orm-0.39.3.tgz#4f844d5849a0236082340e47e2dc9eecc1e0e64c"
-  integrity sha512-EZ8ZpYvDIvKU9C56JYLOmUskazhad+uXZCTCRN4OnRMsL+xAJ05dv1eCpAG5xzhsm1hqiuC5kAZUCS924u2DTw==
+drizzle-orm@0.41.0:
+  version "0.41.0"
+  resolved "https://registry.yarnpkg.com/drizzle-orm/-/drizzle-orm-0.41.0.tgz#61b55ef3bf5983222deaaeed848b8c58c4aa3e0a"
+  integrity sha512-7A4ZxhHk9gdlXmTdPj/lREtP+3u8KvZ4yEN6MYVxBzZGex5Wtdc+CWSbu7btgF6TB0N+MNPrvW7RKBbxJchs/Q==
 
 dset@^3.1.4:
   version "3.1.4"
@@ -1871,10 +1871,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@^0.10.9:
-  version "0.10.9"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.10.9.tgz#19f781b7623548f9bc1e542fbc987ffacb7a7068"
-  integrity sha512-gzfhivZ+GvBizRhtmNIQFXlcn6bjvJwIBz75s35iPOvdkHZAnSVut8wmi5V8dWhPxVnQBJjM6XSWnA8zESCMYQ==
+ponder@^0.10.13:
+  version "0.10.13"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.10.13.tgz#90bdd7c7e8f90c65a7ffb7bd5544fffb1c3179f0"
+  integrity sha512-kE9whazBCMV7xcOE3Ay99e1oGPAv/QH7wkFNWQ2zpuIVc0rxyzW9HbV/Y+EQdr+6WUkEdzhbZJup0VGO5J30QQ==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"
@@ -1891,7 +1891,7 @@ ponder@^0.10.9:
     dataloader "^2.2.2"
     detect-package-manager "^3.0.2"
     dotenv "^16.3.1"
-    drizzle-orm "0.39.3"
+    drizzle-orm "0.41.0"
     glob "^10.3.10"
     graphql "^16.8.1"
     graphql-yoga "^5.3.0"

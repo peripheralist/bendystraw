@@ -280,9 +280,9 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    // const payerWallet = await context.db.find(wallet, {
-    //   address: payer,
-    // });
+    const payerWallet = await context.db.find(wallet, {
+      address: payer,
+    });
 
     const payerParticipant = await context.db.find(participant, {
       address: payer,
@@ -345,21 +345,21 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
             lastPaidTimestamp: Number(event.block.timestamp),
           }),
 
-      // // update or create payer wallet
-      // payerWallet
-      //   ? context.db
-      //       .update(test, {
-      //         address: payer,
-      //       })
-      //       .set({
-      //         volume: payerWallet.volume + amount,
-      //         volumeUsd: payerWallet.volumeUsd + amountUsd,
-      //       })
-      //   : context.db.insert(test).values({
-      //       address: payer,
-      //       volume: amount,
-      //       volumeUsd: amountUsd,
-      //     }),
+      // update or create payer wallet
+      payerWallet
+        ? context.db
+            .update(wallet, {
+              address: payer,
+            })
+            .set({
+              volume: payerWallet.volume + amount,
+              volumeUsd: payerWallet.volumeUsd + amountUsd,
+            })
+        : context.db.insert(wallet).values({
+            address: payer,
+            volume: amount,
+            volumeUsd: amountUsd,
+          }),
     ]);
 
     // beneficiary participant / wallet will be handled on token mint
