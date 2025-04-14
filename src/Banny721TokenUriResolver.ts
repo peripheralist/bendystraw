@@ -38,7 +38,7 @@ ponder.on(
         }),
       ]);
     } catch (e) {
-      console.error("Banny721TokenUriResolver:DecorateBanny", e);
+      // console.error("Banny721TokenUriResolver:DecorateBanny", e);
     }
   }
 );
@@ -103,7 +103,7 @@ ponder.on(
         })
       );
     } catch (e) {
-      console.error("Banny721TokenUriResolver:SetSvgContent", e);
+      // console.error("Banny721TokenUriResolver:SetSvgContent", e);
     }
   }
 );
@@ -129,7 +129,7 @@ ponder.on(
           encodedIpfsUri: tier.encodedIPFSUri,
         });
     } catch (e) {
-      console.error("Banny721TokenUriResolver:SetProductName", e);
+      // console.error("Banny721TokenUriResolver:SetProductName", e);
     }
   }
 );
@@ -163,7 +163,7 @@ ponder.on(
         )
       );
     } catch (e) {
-      console.error("Banny721TokenUriResolver:SetSvgBaseUri", e);
+      // console.error("Banny721TokenUriResolver:SetSvgBaseUri", e);
     }
   }
 );

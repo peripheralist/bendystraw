@@ -1,6 +1,5 @@
 import { ponder } from "ponder:registry";
-import { autoIssueEvent } from "../schema/autoIssueEvent";
-import { storeAutoIssuanceAmountEvent } from "../schema/storeAutoIssuanceAmountEvent";
+import { autoIssueEvent, storeAutoIssuanceAmountEvent } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
 
 ponder.on("RevDeployer:AutoIssue", async ({ event, context }) => {
