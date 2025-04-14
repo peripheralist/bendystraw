@@ -1,25 +1,30 @@
-export function parseProjectMetadata(uri: string) {
-  let name;
-  let description;
-  let tags;
+// import axios from "axios";
 
-  try {
-    const metadata = JSON.parse(atob(uri));
+// export async function parseProjectMetadata(uri: string) {
+//   let name = null;
+//   let description = null;
+//   let tags = null;
 
-    console.log("ASDF metadata");
+//   try {
+//     const cid = uri.includes("ipfs://") ? uri.split("ipfs://")[1] : uri;
+//     const _uri = `https://dweb.link/ipfs/${cid}`;
 
-    if (typeof metadata.name === "string") {
-      name = metadata.name;
-    }
-    if (typeof metadata.description === "string") {
-      description = metadata.description;
-    }
-    if (Array.isArray(metadata.tags)) {
-      tags = metadata.tags;
-    }
-  } catch (e) {
-    console.warn("Error parsing project metadata", uri);
-  }
+//     const metadata = await axios.get(_uri).then((res) => atob(res.data));
 
-  return { name, description, tags };
-}
+//     console.log("ASDF metadata", _uri, metadata);
+
+//     if (typeof metadata.name === "string") {
+//       name = metadata.name;
+//     }
+//     if (typeof metadata.description === "string") {
+//       description = metadata.description;
+//     }
+//     if (Array.isArray(metadata.tags)) {
+//       tags = metadata.tags;
+//     }
+
+//     return { name, description, tags };
+//   } catch (e) {
+//     console.warn("Error parsing project metadata", uri, e);
+//   }
+// }

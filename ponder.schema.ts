@@ -11,7 +11,7 @@ type PGCB<
   ? ColumnTypes
   : never;
 
-export const projectId = (t: PGCB) => ({ projectId: t.integer().notNull() });
+export const eventId = (t: PGCB) => ({ id: t.text().notNull().primaryKey() });
 export const chainId = (t: PGCB) => ({ chainId: t.integer().notNull() });
 export const timestamp = (t: PGCB) => ({ timestamp: t.integer().notNull() });
 export const createdAt = (t: PGCB) => ({ createdAt: t.integer().notNull() });
@@ -19,16 +19,16 @@ export const txHash = (t: PGCB) => ({ txHash: t.hex().notNull() });
 export const txIndex = (t: PGCB) => ({ txIndex: t.integer().notNull() });
 export const caller = (t: PGCB) => ({ caller: t.hex().notNull() });
 export const from = (t: PGCB) => ({ from: t.hex().notNull() });
-export const eventId = (t: PGCB) => ({ id: t.text().primaryKey() });
+export const projectId = (t: PGCB) => ({ projectId: t.integer().notNull() });
 
 export const eventParams = (t: PGCB) => ({
+  ...eventId(t),
   ...chainId(t),
   ...txHash(t),
   ...txIndex(t),
   ...timestamp(t),
   ...caller(t),
   ...from(t),
-  ...eventId(t),
 });
 
 // export * from "./schema/addToBalanceEvent";

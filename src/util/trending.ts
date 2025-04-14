@@ -14,22 +14,21 @@ export async function handleTrendingPayment(
     const oldestValidTimestampSecs =
       Number(timestamp) - TRENDING_WINDOW_DAYS * 24 * 60 * 60;
 
-    const [trendingProjects, trendingWindowPayments] = await Promise.all([
-      context.db.sql
-        .select()
-        .from(project)
-        .where(
-          or(
-            gt(project.trendingPaymentsCount, 0),
-            gt(project.trendingScore, BigInt(0)),
-            gt(project.trendingVolume, BigInt(0))
-          )
-        ),
-      context.db.sql
-        .select()
-        .from(payEvent)
-        .where(gte(payEvent.timestamp, oldestValidTimestampSecs)),
-    ]);
+    const trendingProjects = await context.db.sql
+      .select()
+      .from(project)
+      .where(
+        or(
+          gt(project.trendingPaymentsCount, 0),
+          gt(project.trendingScore, BigInt(0)),
+          gt(project.trendingVolume, BigInt(0))
+        )
+      );
+
+    const trendingWindowPayments = await context.db.sql
+      .select()
+      .from(payEvent)
+      .where(gte(payEvent.timestamp, oldestValidTimestampSecs));
 
     /**
      * We first reset the trending stats for all trending projects

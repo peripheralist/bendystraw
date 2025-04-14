@@ -6,7 +6,6 @@ import {
   sendReservedTokensToSplitsEvent,
 } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
-import { parseProjectMetadata } from "./util/projectMetadata";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
@@ -30,7 +29,7 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   try {
     const { projectId, caller, projectUri } = event.args;
 
-    const { name, description, tags } = parseProjectMetadata(projectUri);
+    // const { name, description, tags } = parseProjectMetadata(projectUri);
 
     await context.db
       .update(project, {
@@ -40,9 +39,9 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
       .set({
         deployer: caller,
         metadataUri: projectUri,
-        name,
-        description,
-        tags,
+        // name,
+        // description,
+        // tags,
       });
   } catch (e) {
     console.error("JBController:LaunchProject", e);
@@ -53,14 +52,19 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
   try {
     const { projectId, uri } = event.args;
 
-    const { name, description, tags } = parseProjectMetadata(uri);
+    // const { name, description, tags } = parseProjectMetadata(uri);
 
     await context.db
       .update(project, {
         chainId: context.network.chainId,
         projectId: Number(projectId),
       })
-      .set({ metadataUri: uri, name, description, tags });
+      .set({
+        metadataUri: uri,
+        // name,
+        // description,
+        // tags,
+      });
   } catch (e) {
     console.error("JBController:SetUri", e);
   }
