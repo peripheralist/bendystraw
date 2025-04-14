@@ -13,6 +13,7 @@ import {
 import { getEventParams } from "./util/getEventParams";
 import { getLatestPayEvent } from "./util/getLatestPayEvent";
 import { usdPriceForEth } from "./util/usdPrice";
+import { handleTrendingPayment } from "./util/trending";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
@@ -345,7 +346,9 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           }),
     ]);
 
-    // beneficiary participant / wallet will be handled on token mint
+    // beneficiary participant/wallet will be handled on token mint
+
+    await handleTrendingPayment(event.block.timestamp, context);
   } catch (error) {
     console.error("JBMultiTerminal:Pay", {
       chain: context.network.chainId,

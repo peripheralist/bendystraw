@@ -130,6 +130,11 @@ export const deployErc20Event = onchainTable(
   })
 );
 
+export const internal = onchainTable("internal", (t) => ({
+  id: t.integer().default(1),
+  trendingLastUpdatedTimestamp: t.integer(),
+}));
+
 // export * from "./schema/mintNftEvent";
 export const mintNftEvent = onchainTable(
   "mint_nft_event",
@@ -305,10 +310,10 @@ export const project = onchainTable(
     nftsMintedCount: t.integer().notNull().default(0),
     balance: t.bigint().notNull().default(BigInt(0)),
     tokenSupply: t.bigint().notNull().default(BigInt(0)),
-    // trendingScore: t.bigint().notNull().default(BigInt(0)),
-    // trendingVolume: t.bigint().notNull().default(BigInt(0)),
-    // trendingPaymentsCount: t.integer().notNull().default(0),
-    // createdWithinTrendingWindow: t.boolean(),
+    trendingScore: t.bigint().notNull().default(BigInt(0)),
+    trendingVolume: t.bigint().notNull().default(BigInt(0)),
+    trendingPaymentsCount: t.integer().notNull().default(0),
+    createdWithinTrendingWindow: t.boolean(),
   }),
   (t) => ({ pk: primaryKey({ columns: [t.chainId, t.projectId] }) })
 );
