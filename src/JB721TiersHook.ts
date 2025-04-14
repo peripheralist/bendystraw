@@ -1,5 +1,11 @@
 import { ponder } from "ponder:registry";
-import { mintNftEvent, nft, nftTier, participant } from "ponder:schema";
+import {
+  mintNftEvent,
+  nft,
+  nftTier,
+  participant,
+  project,
+} from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
@@ -176,15 +182,25 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
       functionName: "PROJECT_ID",
     });
 
-    await context.db.insert(mintNftEvent).values({
-      ...getEventParams({ event, context }),
-      projectId: Number(projectIdCall),
-      hook,
-      tierId: Number(tierId),
-      tokenId,
-      beneficiary,
-      totalAmountPaid,
-    });
+    const projectId = Number(projectIdCall);
+
+    await Promise.all([
+      context.db.insert(mintNftEvent).values({
+        ...getEventParams({ event, context }),
+        projectId,
+        hook,
+        tierId: Number(tierId),
+        tokenId,
+        beneficiary,
+        totalAmountPaid,
+      }),
+      context.db
+        .update(project, {
+          projectId,
+          chainId: context.network.chainId,
+        })
+        .set((p) => ({ nftsMintedCount: p.nftsMintedCount + 1 })),
+    ]);
   } catch (e) {
     console.error("JB721TiersHook:Mint", e);
   }

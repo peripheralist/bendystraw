@@ -165,15 +165,6 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
-    const _project = await context.db.find(project, {
-      chainId,
-      projectId,
-    });
-
-    if (!_project) {
-      throw new Error("Missing project");
-    }
-
     const reclaimAmountUsd = await usdPriceForEth({
       context,
       projectId: _projectId,
@@ -187,11 +178,12 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
           projectId,
           chainId,
         })
-        .set({
-          redeemVolume: _project.redeemVolume + reclaimAmount,
-          redeemVolumeUsd: _project.redeemVolumeUsd + reclaimAmountUsd,
-          balance: _project.balance - reclaimAmount,
-        }),
+        .set((p) => ({
+          redeemCount: p.redeemCount + 1,
+          redeemVolume: p.redeemVolume + reclaimAmount,
+          redeemVolumeUsd: p.redeemVolumeUsd + reclaimAmountUsd,
+          balance: p.balance - reclaimAmount,
+        })),
 
       // create cashOutTokensEvent
       context.db.insert(cashOutTokensEvent).values({
@@ -271,23 +263,14 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
-    const _project = await context.db.find(project, {
-      projectId,
-      chainId,
-    });
-
-    if (!_project) {
-      throw new Error("Missing project");
-    }
-
-    const payerWallet = await context.db.find(wallet, {
-      address: payer,
-    });
-
     const payerParticipant = await context.db.find(participant, {
       address: payer,
       chainId,
       projectId,
+    });
+
+    const payerWallet = await context.db.find(wallet, {
+      address: payer,
     });
 
     const amountUsd = await usdPriceForEth({
@@ -303,13 +286,13 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           projectId,
           chainId,
         })
-        .set({
-          balance: _project.balance + amount,
-          volume: _project.volume + amount,
-          volumeUsd: _project.volumeUsd + amountUsd,
-          contributorsCount:
-            _project.contributorsCount + (payerParticipant ? 0 : 1),
-        }),
+        .set((p) => ({
+          balance: p.balance + amount,
+          volume: p.volume + amount,
+          volumeUsd: p.volumeUsd + amountUsd,
+          contributorsCount: p.contributorsCount + (payerParticipant ? 0 : 1),
+          paymentsCount: p.paymentsCount + 1,
+        })),
 
       // create pay event
       context.db.insert(payEvent).values({
