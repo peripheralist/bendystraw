@@ -19,6 +19,7 @@ export const txHash = (t: PGCB) => ({ txHash: t.hex().notNull() });
 export const txIndex = (t: PGCB) => ({ txIndex: t.integer().notNull() });
 export const caller = (t: PGCB) => ({ caller: t.hex().notNull() });
 export const from = (t: PGCB) => ({ from: t.hex().notNull() });
+export const eventId = (t: PGCB) => ({ id: t.text().primaryKey() });
 
 export const eventParams = (t: PGCB) => ({
   ...chainId(t),
@@ -27,57 +28,41 @@ export const eventParams = (t: PGCB) => ({
   ...timestamp(t),
   ...caller(t),
   ...from(t),
+  ...eventId(t),
 });
 
 // export * from "./schema/addToBalanceEvent";
-export const addToBalanceEvent = onchainTable(
-  "add_to_balance_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-    amount: t.bigint().notNull(),
-    memo: t.text(),
-    metadata: t.hex().notNull(),
-    returnedFees: t.bigint().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
-  })
-);
+export const addToBalanceEvent = onchainTable("add_to_balance_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  amount: t.bigint().notNull(),
+  memo: t.text(),
+  metadata: t.hex().notNull(),
+  returnedFees: t.bigint().notNull(),
+}));
 
 // export * from "./schema/autoIssueEvent";
-export const autoIssueEvent = onchainTable(
-  "auto_issue_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-    stageId: t.bigint().notNull(),
-    beneficiary: t.hex().notNull(),
-    count: t.bigint().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
-  })
-);
+export const autoIssueEvent = onchainTable("auto_issue_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  stageId: t.bigint().notNull(),
+  beneficiary: t.hex().notNull(),
+  count: t.bigint().notNull(),
+}));
 
 // export * from "./schema/burnEvent";
-export const burnEvent = onchainTable(
-  "burn_event",
-  (t) => ({
-    ...chainId(t),
-    ...from(t),
-    ...timestamp(t),
-    ...txHash(t),
-    ...txIndex(t),
-    ...projectId(t),
-    amount: t.bigint().notNull(),
-    creditAmount: t.bigint().notNull(),
-    erc20Amount: t.bigint().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
-  })
-);
+export const burnEvent = onchainTable("burn_event", (t) => ({
+  ...eventId(t),
+  ...chainId(t),
+  ...from(t),
+  ...timestamp(t),
+  ...txHash(t),
+  ...txIndex(t),
+  ...projectId(t),
+  amount: t.bigint().notNull(),
+  creditAmount: t.bigint().notNull(),
+  erc20Amount: t.bigint().notNull(),
+}));
 
 // export * from "./schema/cashOutTokensEvent";
 export const cashOutTokensEvent = onchainTable(
@@ -94,32 +79,28 @@ export const cashOutTokensEvent = onchainTable(
     metadata: t.hex().notNull(),
     rulesetCycleNumber: t.bigint().notNull(),
     rulesetId: t.bigint().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
 // export * from "./schema/decorateBannyEvent";
-export const decorateBannyEvent = onchainTable(
-  "decorate_banny_event",
-  (t) => ({
-    ...eventParams(t),
-    bannyBodyId: t.bigint().notNull(),
-    outfitIds: t.bigint().array(),
-    backgroundId: t.bigint(),
-    tokenUri: t.text(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
-  })
-);
+export const decorateBannyEvent = onchainTable("decorate_banny_event", (t) => ({
+  ...eventParams(t),
+  bannyBodyId: t.bigint().notNull(),
+  outfitIds: t.bigint().array(),
+  backgroundId: t.bigint(),
+  tokenUri: t.text(),
+}));
 
 // export * from "./schema/deployErc20Event";
 export const deployErc20Event = onchainTable(
   "deploy_erc20_event",
   (t) => ({
-    ...eventParams(t),
+    ...chainId(t),
+    ...txHash(t),
+    ...txIndex(t),
+    ...timestamp(t),
+    ...caller(t),
+    ...from(t),
     ...projectId(t),
     symbol: t.text().notNull(),
     name: t.text().notNull(),
@@ -131,38 +112,26 @@ export const deployErc20Event = onchainTable(
 );
 
 // export * from "./schema/mintNftEvent";
-export const mintNftEvent = onchainTable(
-  "mint_nft_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-    hook: t.hex().notNull(),
-    beneficiary: t.hex().notNull(),
-    tierId: t.integer().notNull(),
-    tokenId: t.bigint().notNull(),
-    totalAmountPaid: t.bigint().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.tokenId] }),
-  })
-);
+export const mintNftEvent = onchainTable("mint_nft_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  hook: t.hex().notNull(),
+  beneficiary: t.hex().notNull(),
+  tierId: t.integer().notNull(),
+  tokenId: t.bigint().notNull(),
+  totalAmountPaid: t.bigint().notNull(),
+}));
 
 // export * from "./schema/mintTokensEvent";
-export const mintTokensEvent = onchainTable(
-  "mint_tokens_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-    beneficiary: t.hex().notNull(),
-    beneficiaryTokenCount: t.bigint().notNull(),
-    reservedPercent: t.bigint().notNull(),
-    tokenCount: t.bigint().notNull(),
-    memo: t.text(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
-  })
-);
+export const mintTokensEvent = onchainTable("mint_tokens_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  beneficiary: t.hex().notNull(),
+  beneficiaryTokenCount: t.bigint().notNull(),
+  reservedPercent: t.bigint().notNull(),
+  tokenCount: t.bigint().notNull(),
+  memo: t.text(),
+}));
 
 // export * from "./schema/nft";
 export const nft = onchainTable(
@@ -248,23 +217,17 @@ export const participant = onchainTable(
 );
 
 // export * from "./schema/payEvent";
-export const payEvent = onchainTable(
-  "pay_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-    distributionFromProjectId: t.integer(),
-    beneficiary: t.hex().notNull(),
-    amount: t.bigint().notNull(),
-    amountUsd: t.bigint().notNull(),
-    memo: t.text(),
-    feeFromProject: t.integer(), // Int # Indicates payment is a fee from project with this ID
-    newlyIssuedTokenCount: t.bigint().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
-  })
-);
+export const payEvent = onchainTable("pay_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  distributionFromProjectId: t.integer(),
+  beneficiary: t.hex().notNull(),
+  amount: t.bigint().notNull(),
+  amountUsd: t.bigint().notNull(),
+  memo: t.text(),
+  feeFromProject: t.integer(), // Int # Indicates payment is a fee from project with this ID
+  newlyIssuedTokenCount: t.bigint().notNull(),
+}));
 
 // export * from "./schema/permissionHolder";
 export const permissionHolder = onchainTable(
@@ -314,37 +277,27 @@ export const project = onchainTable(
 );
 
 // export * from "./schema/projectCreateEvent";
-export const projectCreateEvent = onchainTable(
-  "project_create_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-  }),
-  (t) => ({ pk: primaryKey({ columns: [t.chainId, t.projectId] }) })
-);
+export const projectCreateEvent = onchainTable("project_create_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+}));
 
 // export * from "./schema/relations";
 
 // export * from "./schema/sendPayoutsEvent";
-export const sendPayoutsEvent = onchainTable(
-  "send_payouts_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-    amount: t.bigint().notNull(),
-    amountUsd: t.bigint().notNull(),
-    amountPaidOut: t.bigint().notNull(),
-    amountPaidOutUsd: t.bigint().notNull(),
-    netLeftoverPayoutAmount: t.bigint().notNull(),
-    fee: t.bigint().notNull(),
-    feeUsd: t.bigint().notNull(),
-    rulesetId: t.integer().notNull(),
-    rulesetCycleNumber: t.integer().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
-  })
-);
+export const sendPayoutsEvent = onchainTable("send_payouts_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  amount: t.bigint().notNull(),
+  amountUsd: t.bigint().notNull(),
+  amountPaidOut: t.bigint().notNull(),
+  amountPaidOutUsd: t.bigint().notNull(),
+  netLeftoverPayoutAmount: t.bigint().notNull(),
+  fee: t.bigint().notNull(),
+  feeUsd: t.bigint().notNull(),
+  rulesetId: t.integer().notNull(),
+  rulesetCycleNumber: t.integer().notNull(),
+}));
 
 // export * from "./schema/sendPayoutToSplitEvent";
 export const sendPayoutToSplitEvent = onchainTable(
@@ -363,9 +316,6 @@ export const sendPayoutToSplitEvent = onchainTable(
     hook: t.hex().notNull(),
     group: t.bigint().notNull(),
     rulesetId: t.integer().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -384,9 +334,6 @@ export const sendReservedTokensToSplitEvent = onchainTable(
     percent: t.integer().notNull(),
     preferAddToBalance: t.boolean().notNull(),
     splitProjectId: t.integer().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -401,9 +348,6 @@ export const sendReservedTokensToSplitsEvent = onchainTable(
     tokenCount: t.bigint().notNull(),
     leftoverAmount: t.bigint().notNull(),
     owner: t.hex().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
@@ -423,31 +367,22 @@ export const storeAutoIssuanceAmountEvent = onchainTable(
     stageId: t.bigint().notNull(),
     beneficiary: t.hex().notNull(),
     count: t.bigint().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
   })
 );
 
 // export * from "./schema/useAllowanceEvent";
-export const useAllowanceEvent = onchainTable(
-  "use_allowance_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-    amount: t.bigint().notNull(),
-    amountPaidOut: t.bigint().notNull(),
-    netAmountPaidOut: t.bigint().notNull(),
-    beneficiary: t.hex().notNull(),
-    feeBeneficiary: t.hex().notNull(),
-    memo: t.text(),
-    rulesetCycleNumber: t.integer().notNull(),
-    rulesetId: t.integer().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.txHash, t.txIndex] }),
-  })
-);
+export const useAllowanceEvent = onchainTable("use_allowance_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  amount: t.bigint().notNull(),
+  amountPaidOut: t.bigint().notNull(),
+  netAmountPaidOut: t.bigint().notNull(),
+  beneficiary: t.hex().notNull(),
+  feeBeneficiary: t.hex().notNull(),
+  memo: t.text(),
+  rulesetCycleNumber: t.integer().notNull(),
+  rulesetId: t.integer().notNull(),
+}));
 
 // export * from "./schema/wallet";
 export const wallet = onchainTable("wallet", (t) => ({

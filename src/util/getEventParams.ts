@@ -1,5 +1,6 @@
 type Args = {
   event: {
+    id: string;
     args: { caller: `0x${string}` };
     block: { timestamp: bigint };
     transaction: {
@@ -16,6 +17,7 @@ type Args = {
 };
 
 export const getEventParams = ({ event, context }: Args) => ({
+  id: event.id,
   chainId: context.network.chainId,
   txHash: event.transaction.hash,
   txIndex: event.transaction.transactionIndex,

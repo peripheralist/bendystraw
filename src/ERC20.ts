@@ -40,13 +40,13 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
       to === zeroAddress
         ? // create burn event
           context.db.insert(burnEvent).values({
+            id: event.id,
             chainId,
             txHash: event.transaction.hash,
             txIndex: event.transaction.transactionIndex,
             timestamp: Number(event.block.timestamp),
             from,
             projectId,
-            holder: from,
             amount: value,
             erc20Amount: value,
             creditAmount: BigInt(0),

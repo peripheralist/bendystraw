@@ -11,7 +11,7 @@ export async function handleTrendingPayment(
   try {
     // TODO we can use trendingLastUpdatedTimestamp pattern to avoid updating too often
 
-    const oldestValidTimestamp =
+    const oldestValidTimestampSecs =
       Number(timestamp) - TRENDING_WINDOW_DAYS * 24 * 60 * 60;
 
     const [trendingProjects, trendingWindowPayments] = await Promise.all([
@@ -28,7 +28,7 @@ export async function handleTrendingPayment(
       context.db.sql
         .select()
         .from(payEvent)
-        .where(gte(payEvent.timestamp, oldestValidTimestamp)),
+        .where(gte(payEvent.timestamp, oldestValidTimestampSecs)),
     ]);
 
     /**
@@ -40,7 +40,7 @@ export async function handleTrendingPayment(
           trendingPaymentsCount: 0,
           trendingScore: BigInt(0),
           trendingVolume: BigInt(0),
-          createdWithinTrendingWindow: tp.createdAt >= oldestValidTimestamp,
+          createdWithinTrendingWindow: tp.createdAt >= oldestValidTimestampSecs,
         })
       )
     );
@@ -62,7 +62,8 @@ export async function handleTrendingPayment(
             trendingPaymentsCount,
             trendingVolume,
             trendingScore,
-            createdWithinTrendingWindow: p.createdAt >= oldestValidTimestamp,
+            createdWithinTrendingWindow:
+              p.createdAt >= oldestValidTimestampSecs,
           };
         })
       )
