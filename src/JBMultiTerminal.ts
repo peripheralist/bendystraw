@@ -366,7 +366,8 @@ ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
 
     if (latestPayEvent?.projectId !== 1) {
       throw new Error(
-        "Latest PayEvent projectId != 1" + `(${latestPayEvent?.projectId})`
+        "Latest PayEvent projectId != 1" +
+          ` (${latestPayEvent?.projectId}), tx: ${event.transaction.hash}`
       );
     }
 
