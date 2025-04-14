@@ -130,11 +130,6 @@ export const deployErc20Event = onchainTable(
   })
 );
 
-export const internal = onchainTable("internal", (t) => ({
-  id: t.integer().default(1),
-  trendingLastUpdatedTimestamp: t.integer(),
-}));
-
 // export * from "./schema/mintNftEvent";
 export const mintNftEvent = onchainTable(
   "mint_nft_event",
