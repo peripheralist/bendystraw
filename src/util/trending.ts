@@ -1,5 +1,4 @@
 import { gt, gte, or } from "ponder";
-import { config } from "ponder:api";
 import { Context } from "ponder:registry";
 import { payEvent, project } from "ponder:schema";
 
@@ -14,8 +13,6 @@ export async function handleTrendingPayment(
 
     const oldestValidTimestampSecs =
       Number(timestamp) - TRENDING_WINDOW_DAYS * 24 * 60 * 60;
-
-    console.log("ASDF handle trending", timestamp, oldestValidTimestampSecs);
 
     const [trendingProjects, trendingWindowPayments] = await Promise.all([
       context.db.sql
@@ -33,12 +30,6 @@ export async function handleTrendingPayment(
         .from(payEvent)
         .where(gte(payEvent.timestamp, oldestValidTimestampSecs)),
     ]);
-
-    console.log(
-      "ASDF handle trending2",
-      trendingProjects,
-      trendingWindowPayments
-    );
 
     /**
      * We first reset the trending stats for all trending projects
