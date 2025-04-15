@@ -10,7 +10,7 @@ import { rateLimitMiddleware } from "../middleware/rateLimit";
 const app = new Hono();
 
 // public testing
-app.use("/", rateLimitMiddleware);
+if (process.env.NODE_ENV !== "development") app.use("/", rateLimitMiddleware);
 app.use("/", graphql({ db, schema }));
 
 // origin restricted (internal apps)

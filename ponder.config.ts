@@ -10,6 +10,7 @@ import { JBPermissionsAbi } from "./abis/JBPermissionsAbi";
 import { JBProjectsAbi } from "./abis/JBProjectsAbi";
 import { JBTokensAbi } from "./abis/JBTokensAbi";
 import { REVDeployerAbi } from "./abis/REVDeployerAbi";
+import { JBSuckersRegistryAbi } from "./abis/JBSuckersRegistryAbi";
 
 const transportUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
@@ -223,6 +224,24 @@ export default createConfig({
         },
         optimism: {
           startBlock: 132116325,
+        },
+      },
+    },
+    JBSuckersRegistry: {
+      abi: JBSuckersRegistryAbi,
+      address: "0x696c7e9b37d28edbefa3fce06e26041b7197c1a5",
+      network: {
+        ethereum: {
+          startBlock: 21863660,
+        },
+        arbitrum: {
+          startBlock: 306881281,
+        },
+        base: {
+          startBlock: 26487986,
+        },
+        optimism: {
+          startBlock: 132083296,
         },
       },
     },

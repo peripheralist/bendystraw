@@ -28,11 +28,10 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
 ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   // Emitted after JBProjects:Create. This is only needed to set deployer + metadataUri
   // If the controller emits a launchProject event, the project launch tx was called via the JBController, and we want to prefer its `caller` param over any existing value
+  const { projectId: _projectId, caller, projectUri } = event.args;
+  const projectId = Number(_projectId);
+  const chainId = context.network.chainId;
   try {
-    const { projectId: _projectId, caller, projectUri } = event.args;
-    const projectId = Number(_projectId);
-    const chainId = context.network.chainId;
-
     const metadata = await parseProjectMetadata(projectUri);
 
     await Promise.all([
@@ -47,7 +46,7 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
       }),
     ]);
   } catch (e) {
-    console.error("JBController:LaunchProject", e);
+    console.error("JBController:LaunchProject", e, event.transaction.hash);
   }
 });
 
@@ -59,16 +58,25 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
 
     const metadata = await parseProjectMetadata(uri);
 
+    const _projectMetadata = await context.db.find(projectMetadata, {
+      chainId,
+      projectId,
+    });
+
     await Promise.all([
       context.db
         .update(project, { chainId, projectId })
         .set({ metadataUri: uri }),
-      context.db
-        .update(projectMetadata, { chainId, projectId })
-        .set({ ...metadata }),
+      _projectMetadata
+        ? context.db
+            .update(projectMetadata, { chainId, projectId })
+            .set({ ...metadata })
+        : context.db
+            .insert(projectMetadata)
+            .values({ chainId, projectId, ...metadata }),
     ]);
   } catch (e) {
-    console.error("JBController:SetUri", e);
+    console.error("JBController:SetUri", e, event.transaction.hash);
   }
 });
 

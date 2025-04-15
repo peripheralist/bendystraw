@@ -21,7 +21,7 @@ export async function parseProjectMetadata(uri: string) {
 
     const _uri = `https://ipfs.infura.io:5001/api/v0/get?arg=${cid}`;
 
-    const _metadata: ProjectMetadata = await axios
+    const _metadata: ProjectMetadata | undefined = await axios
       .post(
         _uri,
         {},
@@ -31,7 +31,16 @@ export async function parseProjectMetadata(uri: string) {
           },
         }
       )
-      .then((res) => JSON.parse(`{${res.data.split("{")[1].split("}")[0]}}`));
+      .then((res) => {
+        const formattedRes = `{${res.data.split("{")[1].split("}")[0]}}`;
+        try {
+          return JSON.parse(formattedRes);
+        } catch (e) {
+          console.log("Error formatting metadata response", formattedRes);
+        }
+      });
+
+    if (!_metadata) return;
 
     const propNames: (keyof ProjectMetadata)[] = [
       "coverImageUri",

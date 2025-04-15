@@ -1,4 +1,5 @@
 import { onchainTable, primaryKey, relations } from "ponder";
+import { generateId } from "./src/util/id";
 
 // hacky extraction of `PgColumnsBuilders` type that isn't exported by ponder
 type PGCB<
@@ -31,7 +32,6 @@ export const eventParams = (t: PGCB) => ({
   ...logIndex(t),
 });
 
-// export * from "./schema/addToBalanceEvent";
 export const addToBalanceEvent = onchainTable("add_to_balance_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
@@ -41,7 +41,16 @@ export const addToBalanceEvent = onchainTable("add_to_balance_event", (t) => ({
   returnedFees: t.bigint().notNull(),
 }));
 
-// export * from "./schema/autoIssueEvent";
+export const addToBalanceEventRelations = relations(
+  addToBalanceEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [addToBalanceEvent.projectId, addToBalanceEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const autoIssueEvent = onchainTable("auto_issue_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
@@ -50,7 +59,13 @@ export const autoIssueEvent = onchainTable("auto_issue_event", (t) => ({
   count: t.bigint().notNull(),
 }));
 
-// export * from "./schema/burnEvent";
+export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [autoIssueEvent.chainId, autoIssueEvent.projectId],
+    references: [project.chainId, project.projectId],
+  }),
+}));
+
 export const burnEvent = onchainTable("burn_event", (t) => ({
   ...eventId(t),
   ...chainId(t),
@@ -63,7 +78,13 @@ export const burnEvent = onchainTable("burn_event", (t) => ({
   erc20Amount: t.bigint().notNull(),
 }));
 
-// export * from "./schema/cashOutTokensEvent";
+export const burnEventRelations = relations(burnEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [burnEvent.projectId, burnEvent.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+}));
+
 export const cashOutTokensEvent = onchainTable(
   "cash_out_tokens_event",
   (t) => ({
@@ -81,7 +102,16 @@ export const cashOutTokensEvent = onchainTable(
   })
 );
 
-// export * from "./schema/decorateBannyEvent";
+export const cashOutTokensEventRelations = relations(
+  cashOutTokensEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [cashOutTokensEvent.projectId, cashOutTokensEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const decorateBannyEvent = onchainTable("decorate_banny_event", (t) => ({
   ...eventParams(t),
   bannyBodyId: t.bigint().notNull(),
@@ -90,7 +120,16 @@ export const decorateBannyEvent = onchainTable("decorate_banny_event", (t) => ({
   tokenUri: t.text(),
 }));
 
-// export * from "./schema/deployErc20Event";
+export const decorateBannyEventRelations = relations(
+  decorateBannyEvent,
+  ({ one }) => ({
+    bannyNft: one(nft, {
+      fields: [decorateBannyEvent.bannyBodyId, decorateBannyEvent.chainId],
+      references: [nft.tokenId, nft.chainId],
+    }),
+  })
+);
+
 export const deployErc20Event = onchainTable(
   "deploy_erc20_event",
   (t) => ({
@@ -109,7 +148,16 @@ export const deployErc20Event = onchainTable(
   })
 );
 
-// export * from "./schema/mintNftEvent";
+export const deployErc20EventRelations = relations(
+  deployErc20Event,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [deployErc20Event.projectId, deployErc20Event.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const mintNftEvent = onchainTable("mint_nft_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
@@ -120,7 +168,21 @@ export const mintNftEvent = onchainTable("mint_nft_event", (t) => ({
   totalAmountPaid: t.bigint().notNull(),
 }));
 
-// export * from "./schema/mintTokensEvent";
+export const mintNftEventRelations = relations(mintNftEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [mintNftEvent.projectId, mintNftEvent.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+  tier: one(nftTier, {
+    fields: [mintNftEvent.tierId, mintNftEvent.chainId],
+    references: [nftTier.tierId, nftTier.chainId],
+  }),
+  nft: one(nft, {
+    fields: [mintNftEvent.tokenId, mintNftEvent.chainId],
+    references: [nft.tokenId, nft.chainId],
+  }),
+}));
+
 export const mintTokensEvent = onchainTable("mint_tokens_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
@@ -131,7 +193,16 @@ export const mintTokensEvent = onchainTable("mint_tokens_event", (t) => ({
   memo: t.text(),
 }));
 
-// export * from "./schema/nft";
+export const mintTokensEventRelations = relations(
+  mintTokensEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [mintTokensEvent.projectId, mintTokensEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const nft = onchainTable(
   "nft",
   (t) => ({
@@ -150,7 +221,29 @@ export const nft = onchainTable(
   })
 );
 
-// export * from "./schema/nftHook";
+export const nftRelations = relations(nft, ({ one }) => ({
+  tier: one(nftTier, {
+    fields: [nft.tierId, nft.chainId],
+    references: [nftTier.tierId, nftTier.chainId],
+  }),
+  project: one(project, {
+    fields: [nft.projectId, nft.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+  hook: one(nftHook, {
+    fields: [nft.hook, nft.chainId],
+    references: [nftHook.address, nftHook.chainId],
+  }),
+  owner: one(participant, {
+    fields: [nft.owner, nft.chainId],
+    references: [participant.address, participant.chainId],
+  }),
+  wallet: one(wallet, {
+    fields: [nft.owner],
+    references: [wallet.address],
+  }),
+}));
+
 export const nftHook = onchainTable(
   "nft_hook",
   (t) => ({
@@ -166,7 +259,15 @@ export const nftHook = onchainTable(
   })
 );
 
-// export * from "./schema/nftTier";
+export const nftHookRelations = relations(nftHook, ({ many, one }) => ({
+  nfts: many(nft),
+  nftTiers: many(nftTier),
+  project: one(project, {
+    fields: [nftHook.projectId, nftHook.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+}));
+
 export const nftTier = onchainTable(
   "nft_tier",
   (t) => ({
@@ -194,7 +295,18 @@ export const nftTier = onchainTable(
   })
 );
 
-// export * from "./schema/participant";
+export const nftTierRelations = relations(nftTier, ({ many, one }) => ({
+  nfts: many(nft),
+  project: one(project, {
+    fields: [nftTier.projectId, nftTier.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+  hook: one(nftHook, {
+    fields: [nftTier.hook, nftTier.chainId],
+    references: [nftHook.address, nftHook.chainId],
+  }),
+}));
+
 export const participant = onchainTable(
   "participant",
   (t) => ({
@@ -214,7 +326,14 @@ export const participant = onchainTable(
   })
 );
 
-// export * from "./schema/payEvent";
+export const participantRelations = relations(participant, ({ one, many }) => ({
+  wallet: one(wallet, {
+    fields: [participant.address],
+    references: [wallet.address],
+  }),
+  nfts: many(nft),
+}));
+
 export const payEvent = onchainTable("pay_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
@@ -227,7 +346,13 @@ export const payEvent = onchainTable("pay_event", (t) => ({
   newlyIssuedTokenCount: t.bigint().notNull(),
 }));
 
-// export * from "./schema/permissionHolder";
+export const payEventRelations = relations(payEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [payEvent.projectId, payEvent.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+}));
+
 export const permissionHolder = onchainTable(
   "permission_holder",
   (t) => ({
@@ -244,17 +369,28 @@ export const permissionHolder = onchainTable(
   })
 );
 
-// export * from "./schema/project";
+export const permissionHolderRelations = relations(
+  permissionHolder,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [permissionHolder.chainId, permissionHolder.projectId],
+      references: [project.chainId, project.projectId],
+    }),
+  })
+);
+
 export const project = onchainTable(
   "project",
   (t) => ({
+    id: t
+      .text()
+      .notNull()
+      .$default(() => generateId()), // not a primary key, used for relations
     ...chainId(t),
     ...projectId(t),
     ...createdAt(t),
+    suckerGroup: t.text(),
     handle: t.text(),
-    name: t.text(),
-    description: t.text(),
-    tags: t.text().array(),
     metadataUri: t.text(),
     deployer: t.hex().notNull(),
     owner: t.hex().notNull(),
@@ -276,6 +412,32 @@ export const project = onchainTable(
   }),
   (t) => ({ pk: primaryKey({ columns: [t.chainId, t.projectId] }) })
 );
+
+export const projectRelations = relations(project, ({ many, one }) => ({
+  nfts: many(nft),
+  nftHooks: many(nftHook),
+  mintTokensEvents: many(mintTokensEvent),
+  sendPayoutsEvents: many(sendPayoutsEvent),
+  sendPayoutToSplitEvents: many(sendPayoutToSplitEvent),
+  sendReservedTokensToSplitsEvents: many(sendReservedTokensToSplitsEvent),
+  sendReservedTokensToSplitEvents: many(sendReservedTokensToSplitEvent),
+  addToBalanceEvents: many(addToBalanceEvent),
+  cashOutTokensEvents: many(cashOutTokensEvent),
+  useAllowanceEvents: many(useAllowanceEvent),
+  payEvents: many(payEvent),
+  mintNftEvents: many(mintNftEvent),
+  burnEvents: many(burnEvent),
+  deployErc20Events: many(deployErc20Event),
+  permissionHolders: many(permissionHolder),
+  metadata: one(projectMetadata, {
+    fields: [project.projectId, project.chainId],
+    references: [projectMetadata.projectId, projectMetadata.chainId],
+  }),
+  suckerGroup: one(suckerGroup, {
+    fields: [project.suckerGroup],
+    references: [suckerGroup.id],
+  }),
+}));
 
 export const projectMetadata = onchainTable(
   "project_metadata",
@@ -299,15 +461,31 @@ export const projectMetadata = onchainTable(
   (t) => ({ pk: primaryKey({ columns: [t.chainId, t.projectId] }) })
 );
 
-// export * from "./schema/projectCreateEvent";
+export const projectMetadataRelations = relations(
+  projectMetadata,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [projectMetadata.projectId, projectMetadata.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const projectCreateEvent = onchainTable("project_create_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
 }));
 
-// export * from "./schema/relations";
+export const projectCreateEventRelations = relations(
+  projectCreateEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [projectCreateEvent.projectId, projectCreateEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
 
-// export * from "./schema/sendPayoutsEvent";
 export const sendPayoutsEvent = onchainTable("send_payouts_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
@@ -322,7 +500,16 @@ export const sendPayoutsEvent = onchainTable("send_payouts_event", (t) => ({
   rulesetCycleNumber: t.integer().notNull(),
 }));
 
-// export * from "./schema/sendPayoutToSplitEvent";
+export const sendPayoutsEventRelations = relations(
+  sendPayoutsEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [sendPayoutsEvent.projectId, sendPayoutsEvent.chainId],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const sendPayoutToSplitEvent = onchainTable(
   "send_payout_to_split_event",
   (t) => ({
@@ -342,7 +529,19 @@ export const sendPayoutToSplitEvent = onchainTable(
   })
 );
 
-// export * from "./schema/sendReservedTokensToSplitEvent";
+export const sendPayoutToSplitEventRelations = relations(
+  sendPayoutToSplitEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        sendPayoutToSplitEvent.projectId,
+        sendPayoutToSplitEvent.chainId,
+      ],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const sendReservedTokensToSplitEvent = onchainTable(
   "send_reserved_tokens_to_split_event",
   (t) => ({
@@ -360,7 +559,19 @@ export const sendReservedTokensToSplitEvent = onchainTable(
   })
 );
 
-// export * from "./schema/sendReservedTokensToSplitsEvent";
+export const sendReservedTokensToSplitEventRelations = relations(
+  sendReservedTokensToSplitEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        sendReservedTokensToSplitEvent.projectId,
+        sendReservedTokensToSplitEvent.chainId,
+      ],
+      references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
 export const sendReservedTokensToSplitsEvent = onchainTable(
   "send_reserved_tokens_to_splits_event",
   (t) => ({
@@ -371,153 +582,6 @@ export const sendReservedTokensToSplitsEvent = onchainTable(
     tokenCount: t.bigint().notNull(),
     leftoverAmount: t.bigint().notNull(),
     owner: t.hex().notNull(),
-  })
-);
-
-// export * from "./schema/stats";
-export const stats = onchainTable("stats", (t) => ({
-  chainId: t.integer().notNull().primaryKey(),
-  volume: t.bigint().notNull(),
-  volumeUsd: t.bigint().notNull(),
-}));
-
-// export * from "./schema/storeAutoIssuanceAmountEvent";
-export const storeAutoIssuanceAmountEvent = onchainTable(
-  "store_auto_issuance_amount_event",
-  (t) => ({
-    ...eventParams(t),
-    ...projectId(t),
-    stageId: t.bigint().notNull(),
-    beneficiary: t.hex().notNull(),
-    count: t.bigint().notNull(),
-  })
-);
-
-// export * from "./schema/useAllowanceEvent";
-export const useAllowanceEvent = onchainTable("use_allowance_event", (t) => ({
-  ...eventParams(t),
-  ...projectId(t),
-  amount: t.bigint().notNull(),
-  amountPaidOut: t.bigint().notNull(),
-  netAmountPaidOut: t.bigint().notNull(),
-  beneficiary: t.hex().notNull(),
-  feeBeneficiary: t.hex().notNull(),
-  memo: t.text(),
-  rulesetCycleNumber: t.integer().notNull(),
-  rulesetId: t.integer().notNull(),
-}));
-
-// export * from "./schema/wallet";
-export const wallet = onchainTable("wallet", (t) => ({
-  address: t.hex().primaryKey(),
-  volume: t.bigint().notNull().default(BigInt(0)),
-  volumeUsd: t.bigint().notNull().default(BigInt(0)),
-  lastPaidTimestamp: t.integer().notNull().default(0),
-}));
-
-export const nftRelations = relations(nft, ({ one }) => ({
-  tier: one(nftTier, {
-    fields: [nft.tierId, nft.chainId],
-    references: [nftTier.tierId, nftTier.chainId],
-  }),
-  project: one(project, {
-    fields: [nft.projectId, nft.chainId],
-    references: [project.projectId, project.chainId],
-  }),
-  hook: one(nftHook, {
-    fields: [nft.hook, nft.chainId],
-    references: [nftHook.address, nftHook.chainId],
-  }),
-  owner: one(participant, {
-    fields: [nft.owner, nft.chainId],
-    references: [participant.address, participant.chainId],
-  }),
-  wallet: one(wallet, {
-    fields: [nft.owner],
-    references: [wallet.address],
-  }),
-}));
-
-export const nftTierRelations = relations(nftTier, ({ many, one }) => ({
-  nfts: many(nft),
-  project: one(project, {
-    fields: [nftTier.projectId, nftTier.chainId],
-    references: [project.projectId, project.chainId],
-  }),
-  hook: one(nftHook, {
-    fields: [nftTier.hook, nftTier.chainId],
-    references: [nftHook.address, nftHook.chainId],
-  }),
-}));
-
-export const nftHookRelations = relations(nftHook, ({ many, one }) => ({
-  nfts: many(nft),
-  nftTiers: many(nftTier),
-  project: one(project, {
-    fields: [nftHook.projectId, nftHook.chainId],
-    references: [project.projectId, project.chainId],
-  }),
-}));
-
-export const projectRelations = relations(project, ({ many, one }) => ({
-  nfts: many(nft),
-  nftHooks: many(nftHook),
-  mintTokensEvents: many(mintTokensEvent),
-  sendPayoutsEvents: many(sendPayoutsEvent),
-  sendPayoutToSplitEvents: many(sendPayoutToSplitEvent),
-  sendReservedTokensToSplitsEvents: many(sendReservedTokensToSplitsEvent),
-  sendReservedTokensToSplitEvents: many(sendReservedTokensToSplitEvent),
-  addToBalanceEvents: many(addToBalanceEvent),
-  cashOutTokensEvents: many(cashOutTokensEvent),
-  useAllowanceEvents: many(useAllowanceEvent),
-  payEvents: many(payEvent),
-  mintNftEvents: many(mintNftEvent),
-  burnEvents: many(burnEvent),
-  deployErc20Events: many(deployErc20Event),
-  permissionHolders: many(permissionHolder),
-  metadata: one(projectMetadata, {
-    fields: [project.projectId, project.chainId],
-    references: [projectMetadata.projectId, projectMetadata.chainId],
-  }),
-}));
-
-export const projectMetadataRelations = relations(
-  projectMetadata,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [projectMetadata.projectId, projectMetadata.chainId],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const projectCreateEventRelations = relations(
-  projectCreateEvent,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [projectCreateEvent.projectId, projectCreateEvent.chainId],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const mintTokensEventRelations = relations(
-  mintTokensEvent,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [mintTokensEvent.projectId, mintTokensEvent.chainId],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const decorateBannyEventRelations = relations(
-  decorateBannyEvent,
-  ({ one }) => ({
-    bannyNft: one(nft, {
-      fields: [decorateBannyEvent.bannyBodyId, decorateBannyEvent.chainId],
-      references: [nft.tokenId, nft.chainId],
-    }),
   })
 );
 
@@ -534,115 +598,22 @@ export const sendReservedTokensToSplitsEventRelations = relations(
   })
 );
 
-export const sendReservedTokensToSplitEventRelations = relations(
-  sendReservedTokensToSplitEvent,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [
-        sendReservedTokensToSplitEvent.projectId,
-        sendReservedTokensToSplitEvent.chainId,
-      ],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const sendPayoutToSplitEventRelations = relations(
-  sendPayoutToSplitEvent,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [
-        sendPayoutToSplitEvent.projectId,
-        sendPayoutToSplitEvent.chainId,
-      ],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const addToBalanceEventRelations = relations(
-  addToBalanceEvent,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [addToBalanceEvent.projectId, addToBalanceEvent.chainId],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const sendPayoutsEventRelations = relations(
-  sendPayoutsEvent,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [sendPayoutsEvent.projectId, sendPayoutsEvent.chainId],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const cashOutTokensEventRelations = relations(
-  cashOutTokensEvent,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [cashOutTokensEvent.projectId, cashOutTokensEvent.chainId],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const useAllowanceEventRelations = relations(
-  useAllowanceEvent,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [useAllowanceEvent.projectId, useAllowanceEvent.chainId],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
-
-export const payEventRelations = relations(payEvent, ({ one }) => ({
-  project: one(project, {
-    fields: [payEvent.projectId, payEvent.chainId],
-    references: [project.projectId, project.chainId],
-  }),
+export const stats = onchainTable("stats", (t) => ({
+  chainId: t.integer().notNull().primaryKey(),
+  volume: t.bigint().notNull(),
+  volumeUsd: t.bigint().notNull(),
 }));
 
-export const burnEventRelations = relations(burnEvent, ({ one }) => ({
-  project: one(project, {
-    fields: [burnEvent.projectId, burnEvent.chainId],
-    references: [project.projectId, project.chainId],
-  }),
-}));
-
-export const deployErc20EventRelations = relations(
-  deployErc20Event,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [deployErc20Event.projectId, deployErc20Event.chainId],
-      references: [project.projectId, project.chainId],
-    }),
+export const storeAutoIssuanceAmountEvent = onchainTable(
+  "store_auto_issuance_amount_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    stageId: t.bigint().notNull(),
+    beneficiary: t.hex().notNull(),
+    count: t.bigint().notNull(),
   })
 );
-
-export const mintNftEventRelations = relations(mintNftEvent, ({ one }) => ({
-  project: one(project, {
-    fields: [mintNftEvent.projectId, mintNftEvent.chainId],
-    references: [project.projectId, project.chainId],
-  }),
-  tier: one(nftTier, {
-    fields: [mintNftEvent.tierId, mintNftEvent.chainId],
-    references: [nftTier.tierId, nftTier.chainId],
-  }),
-  nft: one(nft, {
-    fields: [mintNftEvent.tokenId, mintNftEvent.chainId],
-    references: [nft.tokenId, nft.chainId],
-  }),
-}));
-
-export const walletRelations = relations(wallet, ({ many }) => ({
-  participants: many(participant),
-  nfts: many(nft),
-}));
 
 export const storeAutoIssuanceAmountEventRelations = relations(
   storeAutoIssuanceAmountEvent,
@@ -657,27 +628,69 @@ export const storeAutoIssuanceAmountEventRelations = relations(
   })
 );
 
-export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
+export const sucker = onchainTable(
+  "sucker",
+  (t) => ({
+    ...projectId(t),
+    ...chainId(t),
+    address: t.hex().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.projectId, t.chainId, t.address] }),
+  })
+);
+
+export const suckerRelations = relations(sucker, ({ one }) => ({
   project: one(project, {
-    fields: [autoIssueEvent.chainId, autoIssueEvent.projectId],
-    references: [project.chainId, project.projectId],
+    fields: [sucker.projectId, sucker.chainId],
+    references: [project.projectId, project.chainId],
   }),
 }));
 
-export const participantRelations = relations(participant, ({ one, many }) => ({
-  wallet: one(wallet, {
-    fields: [participant.address],
-    references: [wallet.address],
-  }),
-  nfts: many(nft),
+export const suckerGroup = onchainTable("sucker_group", (t) => ({
+  id: t
+    .text()
+    .$default(() => generateId())
+    .primaryKey(),
+  projects: t.text().array().notNull().default([]),
+  addresses: t.hex().array().notNull().default([]),
 }));
 
-export const permissionHolderRelations = relations(
-  permissionHolder,
+export const suckerGroupRelations = relations(suckerGroup, ({ many }) => ({
+  projects: many(project),
+}));
+
+export const useAllowanceEvent = onchainTable("use_allowance_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  amount: t.bigint().notNull(),
+  amountPaidOut: t.bigint().notNull(),
+  netAmountPaidOut: t.bigint().notNull(),
+  beneficiary: t.hex().notNull(),
+  feeBeneficiary: t.hex().notNull(),
+  memo: t.text(),
+  rulesetCycleNumber: t.integer().notNull(),
+  rulesetId: t.integer().notNull(),
+}));
+
+export const useAllowanceEventRelations = relations(
+  useAllowanceEvent,
   ({ one }) => ({
     project: one(project, {
-      fields: [permissionHolder.chainId, permissionHolder.projectId],
-      references: [project.chainId, project.projectId],
+      fields: [useAllowanceEvent.projectId, useAllowanceEvent.chainId],
+      references: [project.projectId, project.chainId],
     }),
   })
 );
+
+export const wallet = onchainTable("wallet", (t) => ({
+  address: t.hex().primaryKey(),
+  volume: t.bigint().notNull().default(BigInt(0)),
+  volumeUsd: t.bigint().notNull().default(BigInt(0)),
+  lastPaidTimestamp: t.integer().notNull().default(0),
+}));
+
+export const walletRelations = relations(wallet, ({ many }) => ({
+  participants: many(participant),
+  nfts: many(nft),
+}));
