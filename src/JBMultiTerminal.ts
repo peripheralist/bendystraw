@@ -14,6 +14,7 @@ import { getEventParams } from "./util/getEventParams";
 import { getLatestPayEvent } from "./util/getLatestPayEvent";
 import { usdPriceForEth } from "./util/usdPrice";
 import { handleTrendingPayment } from "./util/trending";
+import { insertActivityEvent } from "./util/activityEvent";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
@@ -37,6 +38,8 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
         metadata,
         returnedFees,
       }),
+
+      insertActivityEvent("addToBalanceEvent", { event, context, projectId }),
     ]);
   } catch (e) {
     console.error("JBMultiTerminal:AddToBalance", e);
@@ -94,6 +97,8 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         rulesetId: Number(rulesetId),
         rulesetCycleNumber: Number(rulesetCycleNumber),
       }),
+
+      insertActivityEvent("sendPayoutsEvent", { event, context, projectId }),
     ]);
   } catch (e) {
     console.error("JBMultiTerminal:SendPayouts", e);
@@ -112,25 +117,33 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
     } = event.args;
     const projectId = Number(_projectId);
 
-    await context.db.insert(sendPayoutToSplitEvent).values({
-      ...getEventParams({ event, context }),
-      projectId: projectId,
-      amount,
-      amountUsd: await usdPriceForEth({
-        context,
-        projectId: _projectId,
-        ethAmount: amount,
+    await Promise.all([
+      context.db.insert(sendPayoutToSplitEvent).values({
+        ...getEventParams({ event, context }),
+        projectId: projectId,
+        amount,
+        amountUsd: await usdPriceForEth({
+          context,
+          projectId: _projectId,
+          ethAmount: amount,
+        }),
+        netAmount,
+        rulesetId: Number(rulesetId),
+        group,
+        beneficiary: split.beneficiary,
+        lockedUntil: split.lockedUntil,
+        hook: split.hook,
+        percent: split.percent,
+        preferAddToBalance: split.preferAddToBalance,
+        splitProjectId: Number(split.projectId),
       }),
-      netAmount,
-      rulesetId: Number(rulesetId),
-      group,
-      beneficiary: split.beneficiary,
-      lockedUntil: split.lockedUntil,
-      hook: split.hook,
-      percent: split.percent,
-      preferAddToBalance: split.preferAddToBalance,
-      splitProjectId: Number(split.projectId),
-    });
+
+      insertActivityEvent("sendPayoutToSplitEvent", {
+        event,
+        context,
+        projectId,
+      }),
+    ]);
 
     // DistributeToPayoutSplitEvent always occurs right after the Pay event, in the case of split payments to projects
     if (split.projectId > 0) {
@@ -200,6 +213,8 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
         rulesetCycleNumber,
         rulesetId,
       }),
+
+      insertActivityEvent("cashOutTokensEvent", { event, context, projectId }),
     ]);
   } catch (e) {
     console.error("JBMultiTerminal:CashOutTokens", e);
@@ -244,6 +259,8 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
         rulesetCycleNumber: Number(rulesetCycleNumber),
         rulesetId: Number(rulesetId),
       }),
+
+      insertActivityEvent("useAllowanceEvent", { event, context, projectId }),
     ]);
   } catch (e) {
     console.error("JBMultiTerminal:UseAllowance", e);
@@ -305,6 +322,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         memo,
         newlyIssuedTokenCount,
       }),
+
+      insertActivityEvent("payEvent", { event, context, projectId }),
 
       // update or create payer participant
       payerParticipant

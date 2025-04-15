@@ -1,6 +1,7 @@
 import { ponder } from "ponder:registry";
 import { project, projectCreateEvent, suckerGroup } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
+import { insertActivityEvent } from "./util/activityEvent";
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
   try {
@@ -29,11 +30,14 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       context.db
         .update(project, { projectId, chainId })
         .set({ suckerGroup: _suckerGroup.id }),
+
       // create project create event
       context.db.insert(projectCreateEvent).values({
         ...getEventParams({ event, context }),
         projectId,
       }),
+
+      insertActivityEvent("projectCreateEvent", { event, context, projectId }),
     ]);
   } catch (e) {
     console.error("JBProjects:Create", e);

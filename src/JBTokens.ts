@@ -6,53 +6,56 @@ import {
   project,
 } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
+import { insertActivityEvent } from "./util/activityEvent";
 
-// ponder.on("JBTokens:Burn", async ({ event, context }) => {
-//   const { projectId: _projectId, holder, count } = event.args;
-//   const projectId = Number(_projectId);
-//   const { chainId } = context.network;
+ponder.on("JBTokens:Burn", async ({ event, context }) => {
+  const { projectId: _projectId, holder, count } = event.args;
+  const projectId = Number(_projectId);
+  const { chainId } = context.network;
 
-//   let burnedCredits = BigInt(0);
+  let burnedCredits = BigInt(0);
 
-//   await context.db
-//     .update(participant, { chainId, projectId, address: holder })
-//     .set((p) => {
-//       const _p = p;
+  await Promise.all([
+    context.db
+      .update(participant, { chainId, projectId, address: holder })
+      .set((p) => {
+        const _p = p;
 
-//       // Only update stakedBalance, since erc20Balance will be updated by erc20 handler
-//       if (count > _p.creditBalance) {
-//         burnedCredits = _p.creditBalance;
-//         _p.creditBalance = BigInt(0);
-//       } else {
-//         burnedCredits = count;
-//         _p.creditBalance = _p.creditBalance - count;
-//       }
+        // Only update stakedBalance, since erc20Balance will be updated by erc20 handler
+        if (count > _p.creditBalance) {
+          burnedCredits = _p.creditBalance;
+          _p.creditBalance = BigInt(0);
+        } else {
+          burnedCredits = count;
+          _p.creditBalance = _p.creditBalance - count;
+        }
 
-//       _p.balance = _p.creditBalance + _p.erc20Balance;
+        _p.balance = _p.creditBalance + _p.erc20Balance;
 
-//       return _p;
-//     });
+        return _p;
+      }),
 
-//   await Promise.all([
-//     context.db.insert(burnEvent).values({
-//       ...getEventParams({ event, context }),
-//       projectId,
-//       holder,
-//       amount: count,
-//       creditAmount: burnedCredits,
-//       erc20Amount: BigInt(0),
-//     }),
+    context.db.insert(burnEvent).values({
+      ...getEventParams({ event, context }),
+      projectId,
+      holder,
+      amount: count,
+      creditAmount: burnedCredits,
+      erc20Amount: BigInt(0),
+    }),
 
-//     context.db
-//       .update(project, {
-//         chainId,
-//         projectId,
-//       })
-//       .set((p) => ({
-//         tokenSupply: p.tokenSupply - count,
-//       })),
-//   ]);
-// });
+    insertActivityEvent("burnEvent", { event, context, projectId }),
+
+    context.db
+      .update(project, {
+        chainId,
+        projectId,
+      })
+      .set((p) => ({
+        tokenSupply: p.tokenSupply - count,
+      })),
+  ]);
+});
 
 ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
   try {
@@ -134,13 +137,17 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
   try {
     const { symbol, token, name, projectId } = event.args;
 
-    await context.db.insert(deployErc20Event).values({
-      ...getEventParams({ event, context }),
-      projectId: Number(projectId),
-      symbol,
-      token,
-      name,
-    });
+    await Promise.all([
+      context.db.insert(deployErc20Event).values({
+        ...getEventParams({ event, context }),
+        projectId: Number(projectId),
+        symbol,
+        token,
+        name,
+      }),
+
+      insertActivityEvent("deployErc20Event", { event, context, projectId }),
+    ]);
   } catch (e) {
     console.error("JBTokens:DeployERC20", e);
   }

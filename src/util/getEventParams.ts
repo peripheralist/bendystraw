@@ -1,7 +1,11 @@
-type Args = {
+import { Context } from "ponder:registry";
+
+type Args = { caller: `0x${string}` } | {};
+
+type GetEventParamsArgs<A extends Args> = {
   event: {
     id: string;
-    args: { caller: `0x${string}` };
+    args: A;
     block: { timestamp: bigint };
     log: { logIndex: number };
     transaction: {
@@ -9,19 +13,32 @@ type Args = {
       hash: `0x${string}`;
     };
   };
-  context: {
-    network: {
-      chainId: number;
-    };
-  };
+  context: Context;
 };
 
-export const getEventParams = ({ event, context }: Args) => ({
-  id: event.id,
-  chainId: context.network.chainId,
-  txHash: event.transaction.hash,
-  logIndex: event.log.logIndex,
-  timestamp: Number(event.block.timestamp),
-  caller: event.args.caller,
-  from: event.transaction.from,
-});
+// Utility typing enables conditionally returning params with `caller` property
+export const getEventParams = <A extends Args>({
+  event,
+  context,
+}: GetEventParamsArgs<A>) =>
+  ({
+    id: event.id,
+    chainId: context.network.chainId,
+    txHash: event.transaction.hash,
+    logIndex: event.log.logIndex,
+    timestamp: Number(event.block.timestamp),
+    from: event.transaction.from,
+    ...((event.args as { caller: `0x${string}` }).caller
+      ? { caller: (event.args as { caller: `0x${string}` }).caller }
+      : {}),
+  } as {
+    id: string;
+    chainId: number;
+    txHash: `0x${string}`;
+    logIndex: number;
+    timestamp: number;
+    from: `0x${string}`;
+    caller: typeof event.args extends { caller: `0x${string}` }
+      ? `0x${string}`
+      : never;
+  });

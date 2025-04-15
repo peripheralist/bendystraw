@@ -32,6 +32,98 @@ export const eventParams = (t: PGCB) => ({
   ...logIndex(t),
 });
 
+export const activityEvent = onchainTable("activity_event", (t) => ({
+  ...eventId(t),
+  ...chainId(t),
+  ...from(t),
+  ...timestamp(t),
+  ...txHash(t),
+  ...projectId(t),
+  addToBalanceEvent: t.text(),
+  autoIssueEvent: t.text(),
+  burnEvent: t.text(),
+  cashOutTokensEvent: t.text(),
+  decorateBannyEvent: t.text(),
+  deployErc20Event: t.text(),
+  mintNftEvent: t.text(),
+  mintTokensEvent: t.text(),
+  payEvent: t.text(),
+  projectCreateEvent: t.text(),
+  sendPayoutsEvent: t.text(),
+  sendPayoutToSplitEvent: t.text(),
+  sendReservedTokensToSplitEvent: t.text(),
+  sendReservedTokensToSplitsEvent: t.text(),
+  storeAutoIssuanceAmountEvent: t.text(),
+  useAllowanceEvent: t.text(),
+}));
+
+export const activityEventRelations = relations(activityEvent, ({ one }) => ({
+  addToBalanceEvent: one(addToBalanceEvent, {
+    fields: [activityEvent.addToBalanceEvent],
+    references: [addToBalanceEvent.id],
+  }),
+  autoIssueEvent: one(autoIssueEvent, {
+    fields: [activityEvent.autoIssueEvent],
+    references: [autoIssueEvent.id],
+  }),
+  burnEvent: one(burnEvent, {
+    fields: [activityEvent.burnEvent],
+    references: [burnEvent.id],
+  }),
+  cashOutTokensEvent: one(cashOutTokensEvent, {
+    fields: [activityEvent.cashOutTokensEvent],
+    references: [cashOutTokensEvent.id],
+  }),
+  decorateBannyEvent: one(decorateBannyEvent, {
+    fields: [activityEvent.decorateBannyEvent],
+    references: [decorateBannyEvent.id],
+  }),
+  deployErc20Event: one(deployErc20Event, {
+    fields: [activityEvent.deployErc20Event],
+    references: [deployErc20Event.id],
+  }),
+  mintNftEvent: one(mintNftEvent, {
+    fields: [activityEvent.mintNftEvent],
+    references: [mintNftEvent.id],
+  }),
+  mintTokensEvent: one(mintTokensEvent, {
+    fields: [activityEvent.mintTokensEvent],
+    references: [mintTokensEvent.id],
+  }),
+  payEvent: one(payEvent, {
+    fields: [activityEvent.payEvent],
+    references: [payEvent.id],
+  }),
+  projectCreateEvent: one(projectCreateEvent, {
+    fields: [activityEvent.projectCreateEvent],
+    references: [projectCreateEvent.id],
+  }),
+  sendPayoutsEvent: one(sendPayoutsEvent, {
+    fields: [activityEvent.sendPayoutsEvent],
+    references: [sendPayoutsEvent.id],
+  }),
+  sendPayoutToSplitEvent: one(sendPayoutToSplitEvent, {
+    fields: [activityEvent.sendPayoutToSplitEvent],
+    references: [sendPayoutToSplitEvent.id],
+  }),
+  sendReservedTokensToSplitEvent: one(sendReservedTokensToSplitEvent, {
+    fields: [activityEvent.sendReservedTokensToSplitEvent],
+    references: [sendReservedTokensToSplitEvent.id],
+  }),
+  sendReservedTokensToSplitsEvent: one(sendReservedTokensToSplitsEvent, {
+    fields: [activityEvent.sendReservedTokensToSplitsEvent],
+    references: [sendReservedTokensToSplitsEvent.id],
+  }),
+  storeAutoIssuanceAmountEvent: one(storeAutoIssuanceAmountEvent, {
+    fields: [activityEvent.storeAutoIssuanceAmountEvent],
+    references: [storeAutoIssuanceAmountEvent.id],
+  }),
+  useAllowanceEvent: one(useAllowanceEvent, {
+    fields: [activityEvent.useAllowanceEvent],
+    references: [useAllowanceEvent.id],
+  }),
+}));
+
 export const addToBalanceEvent = onchainTable("add_to_balance_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
@@ -130,23 +222,13 @@ export const decorateBannyEventRelations = relations(
   })
 );
 
-export const deployErc20Event = onchainTable(
-  "deploy_erc20_event",
-  (t) => ({
-    ...chainId(t),
-    ...txHash(t),
-    ...timestamp(t),
-    ...caller(t),
-    ...from(t),
-    ...projectId(t),
-    symbol: t.text().notNull(),
-    name: t.text().notNull(),
-    token: t.hex().notNull(),
-  }),
-  (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.token] }),
-  })
-);
+export const deployErc20Event = onchainTable("deploy_erc20_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  symbol: t.text().notNull(),
+  name: t.text().notNull(),
+  token: t.hex().notNull(),
+}));
 
 export const deployErc20EventRelations = relations(
   deployErc20Event,

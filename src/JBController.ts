@@ -8,18 +8,27 @@ import {
 } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
 import { parseProjectMetadata } from "./util/projectMetadata";
+import { insertActivityEvent } from "./util/activityEvent";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
-    await context.db.insert(mintTokensEvent).values({
-      ...getEventParams({ event, context }),
-      projectId: Number(event.args.projectId),
-      beneficiary: event.args.beneficiary,
-      beneficiaryTokenCount: event.args.beneficiaryTokenCount,
-      memo: event.args.memo,
-      reservedPercent: event.args.reservedPercent,
-      tokenCount: event.args.tokenCount,
-    });
+    await Promise.all([
+      context.db.insert(mintTokensEvent).values({
+        ...getEventParams({ event, context }),
+        projectId: Number(event.args.projectId),
+        beneficiary: event.args.beneficiary,
+        beneficiaryTokenCount: event.args.beneficiaryTokenCount,
+        memo: event.args.memo,
+        reservedPercent: event.args.reservedPercent,
+        tokenCount: event.args.tokenCount,
+      }),
+
+      insertActivityEvent("mintTokensEvent", {
+        event,
+        context,
+        projectId: event.args.projectId,
+      }),
+    ]);
   } catch (e) {
     console.error("JBController:MintTokens", e);
   }
@@ -93,16 +102,24 @@ ponder.on(
         rulesetCycleNumber,
       } = event.args;
 
-      await context.db.insert(sendReservedTokensToSplitsEvent).values({
-        ...getEventParams({ event, context }),
-        projectId: Number(projectId),
-        from: event.transaction.from,
-        tokenCount: tokenCount,
-        leftoverAmount: leftoverAmount,
-        owner: owner,
-        rulesetId: Number(rulesetId),
-        rulesetCycleNumber: Number(rulesetCycleNumber),
-      });
+      await Promise.all([
+        context.db.insert(sendReservedTokensToSplitsEvent).values({
+          ...getEventParams({ event, context }),
+          projectId: Number(projectId),
+          from: event.transaction.from,
+          tokenCount: tokenCount,
+          leftoverAmount: leftoverAmount,
+          owner: owner,
+          rulesetId: Number(rulesetId),
+          rulesetCycleNumber: Number(rulesetCycleNumber),
+        }),
+
+        insertActivityEvent("sendReservedTokensToSplitsEvent", {
+          event,
+          context,
+          projectId,
+        }),
+      ]);
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplits", e);
     }
@@ -115,19 +132,27 @@ ponder.on(
     try {
       const { split, rulesetId, projectId, tokenCount, groupId } = event.args;
 
-      await context.db.insert(sendReservedTokensToSplitEvent).values({
-        ...getEventParams({ event, context }),
-        projectId: Number(projectId),
-        rulesetId: Number(rulesetId),
-        tokenCount,
-        groupId,
-        beneficiary: split.beneficiary,
-        hook: split.hook,
-        lockedUntil: split.lockedUntil,
-        percent: split.percent,
-        preferAddToBalance: split.preferAddToBalance,
-        splitProjectId: Number(split.projectId),
-      });
+      await Promise.all([
+        context.db.insert(sendReservedTokensToSplitEvent).values({
+          ...getEventParams({ event, context }),
+          projectId: Number(projectId),
+          rulesetId: Number(rulesetId),
+          tokenCount,
+          groupId,
+          beneficiary: split.beneficiary,
+          hook: split.hook,
+          lockedUntil: split.lockedUntil,
+          percent: split.percent,
+          preferAddToBalance: split.preferAddToBalance,
+          splitProjectId: Number(split.projectId),
+        }),
+
+        insertActivityEvent("sendReservedTokensToSplitEvent", {
+          event,
+          context,
+          projectId,
+        }),
+      ]);
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplit", e);
     }

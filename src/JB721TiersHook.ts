@@ -12,6 +12,7 @@ import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
+import { insertActivityEvent } from "./util/activityEvent";
 
 ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
@@ -194,6 +195,9 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
         beneficiary,
         totalAmountPaid,
       }),
+
+      insertActivityEvent("mintNftEvent", { event, context, projectId }),
+
       context.db
         .update(project, {
           projectId,

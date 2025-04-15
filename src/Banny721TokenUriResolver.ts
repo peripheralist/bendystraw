@@ -7,6 +7,21 @@ import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
+import { insertActivityEvent } from "./util/activityEvent";
+import { arbitrum, base, mainnet, optimism } from "viem/chains";
+
+const projectId = (chainId: number) => {
+  switch (chainId) {
+    case mainnet.id:
+    case arbitrum.id:
+    case optimism.id:
+    case base.id:
+      return 4;
+  }
+
+  // testnets
+  return 6;
+};
 
 ponder.on(
   "Banny721TokenUriResolver:DecorateBanny",
@@ -28,6 +43,7 @@ ponder.on(
             tokenId: event.args.bannyBodyId,
           })
           .set({ tokenUri }),
+
         // store decorate event
         await context.db.insert(decorateBannyEvent).values({
           ...getEventParams({ event, context }),
@@ -35,6 +51,12 @@ ponder.on(
           outfitIds: event.args.outfitIds.map((o) => o),
           backgroundId: event.args.backgroundId,
           tokenUri,
+        }),
+
+        insertActivityEvent("decorateBannyEvent", {
+          event,
+          context,
+          projectId: projectId(context.network.chainId),
         }),
       ]);
     } catch (e) {
