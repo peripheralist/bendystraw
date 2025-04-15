@@ -2,10 +2,12 @@ import { ponder } from "ponder:registry";
 import {
   mintTokensEvent,
   project,
+  projectMetadata,
   sendReservedTokensToSplitEvent,
   sendReservedTokensToSplitsEvent,
 } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
+import { parseProjectMetadata } from "./util/projectMetadata";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
@@ -27,22 +29,23 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   // Emitted after JBProjects:Create. This is only needed to set deployer + metadataUri
   // If the controller emits a launchProject event, the project launch tx was called via the JBController, and we want to prefer its `caller` param over any existing value
   try {
-    const { projectId, caller, projectUri } = event.args;
+    const { projectId: _projectId, caller, projectUri } = event.args;
+    const projectId = Number(_projectId);
+    const chainId = context.network.chainId;
 
-    // const { name, description, tags } = parseProjectMetadata(projectUri);
+    const metadata = await parseProjectMetadata(projectUri);
 
-    await context.db
-      .update(project, {
-        chainId: context.network.chainId,
-        projectId: Number(projectId),
-      })
-      .set({
+    await Promise.all([
+      context.db.update(project, { chainId, projectId }).set({
         deployer: caller,
         metadataUri: projectUri,
-        // name,
-        // description,
-        // tags,
-      });
+      }),
+      context.db.insert(projectMetadata).values({
+        chainId,
+        projectId,
+        ...metadata,
+      }),
+    ]);
   } catch (e) {
     console.error("JBController:LaunchProject", e);
   }
@@ -50,21 +53,20 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
 
 ponder.on("JBController:SetUri", async ({ event, context }) => {
   try {
-    const { projectId, uri } = event.args;
+    const { projectId: _projectId, uri } = event.args;
+    const projectId = Number(_projectId);
+    const chainId = context.network.chainId;
 
-    // const { name, description, tags } = parseProjectMetadata(uri);
+    const metadata = await parseProjectMetadata(uri);
 
-    await context.db
-      .update(project, {
-        chainId: context.network.chainId,
-        projectId: Number(projectId),
-      })
-      .set({
-        metadataUri: uri,
-        // name,
-        // description,
-        // tags,
-      });
+    await Promise.all([
+      context.db
+        .update(project, { chainId, projectId })
+        .set({ metadataUri: uri }),
+      context.db
+        .update(projectMetadata, { chainId, projectId })
+        .set({ ...metadata }),
+    ]);
   } catch (e) {
     console.error("JBController:SetUri", e);
   }
