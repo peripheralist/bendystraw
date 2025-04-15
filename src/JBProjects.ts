@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { project, projectCreateEvent } from "ponder:schema";
+import { project, projectCreateEvent, suckerGroup } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
@@ -9,15 +9,27 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     const { chainId } = context.network;
     const projectId = Number(_projectId);
 
+    // create project
+    const _project = await context.db.insert(project).values({
+      projectId,
+      owner,
+      deployer: caller,
+      creator: transaction.from,
+      createdAt: Number(block.timestamp),
+      chainId,
+    });
+
+    // create sucker group. creating a sucker group for all projects ensures we can query all projects by querying sucker groups
+    const _suckerGroup = await context.db
+      .insert(suckerGroup)
+      .values({ projects: [_project.id] });
+
     await Promise.all([
-      context.db.insert(project).values({
-        projectId,
-        owner,
-        deployer: caller,
-        creator: transaction.from,
-        createdAt: Number(block.timestamp),
-        chainId,
-      }),
+      // update project to point to sucker group
+      context.db
+        .update(project, { projectId, chainId })
+        .set({ suckerGroup: _suckerGroup.id }),
+      // create project create event
       context.db.insert(projectCreateEvent).values({
         ...getEventParams({ event, context }),
         projectId,
