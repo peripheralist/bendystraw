@@ -33,7 +33,10 @@ export const eventParams = (t: PGCB) => ({
 });
 
 export const activityEvent = onchainTable("activity_event", (t) => ({
-  ...eventId(t),
+  id: t
+    .text()
+    .notNull()
+    .$default(() => generateId()), // not a primary key, used for relations
   ...chainId(t),
   ...from(t),
   ...timestamp(t),

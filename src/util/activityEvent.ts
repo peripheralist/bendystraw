@@ -13,7 +13,10 @@ export const insertActivityEvent = async <
     projectId: bigint | number;
   }
 ) => {
-  const params = getEventParams<typeof event.args>({ event, context });
+  const { id, ...params } = getEventParams<typeof event.args>({
+    event,
+    context,
+  });
 
   const _project = await context.db.find(project, {
     chainId: params.chainId,
@@ -21,8 +24,8 @@ export const insertActivityEvent = async <
   });
 
   return context.db.insert(activityEvent).values({
-    ...params,
-    [key]: params.id, // NOTE: using the id from `getEventParams` ensures that if this function is called in the same function that inserts the target event, the ID will match
+    ...params, // exclude id from params to use generated id
+    [key]: id, // NOTE: using the id from `getEventParams` ensures that if this function is called in the same function that inserts the target event, the ID will match
     projectId: Number(projectId),
     suckerGroup: _project?.suckerGroup,
   });
