@@ -303,6 +303,7 @@ export const nft = onchainTable(
     ...chainId(t),
     ...projectId(t),
     ...createdAt(t),
+    mintTx: t.hex().notNull(),
     hook: t.hex().notNull(),
     tokenId: t.bigint().notNull(),
     owner: t.hex().notNull(),

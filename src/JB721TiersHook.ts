@@ -131,6 +131,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
             return context.db.insert(nft).values({
               chainId,
               hook,
+              mintTx: event.transaction.hash,
               tokenId,
               category: tier.category,
               owner: to,
