@@ -195,6 +195,7 @@ ponder.on(
             })
             .set({
               resolvedUri: resolvedUri,
+              metadata: parseTokenUri(resolvedUri),
               encodedIpfsUri: encodedIPFSUri,
               svg: await getBannySvg({ context, tierId: BigInt(id) }),
             })

@@ -377,6 +377,7 @@ export const nftTier = onchainTable(
     allowOnwerMint: t.boolean(),
     encodedIpfsUri: t.hex(),
     resolvedUri: t.text(),
+    metadata: t.json(),
     initialSupply: t.integer().notNull(),
     remainingSupply: t.integer().notNull(),
     cannotBeRemoved: t.boolean(),

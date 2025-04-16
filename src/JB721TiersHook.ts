@@ -53,6 +53,7 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
       transfersPausable: tier.transfersPausable,
       votingUnits: BigInt(tier.votingUnits),
       resolvedUri,
+      metadata: parseTokenUri(resolvedUri),
       svg,
     });
   } catch (e) {
