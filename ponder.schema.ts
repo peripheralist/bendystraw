@@ -36,7 +36,8 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   id: t
     .text()
     .notNull()
-    .$default(() => generateId()), // not a primary key, used for relations
+    .$default(() => generateId())
+    .primaryKey(),
   ...chainId(t),
   ...from(t),
   ...timestamp(t),
