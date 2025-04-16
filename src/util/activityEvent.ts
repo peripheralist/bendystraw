@@ -1,4 +1,4 @@
-import { activityEvent } from "ponder:schema";
+import { activityEvent, project } from "ponder:schema";
 import { getEventParams } from "./getEventParams";
 
 export const insertActivityEvent = async <
@@ -15,9 +15,15 @@ export const insertActivityEvent = async <
 ) => {
   const params = getEventParams<typeof event.args>({ event, context });
 
+  const _project = await context.db.find(project, {
+    chainId: params.chainId,
+    projectId: Number(projectId),
+  });
+
   return context.db.insert(activityEvent).values({
     ...params,
     [key]: params.id, // NOTE: using the id from `getEventParams` ensures that if this function is called in the same function that inserts the target event, the ID will match
     projectId: Number(projectId),
+    suckerGroup: _project?.suckerGroup,
   });
 };
