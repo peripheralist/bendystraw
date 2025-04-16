@@ -13,6 +13,7 @@ import { insertActivityEvent } from "./util/activityEvent";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
+import { parseTokenUri } from "./util/tokenUri";
 
 ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
@@ -135,6 +136,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
               projectId: Number(projectId),
               createdAt: Number(event.block.timestamp),
               tokenUri,
+              metadata: parseTokenUri(tokenUri),
               tierId: tier.id,
             });
           }

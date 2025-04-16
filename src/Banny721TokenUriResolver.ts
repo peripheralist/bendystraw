@@ -9,6 +9,7 @@ import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
 import { insertActivityEvent } from "./util/activityEvent";
 import { arbitrum, base, mainnet, optimism } from "viem/chains";
+import { parseTokenUri } from "./util/tokenUri";
 
 const projectId = (chainId: number) => {
   switch (chainId) {
@@ -34,6 +35,8 @@ ponder.on(
         args: [event.args.bannyBodyId],
       });
 
+      const metadata = parseTokenUri(tokenUri);
+
       await Promise.all([
         // update nft tokenUri
         await context.db
@@ -44,6 +47,7 @@ ponder.on(
           })
           .set({
             tokenUri,
+            metadata,
             customized:
               event.args.outfitIds.length > 0 ||
               event.args.backgroundId !== BigInt(0),
@@ -58,6 +62,7 @@ ponder.on(
             outfitIds: event.args.outfitIds.map((o) => o),
             backgroundId: event.args.backgroundId,
             tokenUri,
+            tokenUriMetadata: metadata,
           })
           .then(({ id }) =>
             insertActivityEvent("decorateBannyEvent", {
@@ -131,7 +136,10 @@ ponder.on(
               hook: hook,
               tokenId,
             })
-            .set({ tokenUri });
+            .set({
+              tokenUri,
+              metadata: parseTokenUri(tokenUri),
+            });
         })
       );
     } catch (e) {

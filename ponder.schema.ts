@@ -1,4 +1,4 @@
-import { onchainTable, primaryKey, relations } from "ponder";
+import { index, onchainTable, primaryKey, relations } from "ponder";
 import { generateId } from "./src/util/id";
 
 // hacky extraction of `PgColumnsBuilders` type that isn't exported by ponder
@@ -221,6 +221,7 @@ export const decorateBannyEvent = onchainTable("decorate_banny_event", (t) => ({
   outfitIds: t.bigint().array(),
   backgroundId: t.bigint(),
   tokenUri: t.text(),
+  tokenUriMetadata: t.json(),
 }));
 
 export const decorateBannyEventRelations = relations(
@@ -307,10 +308,13 @@ export const nft = onchainTable(
     owner: t.hex().notNull(),
     category: t.integer().notNull(),
     tokenUri: t.text(),
+    metadata: t.json(),
     tierId: t.integer().notNull(),
     customized: t.boolean(),
   }),
   (t) => ({
+    tokenIdx: index().on(t.tokenId),
+    tierIdx: index().on(t.tierId),
     pk: primaryKey({ columns: [t.chainId, t.hook, t.tokenId] }),
   })
 );
@@ -385,6 +389,7 @@ export const nftTier = onchainTable(
     svg: t.text(), // only Banny,
   }),
   (t) => ({
+    tierIdx: index().on(t.tierId),
     pk: primaryKey({ columns: [t.chainId, t.hook, t.tierId] }),
   })
 );
@@ -416,6 +421,7 @@ export const participant = onchainTable(
     erc20Balance: t.bigint().notNull().default(BigInt(0)),
   }),
   (t) => ({
+    addressIdx: index().on(t.address),
     pk: primaryKey({ columns: [t.chainId, t.projectId, t.address] }),
   })
 );
@@ -505,7 +511,10 @@ export const project = onchainTable(
     trendingPaymentsCount: t.integer().notNull().default(0),
     createdWithinTrendingWindow: t.boolean(),
   }),
-  (t) => ({ pk: primaryKey({ columns: [t.chainId, t.projectId] }) })
+  (t) => ({
+    projectIdx: index().on(t.projectId),
+    pk: primaryKey({ columns: [t.chainId, t.projectId] }),
+  })
 );
 
 export const projectRelations = relations(project, ({ many, one }) => ({
