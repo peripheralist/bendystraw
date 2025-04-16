@@ -11,7 +11,7 @@ export function getBannySvg({
 }) {
   return context.client.readContract({
     abi: Banny721TokenUriResolverAbi,
-    address: "0xff80c37a57016eff3d19fb286e9c740ec4537dd3",
+    address: "0xa5f8911d4cfd60a6697479f078409434424fe666",
     functionName: "svgOf",
     args: [BANNY_RETAIL_HOOK, tierId * BigInt(1000000000), false, false],
   });

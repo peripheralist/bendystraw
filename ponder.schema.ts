@@ -321,8 +321,8 @@ export const nft = onchainTable(
 
 export const nftRelations = relations(nft, ({ one }) => ({
   tier: one(nftTier, {
-    fields: [nft.tierId, nft.chainId],
-    references: [nftTier.tierId, nftTier.chainId],
+    fields: [nft.tierId, nft.chainId, nft.hook],
+    references: [nftTier.tierId, nftTier.chainId, nftTier.hook],
   }),
   project: one(project, {
     fields: [nft.projectId, nft.chainId],

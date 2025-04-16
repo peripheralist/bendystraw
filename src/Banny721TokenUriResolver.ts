@@ -75,7 +75,7 @@ ponder.on(
       ]);
     } catch (e) {
       // TODO handle these errors (lots emitted bc resolver was changed i think)
-      // console.error("Banny721TokenUriResolver:DecorateBanny", e);
+      console.error("Banny721TokenUriResolver:DecorateBanny", e);
     }
   }
 );
@@ -143,7 +143,12 @@ ponder.on(
         })
       );
     } catch (e) {
-      // console.error("Banny721TokenUriResolver:SetSvgContent", e);
+      console.error(
+        "Banny721TokenUriResolver:SetSvgContent",
+        context.network.chainId,
+        event.args.upc,
+        e
+      );
     }
   }
 );
@@ -169,7 +174,7 @@ ponder.on(
           encodedIpfsUri: tier.encodedIPFSUri,
         });
     } catch (e) {
-      // console.error("Banny721TokenUriResolver:SetProductName", e);
+      console.error("Banny721TokenUriResolver:SetProductName", e);
     }
   }
 );
@@ -180,15 +185,8 @@ ponder.on(
     try {
       const tiers = await getAllTiers({ context, hook: BANNY_RETAIL_HOOK });
 
-      const tiersWithSvgs = await Promise.all(
-        tiers.map(async (t) => ({
-          ...t,
-          svg: await getBannySvg({ context, tierId: BigInt(t.id) }),
-        }))
-      );
-
       await Promise.all(
-        tiersWithSvgs.map(({ id, resolvedUri, encodedIPFSUri, svg }) =>
+        tiers.map(async ({ id, resolvedUri, encodedIPFSUri }) =>
           context.db
             .update(nftTier, {
               hook: BANNY_RETAIL_HOOK,
@@ -198,12 +196,12 @@ ponder.on(
             .set({
               resolvedUri: resolvedUri,
               encodedIpfsUri: encodedIPFSUri,
-              svg,
+              svg: await getBannySvg({ context, tierId: BigInt(id) }),
             })
         )
       );
     } catch (e) {
-      // console.error("Banny721TokenUriResolver:SetSvgBaseUri", e);
+      console.error("Banny721TokenUriResolver:SetSvgBaseUri", e);
     }
   }
 );
