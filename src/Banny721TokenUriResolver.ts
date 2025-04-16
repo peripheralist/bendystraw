@@ -42,7 +42,12 @@ ponder.on(
             hook: BANNY_RETAIL_HOOK,
             tokenId: event.args.bannyBodyId,
           })
-          .set({ tokenUri }),
+          .set({
+            tokenUri,
+            customized:
+              event.args.outfitIds.length > 0 ||
+              event.args.backgroundId !== BigInt(0),
+          }),
 
         // store decorate event
         await context.db
@@ -64,6 +69,7 @@ ponder.on(
           ),
       ]);
     } catch (e) {
+      // TODO handle these errors (lots emitted bc resolver was changed i think)
       // console.error("Banny721TokenUriResolver:DecorateBanny", e);
     }
   }

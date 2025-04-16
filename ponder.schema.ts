@@ -308,6 +308,7 @@ export const nft = onchainTable(
     category: t.integer().notNull(),
     tokenUri: t.text(),
     tierId: t.integer().notNull(),
+    customized: t.boolean(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.hook, t.tokenId] }),
