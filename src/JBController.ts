@@ -2,7 +2,6 @@ import { ponder } from "ponder:registry";
 import {
   mintTokensEvent,
   project,
-  projectMetadata,
   sendReservedTokensToSplitEvent,
   sendReservedTokensToSplitsEvent,
 } from "ponder:schema";
@@ -12,8 +11,9 @@ import { insertActivityEvent } from "./util/activityEvent";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
-    await Promise.all([
-      context.db.insert(mintTokensEvent).values({
+    await context.db
+      .insert(mintTokensEvent)
+      .values({
         ...getEventParams({ event, context }),
         projectId: Number(event.args.projectId),
         beneficiary: event.args.beneficiary,
@@ -21,14 +21,15 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
         memo: event.args.memo,
         reservedPercent: event.args.reservedPercent,
         tokenCount: event.args.tokenCount,
-      }),
-
-      insertActivityEvent("mintTokensEvent", {
-        event,
-        context,
-        projectId: event.args.projectId,
-      }),
-    ]);
+      })
+      .then(({ id }) =>
+        insertActivityEvent("mintTokensEvent", {
+          id,
+          event,
+          context,
+          projectId: event.args.projectId,
+        })
+      );
   } catch (e) {
     console.error("JBController:MintTokens", e);
   }
@@ -43,17 +44,11 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   try {
     const metadata = await parseProjectMetadata(projectUri);
 
-    await Promise.all([
-      context.db.update(project, { chainId, projectId }).set({
-        deployer: caller,
-        metadataUri: projectUri,
-      }),
-      context.db.insert(projectMetadata).values({
-        chainId,
-        projectId,
-        ...metadata,
-      }),
-    ]);
+    await context.db.update(project, { chainId, projectId }).set({
+      deployer: caller,
+      metadataUri: projectUri,
+      metadata,
+    });
   } catch (e) {
     console.error("JBController:LaunchProject", e, event.transaction.hash);
   }
@@ -67,23 +62,9 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
 
     const metadata = await parseProjectMetadata(uri);
 
-    const _projectMetadata = await context.db.find(projectMetadata, {
-      chainId,
-      projectId,
-    });
-
-    await Promise.all([
-      context.db
-        .update(project, { chainId, projectId })
-        .set({ metadataUri: uri }),
-      _projectMetadata
-        ? context.db
-            .update(projectMetadata, { chainId, projectId })
-            .set({ ...metadata })
-        : context.db
-            .insert(projectMetadata)
-            .values({ chainId, projectId, ...metadata }),
-    ]);
+    await context.db
+      .update(project, { chainId, projectId })
+      .set({ metadataUri: uri, metadata });
   } catch (e) {
     console.error("JBController:SetUri", e, event.transaction.hash);
   }
@@ -102,8 +83,9 @@ ponder.on(
         rulesetCycleNumber,
       } = event.args;
 
-      await Promise.all([
-        context.db.insert(sendReservedTokensToSplitsEvent).values({
+      await context.db
+        .insert(sendReservedTokensToSplitsEvent)
+        .values({
           ...getEventParams({ event, context }),
           projectId: Number(projectId),
           from: event.transaction.from,
@@ -112,14 +94,15 @@ ponder.on(
           owner: owner,
           rulesetId: Number(rulesetId),
           rulesetCycleNumber: Number(rulesetCycleNumber),
-        }),
-
-        insertActivityEvent("sendReservedTokensToSplitsEvent", {
-          event,
-          context,
-          projectId,
-        }),
-      ]);
+        })
+        .then(({ id }) =>
+          insertActivityEvent("sendReservedTokensToSplitsEvent", {
+            id,
+            event,
+            context,
+            projectId,
+          })
+        );
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplits", e);
     }
@@ -132,8 +115,9 @@ ponder.on(
     try {
       const { split, rulesetId, projectId, tokenCount, groupId } = event.args;
 
-      await Promise.all([
-        context.db.insert(sendReservedTokensToSplitEvent).values({
+      await context.db
+        .insert(sendReservedTokensToSplitEvent)
+        .values({
           ...getEventParams({ event, context }),
           projectId: Number(projectId),
           rulesetId: Number(rulesetId),
@@ -145,14 +129,15 @@ ponder.on(
           percent: split.percent,
           preferAddToBalance: split.preferAddToBalance,
           splitProjectId: Number(split.projectId),
-        }),
-
-        insertActivityEvent("sendReservedTokensToSplitEvent", {
-          event,
-          context,
-          projectId,
-        }),
-      ]);
+        })
+        .then(({ id }) =>
+          insertActivityEvent("sendReservedTokensToSplitEvent", {
+            id,
+            event,
+            context,
+            projectId,
+          })
+        );
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplit", e);
     }

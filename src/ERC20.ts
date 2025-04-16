@@ -25,12 +25,6 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
 
     const { projectId } = _deployErc20Event;
 
-    const toParticipant = await context.db.find(participant, {
-      chainId,
-      projectId,
-      address: to,
-    });
-
     await Promise.all([
       // update from participant
       from === zeroAddress
@@ -42,10 +36,11 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
               balance: p.erc20Balance - value + p.creditBalance,
             })),
 
-      ...(to === zeroAddress
+      to === zeroAddress
         ? // create burn event
-          [
-            context.db.insert(burnEvent).values({
+          context.db
+            .insert(burnEvent)
+            .values({
               chainId,
               txHash: event.transaction.hash,
               timestamp: Number(event.block.timestamp),
@@ -54,26 +49,29 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
               amount: value,
               erc20Amount: value,
               creditAmount: BigInt(0),
-            }),
-            insertActivityEvent("burnEvent", { event, context, projectId }),
-          ]
-        : // update `to` participant
-          [
-            toParticipant
-              ? context.db
-                  .update(participant, { chainId, projectId, address: to })
-                  .set((p) => ({
-                    erc20Balance: p.erc20Balance + value,
-                    balance: p.erc20Balance + value + p.creditBalance,
-                  }))
-              : context.db.insert(participant).values({
-                  chainId,
-                  projectId,
-                  address: to,
-                  erc20Balance: value,
-                  balance: value,
-                }),
-          ]),
+            })
+            .then(({ id }) =>
+              insertActivityEvent("burnEvent", {
+                id,
+                event,
+                context,
+                projectId,
+              })
+            )
+        : // insert/update `to` participant
+          context.db
+            .insert(participant)
+            .values({
+              chainId,
+              projectId,
+              address: to,
+              erc20Balance: value,
+              balance: value,
+            })
+            .onConflictDoUpdate((p) => ({
+              erc20Balance: p.erc20Balance + value,
+              balance: p.erc20Balance + value + p.creditBalance,
+            })),
     ]);
   } catch (e) {
     console.error(

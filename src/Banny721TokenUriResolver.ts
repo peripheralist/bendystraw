@@ -45,19 +45,23 @@ ponder.on(
           .set({ tokenUri }),
 
         // store decorate event
-        await context.db.insert(decorateBannyEvent).values({
-          ...getEventParams({ event, context }),
-          bannyBodyId: event.args.bannyBodyId,
-          outfitIds: event.args.outfitIds.map((o) => o),
-          backgroundId: event.args.backgroundId,
-          tokenUri,
-        }),
-
-        insertActivityEvent("decorateBannyEvent", {
-          event,
-          context,
-          projectId: projectId(context.network.chainId),
-        }),
+        await context.db
+          .insert(decorateBannyEvent)
+          .values({
+            ...getEventParams({ event, context }),
+            bannyBodyId: event.args.bannyBodyId,
+            outfitIds: event.args.outfitIds.map((o) => o),
+            backgroundId: event.args.backgroundId,
+            tokenUri,
+          })
+          .then(({ id }) =>
+            insertActivityEvent("decorateBannyEvent", {
+              id,
+              event,
+              context,
+              projectId: projectId(context.network.chainId),
+            })
+          ),
       ]);
     } catch (e) {
       // console.error("Banny721TokenUriResolver:DecorateBanny", e);

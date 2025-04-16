@@ -35,16 +35,19 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
         return _p;
       }),
 
-    context.db.insert(burnEvent).values({
-      ...getEventParams({ event, context }),
-      projectId,
-      holder,
-      amount: count,
-      creditAmount: burnedCredits,
-      erc20Amount: BigInt(0),
-    }),
-
-    insertActivityEvent("burnEvent", { event, context, projectId }),
+    context.db
+      .insert(burnEvent)
+      .values({
+        ...getEventParams({ event, context }),
+        projectId,
+        holder,
+        amount: count,
+        creditAmount: burnedCredits,
+        erc20Amount: BigInt(0),
+      })
+      .then(({ id }) =>
+        insertActivityEvent("burnEvent", { id, event, context, projectId })
+      ),
 
     context.db
       .update(project, {
@@ -87,7 +90,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { chainId } = context.network;
 
-    const [_, receiverParticipant] = await Promise.all([
+    await Promise.all([
       // update sender participant
       context.db
         .update(participant, {
@@ -100,34 +103,21 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
           balance: p.creditBalance - count + p.erc20Balance,
         })),
 
-      // get receiver participant
-      context.db.find(participant, {
-        chainId,
-        address: recipient,
-        projectId,
-      }),
-    ]);
-
-    if (receiverParticipant) {
-      await context.db
-        .update(participant, {
+      // insert/update receiver participant
+      context.db
+        .insert(participant)
+        .values({
           chainId,
           address: recipient,
           projectId,
+          balance: count,
+          creditBalance: count,
         })
-        .set((p) => ({
+        .onConflictDoUpdate((p) => ({
           creditBalance: p.creditBalance + count,
           balance: p.creditBalance + count + p.erc20Balance,
-        }));
-    } else {
-      await context.db.insert(participant).values({
-        chainId,
-        address: recipient,
-        projectId,
-        balance: count,
-        creditBalance: count,
-      });
-    }
+        })),
+    ]);
   } catch (e) {
     console.error("JBTokens:TransferCredits", e);
   }
@@ -137,17 +127,23 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
   try {
     const { symbol, token, name, projectId } = event.args;
 
-    await Promise.all([
-      context.db.insert(deployErc20Event).values({
+    await context.db
+      .insert(deployErc20Event)
+      .values({
         ...getEventParams({ event, context }),
         projectId: Number(projectId),
         symbol,
         token,
         name,
-      }),
-
-      insertActivityEvent("deployErc20Event", { event, context, projectId }),
-    ]);
+      })
+      .then(({ id }) =>
+        insertActivityEvent("deployErc20Event", {
+          id,
+          event,
+          context,
+          projectId,
+        })
+      );
   } catch (e) {
     console.error("JBTokens:DeployERC20", e);
   }
@@ -170,33 +166,20 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
      */
     if (tokensWereClaimed) return;
 
-    await context.db
-      .find(participant, {
-        chainId,
-        address: holder,
-        projectId,
-      })
-      .then(async (p) => {
-        if (p) return;
-
-        await context.db.insert(participant).values({
-          chainId,
-          address: holder,
-          projectId,
-        });
-      });
-
     await Promise.all([
-      // update receiver participant
+      // insert/update receiver participant
       context.db
-        .update(participant, {
+        .insert(participant)
+        .values({
           chainId,
           address: holder,
           projectId,
+          creditBalance: count,
+          balance: count,
         })
-        .set((_p) => ({
-          creditBalance: _p.creditBalance + count,
-          balance: _p.creditBalance + count + _p.erc20Balance,
+        .onConflictDoUpdate((p) => ({
+          creditBalance: p.creditBalance + count,
+          balance: p.creditBalance + p.erc20Balance + count,
         })),
 
       // update project

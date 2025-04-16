@@ -8,12 +8,14 @@ export const insertActivityEvent = async <
   {
     event,
     context,
+    id,
     projectId,
   }: Parameters<typeof getEventParams<Args>>[0] & {
+    id: string;
     projectId: bigint | number;
   }
 ) => {
-  const { id, ...params } = getEventParams<typeof event.args>({
+  const params = getEventParams<typeof event.args>({
     event,
     context,
   });

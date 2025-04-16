@@ -485,6 +485,7 @@ export const project = onchainTable(
     suckerGroup: t.text(),
     handle: t.text(),
     metadataUri: t.text(),
+    metadata: t.json(),
     deployer: t.hex().notNull(),
     owner: t.hex().notNull(),
     creator: t.hex().notNull(),
@@ -522,47 +523,11 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   burnEvents: many(burnEvent),
   deployErc20Events: many(deployErc20Event),
   permissionHolders: many(permissionHolder),
-  metadata: one(projectMetadata, {
-    fields: [project.projectId, project.chainId],
-    references: [projectMetadata.projectId, projectMetadata.chainId],
-  }),
   suckerGroup: one(suckerGroup, {
     fields: [project.suckerGroup],
     references: [suckerGroup.id],
   }),
 }));
-
-export const projectMetadata = onchainTable(
-  "project_metadata",
-  (t) => ({
-    ...chainId(t),
-    ...projectId(t),
-    name: t.text(),
-    infoUri: t.text(),
-    logoUri: t.text(),
-    coverImageUri: t.text(),
-    description: t.text(),
-    twitter: t.text(),
-    discord: t.text(),
-    telegram: t.text(),
-    tags: t.text().array(),
-    domain: t.text(),
-    version: t.integer(),
-    projectTagline: t.text(),
-    payDisclosure: t.text(),
-  }),
-  (t) => ({ pk: primaryKey({ columns: [t.chainId, t.projectId] }) })
-);
-
-export const projectMetadataRelations = relations(
-  projectMetadata,
-  ({ one }) => ({
-    project: one(project, {
-      fields: [projectMetadata.projectId, projectMetadata.chainId],
-      references: [project.projectId, project.chainId],
-    }),
-  })
-);
 
 export const projectCreateEvent = onchainTable("project_create_event", (t) => ({
   ...eventParams(t),

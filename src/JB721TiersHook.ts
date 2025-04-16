@@ -9,10 +9,10 @@ import {
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
+import { insertActivityEvent } from "./util/activityEvent";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
-import { insertActivityEvent } from "./util/activityEvent";
 
 ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
@@ -141,20 +141,15 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         }),
     ]);
 
-    const _participant = await context.db.find(participant, {
-      address: to,
-      chainId,
-      projectId,
-    });
-
-    if (!_participant) {
-      // create participant if none exists
-      await context.db.insert(participant).values({
+    // create participant if none exists
+    await context.db
+      .insert(participant)
+      .values({
         address: to,
         chainId,
         projectId,
-      });
-    }
+      })
+      .onConflictDoNothing();
   } catch (e) {
     console.error("JB721TiersHook:Transfer", e);
   }
@@ -186,17 +181,20 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
     const projectId = Number(projectIdCall);
 
     await Promise.all([
-      context.db.insert(mintNftEvent).values({
-        ...getEventParams({ event, context }),
-        projectId,
-        hook,
-        tierId: Number(tierId),
-        tokenId,
-        beneficiary,
-        totalAmountPaid,
-      }),
-
-      insertActivityEvent("mintNftEvent", { event, context, projectId }),
+      context.db
+        .insert(mintNftEvent)
+        .values({
+          ...getEventParams({ event, context }),
+          projectId,
+          hook,
+          tierId: Number(tierId),
+          tokenId,
+          beneficiary,
+          totalAmountPaid,
+        })
+        .then(({ id }) =>
+          insertActivityEvent("mintNftEvent", { id, event, context, projectId })
+        ),
 
       context.db
         .update(project, {
