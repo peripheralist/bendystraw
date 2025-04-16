@@ -12,7 +12,13 @@ type PGCB<
   ? ColumnTypes
   : never;
 
-export const eventId = (t: PGCB) => ({ id: t.text().notNull().primaryKey() });
+export const eventId = (t: PGCB) => ({
+  id: t
+    .text()
+    .notNull()
+    .$default(() => generateId())
+    .primaryKey(),
+});
 export const chainId = (t: PGCB) => ({ chainId: t.integer().notNull() });
 export const timestamp = (t: PGCB) => ({ timestamp: t.integer().notNull() });
 export const logIndex = (t: PGCB) => ({ logIndex: t.integer().notNull() });
@@ -33,11 +39,7 @@ export const eventParams = (t: PGCB) => ({
 });
 
 export const activityEvent = onchainTable("activity_event", (t) => ({
-  id: t
-    .text()
-    .notNull()
-    .$default(() => generateId())
-    .primaryKey(),
+  ...eventId(t),
   ...chainId(t),
   ...from(t),
   ...timestamp(t),
