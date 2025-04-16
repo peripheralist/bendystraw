@@ -3,7 +3,6 @@ import { ponder } from "ponder:registry";
 import { burnEvent, deployErc20Event, participant } from "ponder:schema";
 import { zeroAddress } from "viem";
 import { insertActivityEvent } from "./util/activityEvent";
-import { getEventParams } from "./util/getEventParams";
 
 ponder.on("ERC20:Transfer", async ({ event, context }) => {
   try {
@@ -47,7 +46,6 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
         ? // create burn event
           [
             context.db.insert(burnEvent).values({
-              id: event.id,
               chainId,
               txHash: event.transaction.hash,
               timestamp: Number(event.block.timestamp),
