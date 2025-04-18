@@ -37,6 +37,10 @@ ponder.on(
 
       const metadata = parseTokenUri(tokenUri);
 
+      const customized =
+        event.args.outfitIds.length > 0 ||
+        event.args.backgroundId !== BigInt(0);
+
       await Promise.all([
         // update nft tokenUri
         await context.db
@@ -48,9 +52,10 @@ ponder.on(
           .set({
             tokenUri,
             metadata,
-            customized:
-              event.args.outfitIds.length > 0 ||
-              event.args.backgroundId !== BigInt(0),
+            customized,
+            ...(customized
+              ? { customizedAt: Number(event.block.timestamp) }
+              : {}),
           }),
 
         // store decorate event

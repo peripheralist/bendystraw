@@ -312,6 +312,7 @@ export const nft = onchainTable(
     metadata: t.json(),
     tierId: t.integer().notNull(),
     customized: t.boolean(),
+    customizedAt: t.integer().notNull(),
   }),
   (t) => ({
     tokenIdx: index().on(t.tokenId),
