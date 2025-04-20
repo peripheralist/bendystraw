@@ -14,6 +14,7 @@ import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
+import { ADDRESS } from "./constants/address";
 
 ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
@@ -69,9 +70,9 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
   try {
     const tier = await context.client.readContract({
       abi: JB721TiersHookStoreAbi,
-      address: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
+      address: ADDRESS.jb721TiersHookStore,
       functionName: "tierOfTokenId",
-      args: [event.log.address, tokenId, true],
+      args: [hook, tokenId, true],
     });
 
     const _projectId = await context.client.readContract({
@@ -105,6 +106,8 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           tokenId,
         })
         .then(async (existingNft) => {
+          // we first check for existingNft because we may not need to call tokenUri(). db query is cheaper than contract read
+
           if (existingNft) {
             return context.db
               .update(nft, {
@@ -114,19 +117,12 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
               })
               .set({ owner: to });
           } else {
-            const [projectId, tokenUri] = await Promise.all([
-              context.client.readContract({
-                abi: JB721TiersHookAbi,
-                address: hook,
-                functionName: "PROJECT_ID",
-              }),
-              context.client.readContract({
-                abi: JB721TiersHookAbi,
-                address: hook,
-                functionName: "tokenURI",
-                args: [tokenId],
-              }),
-            ]);
+            const tokenUri = await context.client.readContract({
+              abi: JB721TiersHookAbi,
+              address: hook,
+              functionName: "tokenURI",
+              args: [tokenId],
+            });
 
             return context.db.insert(nft).values({
               chainId,

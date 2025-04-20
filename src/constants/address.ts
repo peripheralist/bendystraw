@@ -1,0 +1,13 @@
+export const ADDRESS = {
+  jb721TiersHookDeployer: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
+  jbTokens: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
+  jbProjects: "0x0b538a02610d7d3cc91ce2870f423e0a34d646ad",
+  jbController: "0xb291844f213047eb9e1621ae555b1eae6700d553",
+  jbMultiTerminal: "0xdb9644369c79c3633cde70d2df50d827d7dc7dbc",
+  jbPermissions: "0xf5ca295dc286a176e35ebb7833031fd95550eb14",
+  banny721TokenUriResolver: "0xa5f8911d4cfd60a6697479f078409434424fe666",
+  revDeployer: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
+  jbSuckersRegistry: "0x696c7e9b37d28edbefa3fce06e26041b7197c1a5",
+  jb721TiersHookStore: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
+  jbPrices: "0xe712d14b04f1a1fe464be930e3ea72b9b0a141d7",
+} as const;

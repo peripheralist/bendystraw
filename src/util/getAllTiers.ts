@@ -1,5 +1,6 @@
 import { Context } from "ponder:registry";
 import { JB721TiersHookStoreAbi } from "../../abis/JB721TiersHookStoreAbi";
+import { ADDRESS } from "../constants/address";
 import { tierOf } from "./tierOf";
 
 export async function getAllTiers({
@@ -11,7 +12,7 @@ export async function getAllTiers({
 }) {
   const maxTierCall = await context.client.readContract({
     abi: JB721TiersHookStoreAbi,
-    address: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
+    address: ADDRESS.jb721TiersHookStore,
     functionName: "maxTierIdOf",
     args: [hook],
   });
