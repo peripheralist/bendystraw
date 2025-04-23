@@ -1547,10 +1547,10 @@ hasown@^2.0.2:
   dependencies:
     function-bind "^1.1.2"
 
-hono@^4.5.0:
-  version "4.7.4"
-  resolved "https://registry.yarnpkg.com/hono/-/hono-4.7.4.tgz#27294b29792242486ed83de3e9fc25c46768c372"
-  integrity sha512-Pst8FuGqz3L7tFF+u9Pu70eI0xa5S3LPUmrNd5Jm8nTHze9FxLTK9Kaj5g/k4UcwuJSXTP65SyHOPLrffpcAJg==
+hono@4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/hono/-/hono-4.5.0.tgz#cc8caebff934728e8f3f99cf005278828a43f137"
+  integrity sha512-ZbezypZfn4odyApjCCv+Fw5OgweBqRLA/EsMyc4FUknFvBJcBIKhHy4sqmD1rWpBc/3wUlaQ6tqOPjk36R1ckg==
 
 http-terminator@^3.2.0:
   version "3.2.0"
@@ -2026,10 +2026,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@^0.10.13:
-  version "0.10.13"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.10.13.tgz#90bdd7c7e8f90c65a7ffb7bd5544fffb1c3179f0"
-  integrity sha512-kE9whazBCMV7xcOE3Ay99e1oGPAv/QH7wkFNWQ2zpuIVc0rxyzW9HbV/Y+EQdr+6WUkEdzhbZJup0VGO5J30QQ==
+ponder@0.10.18-next.1:
+  version "0.10.18-next.1"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.10.18-next.1.tgz#63d86a25d98aea398302ffd34f8d325969954184"
+  integrity sha512-vlEEUzg4MV+VFGEyyJtaI1NHv3juTuX2n9W9meJIWjr5SWOAlJg9cBCs/0wevwMA9egtuGM8T939yPfuW0pT2w==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"

@@ -17,8 +17,8 @@
     "@unkey/api": "^0.35.0",
     "@unkey/ratelimit": "^0.5.5",
     "axios": "^1.8.4",
-    "hono": "^4.5.0",
-    "ponder": "^0.10.13",
+    "hono": "4.5.0",
+    "ponder": "0.10.18-next.1",
     "viem": "^2.21.3"
   },
   "devDependencies": {
