@@ -5,12 +5,20 @@ import { db } from "ponder:api";
 import schema from "ponder:schema";
 import { ALLOWED_ORIGINS } from "../constants/origins";
 import { keyAuthMiddleware } from "../middleware/keyAuth";
+import { serveStatic } from "@hono/node-server/serve-static";
 
 const app = new Hono();
 
 // public testing
 // if (process.env.NODE_ENV !== "development") app.use("/", rateLimitMiddleware); // disable rate limiting until CORS works
 app.use("/", graphql({ db, schema }));
+
+app.get(
+  "/favicon.ico",
+  serveStatic({
+    path: "/src/api/favicon.ico",
+  })
+);
 
 // origin restricted (internal apps)
 app.use("/graphql", async (c, next) => {
