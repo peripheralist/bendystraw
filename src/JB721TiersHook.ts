@@ -88,6 +88,16 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     await Promise.all([
+      // create participant if none exists
+      context.db
+        .insert(participant)
+        .values({
+          address: to,
+          chainId,
+          projectId,
+        })
+        .onConflictDoNothing(),
+
       // update remainingSupply of tier, in case this is a mint
       context.db
         .update(nftTier, {
@@ -141,16 +151,6 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           }
         }),
     ]);
-
-    // create participant if none exists
-    await context.db
-      .insert(participant)
-      .values({
-        address: to,
-        chainId,
-        projectId,
-      })
-      .onConflictDoNothing();
   } catch (e) {
     console.error("JB721TiersHook:Transfer", e);
   }
