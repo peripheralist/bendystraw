@@ -45,7 +45,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
             .set((p) => ({
               erc20Balance: p.erc20Balance - value,
               balance: p.erc20Balance - value + p.creditBalance,
-              suckerGroupId: _project.suckerGroup,
+              suckerGroupId: _project.suckerGroupId,
             })),
 
       to === zeroAddress
@@ -79,12 +79,12 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
               address: to,
               erc20Balance: value,
               balance: value,
-              suckerGroupId: _project.suckerGroup,
+              suckerGroupId: _project.suckerGroupId,
             })
             .onConflictDoUpdate((p) => ({
               erc20Balance: p.erc20Balance + value,
               balance: p.erc20Balance + value + p.creditBalance,
-              suckerGroupId: _project.suckerGroup,
+              suckerGroupId: _project.suckerGroupId,
             })),
     ]);
   } catch (e) {

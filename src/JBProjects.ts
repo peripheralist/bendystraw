@@ -29,15 +29,23 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       // update project to point to sucker group
       context.db
         .update(project, { projectId, chainId })
-        .set({ suckerGroup: _suckerGroup.id }),
+        .set({ suckerGroupId: _suckerGroup.id }),
 
       // create project create event
-      context.db.insert(projectCreateEvent).values({
-        ...getEventParams({ event, context }),
-        projectId,
-      }),
-
-      insertActivityEvent("projectCreateEvent", { event, context, projectId }),
+      context.db
+        .insert(projectCreateEvent)
+        .values({
+          ...getEventParams({ event, context }),
+          projectId,
+        })
+        .then(({ id }) =>
+          insertActivityEvent("projectCreateEvent", {
+            id,
+            event,
+            context,
+            projectId,
+          })
+        ),
     ]);
   } catch (e) {
     console.error("JBProjects:Create", e);

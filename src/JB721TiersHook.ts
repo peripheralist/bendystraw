@@ -101,9 +101,9 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           address: to,
           chainId,
           projectId,
-          suckerGroupId: _project.suckerGroup,
+          suckerGroupId: _project.suckerGroupId,
         })
-        .onConflictDoUpdate({ suckerGroupId: _project.suckerGroup }),
+        .onConflictDoUpdate({ suckerGroupId: _project.suckerGroupId }),
 
       // update remainingSupply of tier, in case this is a mint
       context.db

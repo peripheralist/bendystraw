@@ -45,7 +45,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   ...timestamp(t),
   ...txHash(t),
   ...projectId(t),
-  suckerGroup: t.text(),
+  suckerGroupId: t.text(),
   addToBalanceEvent: t.text(),
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
@@ -66,7 +66,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
 
 export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   suckerGroup: one(suckerGroup, {
-    fields: [activityEvent.suckerGroup],
+    fields: [activityEvent.suckerGroupId],
     references: [suckerGroup.id],
   }),
   addToBalanceEvent: one(addToBalanceEvent, {
@@ -501,7 +501,7 @@ export const project = onchainTable(
     ...chainId(t),
     ...projectId(t),
     ...createdAt(t),
-    suckerGroup: t.text(),
+    suckerGroupId: t.text(),
     handle: t.text(),
     metadataUri: t.text(),
     metadata: t.json(),

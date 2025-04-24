@@ -27,7 +27,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       .set((p) => {
         const _p = p;
 
-        _p.suckerGroupId = _project.suckerGroup;
+        _p.suckerGroupId = _project.suckerGroupId;
 
         // Only update stakedBalance, since erc20Balance will be updated by erc20 handler
         if (count > _p.creditBalance) {
@@ -92,7 +92,7 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
       .set((p) => ({
         creditBalance: creditBalance - count,
         balance: p.erc20Balance + creditBalance - count,
-        suckerGroupId: _project.suckerGroup,
+        suckerGroupId: _project.suckerGroupId,
       }));
   } catch (e) {
     console.error("JBTokens:ClaimTokens", e);
@@ -122,7 +122,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
         .set((p) => ({
           creditBalance: p.creditBalance - count,
           balance: p.creditBalance - count + p.erc20Balance,
-          suckerGroupId: _project.suckerGroup,
+          suckerGroupId: _project.suckerGroupId,
         })),
 
       // insert/update receiver participant
@@ -134,12 +134,12 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
           projectId,
           balance: count,
           creditBalance: count,
-          suckerGroupId: _project.suckerGroup,
+          suckerGroupId: _project.suckerGroupId,
         })
         .onConflictDoUpdate((p) => ({
           creditBalance: p.creditBalance + count,
           balance: p.creditBalance + count + p.erc20Balance,
-          suckerGroupId: _project.suckerGroup,
+          suckerGroupId: _project.suckerGroupId,
         })),
     ]);
   } catch (e) {

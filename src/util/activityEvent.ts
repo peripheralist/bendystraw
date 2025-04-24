@@ -29,6 +29,6 @@ export const insertActivityEvent = async <
     ...params, // exclude id from params to use generated id
     [key]: id, // NOTE: using the id from `getEventParams` ensures that if this function is called in the same function that inserts the target event, the ID will match
     projectId: Number(projectId),
-    suckerGroup: _project?.suckerGroup,
+    suckerGroupId: _project?.suckerGroup,
   });
 };

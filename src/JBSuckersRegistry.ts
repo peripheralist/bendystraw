@@ -101,7 +101,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
         if (_project) {
           await context.db
             .update(project, _project)
-            .set({ suckerGroup: newSuckerGroup.id });
+            .set({ suckerGroupId: newSuckerGroup.id });
         }
       }
 
