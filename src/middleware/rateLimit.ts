@@ -14,7 +14,7 @@ if (!rootKey && process.env.NODE_ENV !== "development") {
 const unkey = rootKey
   ? new Ratelimit({
       rootKey,
-      namespace: "bendystraw",
+      namespace: "bendystraw-api",
       limit: 6,
       duration: "60s",
     })
