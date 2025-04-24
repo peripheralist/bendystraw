@@ -26,7 +26,7 @@ app.use("/graphql", async (c, next) => {
   if (c.req.method !== "POST") return c.text("Not allowed", 401);
   await next();
 });
-app.use(cors({ origin: ALLOWED_ORIGINS }));
+app.use("/graphql", cors({ origin: ALLOWED_ORIGINS }));
 app.use("/graphql", graphql({ db, schema }));
 
 // require key (internal dev, external apps)
