@@ -1,3 +1,4 @@
+import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { graphql } from "ponder";
@@ -5,12 +6,14 @@ import { db } from "ponder:api";
 import schema from "ponder:schema";
 import { ALLOWED_ORIGINS } from "../constants/origins";
 import { keyAuthMiddleware } from "../middleware/keyAuth";
-import { serveStatic } from "@hono/node-server/serve-static";
+import { rateLimitMiddleware } from "../middleware/rateLimit";
 
 const app = new Hono();
 
 // public testing
-// if (process.env.NODE_ENV !== "development") app.use("/", rateLimitMiddleware); // disable rate limiting until CORS works
+if (process.env.NODE_ENV !== "development") {
+  app.use("/", rateLimitMiddleware);
+}
 app.use("/", graphql({ db, schema }));
 
 app.get(
