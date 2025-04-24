@@ -374,14 +374,14 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           volume: amount,
           volumeUsd: amountUsd,
           lastPaidTimestamp: Number(event.block.timestamp),
-          suckerGroupId: _project.suckerGroup,
+          suckerGroupId: _project.suckerGroupId,
         })
         .onConflictDoUpdate((p) => ({
           volume: p.volume + amount,
           volumeUsd: p.volumeUsd + amountUsd,
           lastPaidTimestamp: Number(event.block.timestamp),
           paymentsCount: p.paymentsCount + 1,
-          suckerGroupId: _project.suckerGroup,
+          suckerGroupId: _project.suckerGroupId,
         })),
 
       // insert/update payer wallet

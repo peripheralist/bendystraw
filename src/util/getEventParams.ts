@@ -36,7 +36,8 @@ export const getEventParams = <A extends Args>({
     logIndex: number;
     timestamp: number;
     from: `0x${string}`;
-    caller: typeof event.args extends { caller: `0x${string}` }
-      ? `0x${string}`
-      : never;
+    caller: `0x${string}` | never; // TODO fix dumb type
+    // caller: typeof event.args extends { caller: `0x${string}` }
+    //   ? `0x${string}`
+    //   : never;
   });

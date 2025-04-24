@@ -10,7 +10,9 @@
     "serve": "ponder serve",
     "codegen": "ponder codegen",
     "lint": "eslint .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "prepare": "husky",
+    "tsc": "tsc"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
@@ -25,6 +27,7 @@
     "@types/node": "^20.9.0",
     "eslint": "^8.53.0",
     "eslint-config-ponder": "^0.10.9",
+    "husky": "^9.1.7",
     "typescript": "^5.2.2"
   },
   "engines": {
