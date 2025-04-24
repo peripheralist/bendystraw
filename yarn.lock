@@ -2026,10 +2026,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@0.10.18-next.1:
-  version "0.10.18-next.1"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.10.18-next.1.tgz#63d86a25d98aea398302ffd34f8d325969954184"
-  integrity sha512-vlEEUzg4MV+VFGEyyJtaI1NHv3juTuX2n9W9meJIWjr5SWOAlJg9cBCs/0wevwMA9egtuGM8T939yPfuW0pT2w==
+ponder@^0.10.18:
+  version "0.10.18"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.10.18.tgz#d774d331b32db18fdb2eeffc06362fcfa8667add"
+  integrity sha512-6H8XKquYiKwUTXaoS165E9cQPcaNUMX2awE67SbgV+XEb91W2oxdhoEqe6S8Pi0CUm2VLiS8dlG1PRPVDc1l7A==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"
