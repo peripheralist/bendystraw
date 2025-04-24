@@ -509,7 +509,6 @@ export const project = onchainTable(
     owner: t.hex().notNull(),
     creator: t.hex().notNull(),
     paymentsCount: t.integer().notNull().default(0),
-    contributorsCount: t.integer().notNull().default(0),
     redeemCount: t.integer().notNull().default(0),
     volume: t.bigint().notNull().default(BigInt(0)),
     volumeUsd: t.bigint().notNull().default(BigInt(0)),

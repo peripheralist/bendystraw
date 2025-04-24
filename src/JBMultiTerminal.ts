@@ -10,11 +10,11 @@ import {
   useAllowanceEvent,
   wallet,
 } from "ponder:schema";
+import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { getLatestPayEvent } from "./util/getLatestPayEvent";
-import { usdPriceForEth } from "./util/usdPrice";
 import { handleTrendingPayment } from "./util/trending";
-import { insertActivityEvent } from "./util/activityEvent";
+import { usdPriceForEth } from "./util/usdPrice";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
@@ -315,12 +315,6 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
-    const payerParticipant = await context.db.find(participant, {
-      address: payer,
-      chainId,
-      projectId,
-    });
-
     const amountUsd = await usdPriceForEth({
       context,
       projectId: _projectId,
@@ -344,7 +338,6 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           balance: p.balance + amount,
           volume: p.volume + amount,
           volumeUsd: p.volumeUsd + amountUsd,
-          contributorsCount: p.contributorsCount + (payerParticipant ? 0 : 1),
           paymentsCount: p.paymentsCount + 1,
         })),
 
