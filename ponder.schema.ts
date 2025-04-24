@@ -547,7 +547,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   deployErc20Events: many(deployErc20Event),
   permissionHolders: many(permissionHolder),
   suckerGroup: one(suckerGroup, {
-    fields: [project.suckerGroup],
+    fields: [project.suckerGroupId],
     references: [suckerGroup.id],
   }),
 }));
