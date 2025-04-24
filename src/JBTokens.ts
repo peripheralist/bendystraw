@@ -15,11 +15,19 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
 
   let burnedCredits = BigInt(0);
 
+  const _project = await context.db.find(project, { projectId, chainId });
+
+  if (!_project) {
+    throw new Error("Missing project");
+  }
+
   await Promise.all([
     context.db
       .update(participant, { chainId, projectId, address: holder })
       .set((p) => {
         const _p = p;
+
+        _p.suckerGroupId = _project.suckerGroup;
 
         // Only update stakedBalance, since erc20Balance will be updated by erc20 handler
         if (count > _p.creditBalance) {
@@ -66,6 +74,12 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { chainId } = context.network;
 
+    const _project = await context.db.find(project, { projectId, chainId });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     // participant will have been created by previous transferCredits event to holder
 
     // only update staked balance, erc20 balance will be updated by erc20 mint event
@@ -78,6 +92,7 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
       .set((p) => ({
         creditBalance: creditBalance - count,
         balance: p.erc20Balance + creditBalance - count,
+        suckerGroupId: _project.suckerGroup,
       }));
   } catch (e) {
     console.error("JBTokens:ClaimTokens", e);
@@ -90,6 +105,12 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { chainId } = context.network;
 
+    const _project = await context.db.find(project, { projectId, chainId });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     await Promise.all([
       // update sender participant
       context.db
@@ -101,6 +122,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
         .set((p) => ({
           creditBalance: p.creditBalance - count,
           balance: p.creditBalance - count + p.erc20Balance,
+          suckerGroupId: _project.suckerGroup,
         })),
 
       // insert/update receiver participant
@@ -112,10 +134,12 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
           projectId,
           balance: count,
           creditBalance: count,
+          suckerGroupId: _project.suckerGroup,
         })
         .onConflictDoUpdate((p) => ({
           creditBalance: p.creditBalance + count,
           balance: p.creditBalance + count + p.erc20Balance,
+          suckerGroupId: _project.suckerGroup,
         })),
     ]);
   } catch (e) {

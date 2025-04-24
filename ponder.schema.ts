@@ -422,6 +422,7 @@ export const participant = onchainTable(
     balance: t.bigint().notNull().default(BigInt(0)),
     creditBalance: t.bigint().notNull().default(BigInt(0)),
     erc20Balance: t.bigint().notNull().default(BigInt(0)),
+    suckerGroupId: t.text(),
   }),
   (t) => ({
     addressIdx: index().on(t.address),
@@ -435,6 +436,14 @@ export const participantRelations = relations(participant, ({ one, many }) => ({
     references: [wallet.address],
   }),
   nfts: many(nft),
+  project: one(project, {
+    fields: [participant.projectId, participant.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+  suckerGroup: one(suckerGroup, {
+    fields: [participant.suckerGroupId],
+    references: [suckerGroup.id],
+  }),
 }));
 
 export const payEvent = onchainTable("pay_event", (t) => ({
@@ -521,6 +530,7 @@ export const project = onchainTable(
 );
 
 export const projectRelations = relations(project, ({ many, one }) => ({
+  participants: many(participant),
   nfts: many(nft),
   nftHooks: many(nftHook),
   mintTokensEvents: many(mintTokensEvent),

@@ -327,6 +327,12 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       ethAmount: amount,
     });
 
+    const _project = await context.db.find(project, { projectId, chainId });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     await Promise.all([
       // update project
       context.db
@@ -368,12 +374,14 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           volume: amount,
           volumeUsd: amountUsd,
           lastPaidTimestamp: Number(event.block.timestamp),
+          suckerGroupId: _project.suckerGroup,
         })
         .onConflictDoUpdate((p) => ({
           volume: p.volume + amount,
           volumeUsd: p.volumeUsd + amountUsd,
           lastPaidTimestamp: Number(event.block.timestamp),
           paymentsCount: p.paymentsCount + 1,
+          suckerGroupId: _project.suckerGroup,
         })),
 
       // insert/update payer wallet

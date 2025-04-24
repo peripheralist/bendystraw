@@ -1,6 +1,11 @@
 import { and, eq } from "ponder";
 import { ponder } from "ponder:registry";
-import { burnEvent, deployErc20Event, participant } from "ponder:schema";
+import {
+  burnEvent,
+  deployErc20Event,
+  participant,
+  project,
+} from "ponder:schema";
 import { zeroAddress } from "viem";
 import { insertActivityEvent } from "./util/activityEvent";
 
@@ -25,6 +30,12 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
 
     const { projectId } = _deployErc20Event;
 
+    const _project = await context.db.find(project, { projectId, chainId });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     await Promise.all([
       // update from participant
       from === zeroAddress
@@ -34,6 +45,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
             .set((p) => ({
               erc20Balance: p.erc20Balance - value,
               balance: p.erc20Balance - value + p.creditBalance,
+              suckerGroupId: _project.suckerGroup,
             })),
 
       to === zeroAddress
@@ -67,10 +79,12 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
               address: to,
               erc20Balance: value,
               balance: value,
+              suckerGroupId: _project.suckerGroup,
             })
             .onConflictDoUpdate((p) => ({
               erc20Balance: p.erc20Balance + value,
               balance: p.erc20Balance + value + p.creditBalance,
+              suckerGroupId: _project.suckerGroup,
             })),
     ]);
   } catch (e) {

@@ -87,6 +87,12 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
+    const _project = await context.db.find(project, { projectId, chainId });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     await Promise.all([
       // create participant if none exists
       context.db
@@ -95,8 +101,9 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           address: to,
           chainId,
           projectId,
+          suckerGroupId: _project.suckerGroup,
         })
-        .onConflictDoNothing(),
+        .onConflictDoUpdate({ suckerGroupId: _project.suckerGroup }),
 
       // update remainingSupply of tier, in case this is a mint
       context.db
