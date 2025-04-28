@@ -72,21 +72,22 @@ ponder.on(
             .then((tokenUri) => {
               const metadata = parseTokenUri<{
                 outfitIds: bigint[];
-                backgroundId: bigint;
+                backgroundId?: bigint;
               }>(tokenUri);
 
               const customized =
-                metadata &&
+                !!metadata &&
                 (metadata.outfitIds.length > 0 ||
-                  metadata.backgroundId !== BigInt(0));
+                  (!!metadata.backgroundId &&
+                    metadata.backgroundId !== BigInt(0)));
 
               return context.db.update(nft, _nft).set({
                 tokenUri,
                 metadata,
                 customized,
-                ...(customized
+                ...(customized && _nft.tokenId === tokenId // only update customizedAt for Banny being dressed
                   ? {
-                      customizedAt: Number(event.block.timestamp), // only update customizedAt for Banny being dressed
+                      customizedAt: Number(event.block.timestamp),
                     }
                   : {}),
               });
