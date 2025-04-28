@@ -1,14 +1,14 @@
 import { and, eq, or } from "ponder";
 import { ponder } from "ponder:registry";
 import { decorateBannyEvent, nft, nftTier } from "ponder:schema";
+import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
+import { insertActivityEvent } from "./util/activityEvent";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
-import { insertActivityEvent } from "./util/activityEvent";
-import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import { parseTokenUri } from "./util/tokenUri";
 
 const projectId = (chainId: number) => {
@@ -75,16 +75,26 @@ ponder.on(
                   functionName: "tokenURI",
                   args: [tokenId],
                 })
-                .then((tokenUri) =>
-                  context.db.update(nft, _nft).set({
+                .then((tokenUri) => {
+                  const metadata = _nft.metadata as {
+                    outfitIds: bigint[];
+                    backgroundId: bigint;
+                  };
+
+                  const customized =
+                    metadata.outfitIds.length > 0 ||
+                    metadata.backgroundId !== BigInt(0);
+
+                  return context.db.update(nft, _nft).set({
                     tokenUri,
-                    ...(_nft.tokenId === tokenId && customized
+                    customized,
+                    ...(customized
                       ? {
                           customizedAt: Number(event.block.timestamp), // only update customizedAt for Banny being dressed
                         }
                       : {}),
-                  })
-                );
+                  });
+                });
             })
           ),
 
