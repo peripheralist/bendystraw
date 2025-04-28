@@ -31,7 +31,7 @@ ponder.on(
       const chainId = context.network.chainId;
       const { bannyBodyId: tokenId } = event.args;
 
-      const tokenUri = await context.client.readContract({
+      const decoratedTokenUri = await context.client.readContract({
         abi: JB721TiersHookAbi,
         address: BANNY_RETAIL_HOOK,
         functionName: "tokenURI",
@@ -99,8 +99,8 @@ ponder.on(
             bannyBodyId: event.args.bannyBodyId,
             outfitIds: event.args.outfitIds.map((o) => o),
             backgroundId: event.args.backgroundId,
-            tokenUri,
-            tokenUriMetadata: parseTokenUri(tokenUri),
+            tokenUri: decoratedTokenUri,
+            tokenUriMetadata: parseTokenUri(decoratedTokenUri),
           })
           .then(({ id }) =>
             insertActivityEvent("decorateBannyEvent", {
