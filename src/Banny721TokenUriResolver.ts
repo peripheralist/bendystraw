@@ -61,7 +61,7 @@ ponder.on(
 
       await Promise.all([
         // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed
-        ownerBannys.map((_nft) =>
+        ...ownerBannys.map((_nft) =>
           context.client
             .readContract({
               abi: JB721TiersHookAbi,
