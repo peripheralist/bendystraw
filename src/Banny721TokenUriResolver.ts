@@ -48,48 +48,50 @@ ponder.on(
         throw new Error("Missing Banny NFT");
       }
 
+      const ownerBannys = await context.db.sql
+        .select()
+        .from(nft)
+        .where(
+          and(
+            eq(nft.hook, BANNY_RETAIL_HOOK),
+            eq(nft.category, 0),
+            eq(nft.owner, nftToDecorate?.owner)
+          )
+        );
+
       await Promise.all([
         // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed
-        context.db.sql
-          .select()
-          .from(nft)
-          .where(
-            and(
-              eq(nft.hook, BANNY_RETAIL_HOOK),
-              eq(nft.category, 0),
-              eq(nft.owner, nftToDecorate?.owner)
-            )
-          )
-          .then((nfts) =>
-            nfts.map((_nft) => {
-              context.client
-                .readContract({
-                  abi: JB721TiersHookAbi,
-                  address: BANNY_RETAIL_HOOK,
-                  functionName: "tokenURI",
-                  args: [_nft.tokenId],
-                })
-                .then((tokenUri) => {
-                  const metadata = parseTokenUri(tokenUri);
-
-                  const customized =
-                    metadata &&
-                    (metadata.outfitIds.length > 0 ||
-                      metadata.backgroundId !== BigInt(0));
-
-                  return context.db.update(nft, _nft).set({
-                    tokenUri,
-                    metadata,
-                    customized,
-                    ...(customized
-                      ? {
-                          customizedAt: Number(event.block.timestamp), // only update customizedAt for Banny being dressed
-                        }
-                      : {}),
-                  });
-                });
+        ownerBannys.map((_nft) =>
+          context.client
+            .readContract({
+              abi: JB721TiersHookAbi,
+              address: BANNY_RETAIL_HOOK,
+              functionName: "tokenURI",
+              args: [_nft.tokenId],
             })
-          ),
+            .then((tokenUri) => {
+              const metadata = parseTokenUri<{
+                outfitIds: bigint[];
+                backgroundId: bigint;
+              }>(tokenUri);
+
+              const customized =
+                metadata &&
+                (metadata.outfitIds.length > 0 ||
+                  metadata.backgroundId !== BigInt(0));
+
+              return context.db.update(nft, _nft).set({
+                tokenUri,
+                metadata,
+                customized,
+                ...(customized
+                  ? {
+                      customizedAt: Number(event.block.timestamp), // only update customizedAt for Banny being dressed
+                    }
+                  : {}),
+              });
+            })
+        ),
 
         // store decorate event
         context.db
