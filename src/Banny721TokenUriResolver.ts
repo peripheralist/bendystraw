@@ -38,12 +38,6 @@ ponder.on(
         args: [tokenId],
       });
 
-      const metadata = parseTokenUri(tokenUri);
-
-      const customized =
-        event.args.outfitIds.length > 0 ||
-        event.args.backgroundId !== BigInt(0);
-
       const nftToDecorate = await context.db.find(nft, {
         chainId,
         hook: BANNY_RETAIL_HOOK,
@@ -76,17 +70,16 @@ ponder.on(
                   args: [tokenId],
                 })
                 .then((tokenUri) => {
-                  const metadata = _nft.metadata as {
-                    outfitIds: bigint[];
-                    backgroundId: bigint;
-                  };
+                  const metadata = parseTokenUri(tokenUri);
 
                   const customized =
-                    metadata.outfitIds.length > 0 ||
-                    metadata.backgroundId !== BigInt(0);
+                    metadata &&
+                    (metadata.outfitIds.length > 0 ||
+                      metadata.backgroundId !== BigInt(0));
 
                   return context.db.update(nft, _nft).set({
                     tokenUri,
+                    metadata,
                     customized,
                     ...(customized
                       ? {
@@ -107,7 +100,7 @@ ponder.on(
             outfitIds: event.args.outfitIds.map((o) => o),
             backgroundId: event.args.backgroundId,
             tokenUri,
-            tokenUriMetadata: metadata,
+            tokenUriMetadata: parseTokenUri(tokenUri),
           })
           .then(({ id }) =>
             insertActivityEvent("decorateBannyEvent", {
