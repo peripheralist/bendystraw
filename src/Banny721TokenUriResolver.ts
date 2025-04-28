@@ -28,11 +28,14 @@ ponder.on(
   "Banny721TokenUriResolver:DecorateBanny",
   async ({ event, context }) => {
     try {
+      const chainId = context.network.chainId;
+      const { bannyBodyId: tokenId } = event.args;
+
       const tokenUri = await context.client.readContract({
         abi: JB721TiersHookAbi,
         address: BANNY_RETAIL_HOOK,
         functionName: "tokenURI",
-        args: [event.args.bannyBodyId],
+        args: [tokenId],
       });
 
       const metadata = parseTokenUri(tokenUri);
@@ -41,25 +44,52 @@ ponder.on(
         event.args.outfitIds.length > 0 ||
         event.args.backgroundId !== BigInt(0);
 
+      const nftToDecorate = await context.db.find(nft, {
+        chainId,
+        hook: BANNY_RETAIL_HOOK,
+        tokenId,
+      });
+
+      if (!nftToDecorate) {
+        throw new Error("Missing Banny NFT");
+      }
+
       await Promise.all([
-        // update nft tokenUri
-        await context.db
-          .update(nft, {
-            chainId: context.network.chainId,
-            hook: BANNY_RETAIL_HOOK,
-            tokenId: event.args.bannyBodyId,
-          })
-          .set({
-            tokenUri,
-            metadata,
-            customized,
-            ...(customized
-              ? { customizedAt: Number(event.block.timestamp) }
-              : {}),
-          }),
+        // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed
+        context.db.sql
+          .select()
+          .from(nft)
+          .where(
+            and(
+              eq(nft.hook, BANNY_RETAIL_HOOK),
+              eq(nft.category, 0),
+              eq(nft.owner, nftToDecorate?.owner)
+            )
+          )
+          .then((nfts) =>
+            nfts.map((_nft) => {
+              context.client
+                .readContract({
+                  abi: JB721TiersHookAbi,
+                  address: BANNY_RETAIL_HOOK,
+                  functionName: "tokenURI",
+                  args: [tokenId],
+                })
+                .then((tokenUri) =>
+                  context.db.update(nft, _nft).set({
+                    tokenUri,
+                    ...(_nft.tokenId === tokenId && customized
+                      ? {
+                          customizedAt: Number(event.block.timestamp), // only update customizedAt for Banny being dressed
+                        }
+                      : {}),
+                  })
+                );
+            })
+          ),
 
         // store decorate event
-        await context.db
+        context.db
           .insert(decorateBannyEvent)
           .values({
             ...getEventParams({ event, context }),
@@ -79,7 +109,6 @@ ponder.on(
           ),
       ]);
     } catch (e) {
-      // TODO handle these errors (lots emitted bc resolver was changed i think)
       console.error("Banny721TokenUriResolver:DecorateBanny", e);
     }
   }
