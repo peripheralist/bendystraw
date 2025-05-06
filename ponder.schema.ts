@@ -549,6 +549,31 @@ export const projectRelations = relations(project, ({ many, one }) => ({
     fields: [project.suckerGroupId],
     references: [suckerGroup.id],
   }),
+  projectMoments: many(projectMoment),
+}));
+
+export const projectMoment = onchainTable(
+  "project_moment",
+  (t) => ({
+    ...projectId(t),
+    ...chainId(t),
+    block: t.integer().notNull(),
+    timestamp: t.integer().notNull(),
+    volume: t.bigint().notNull().default(BigInt(0)),
+    volumeUsd: t.bigint().notNull().default(BigInt(0)),
+    balance: t.bigint().notNull().default(BigInt(0)),
+    trendingScore: t.bigint().notNull().default(BigInt(0)),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.block] }),
+  })
+);
+
+export const projectMomentRelations = relations(projectMoment, ({ one }) => ({
+  project: one(project, {
+    fields: [projectMoment.projectId, projectMoment.chainId],
+    references: [project.projectId, project.chainId],
+  }),
 }));
 
 export const projectCreateEvent = onchainTable("project_create_event", (t) => ({
