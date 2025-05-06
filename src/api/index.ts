@@ -1,7 +1,7 @@
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { graphql } from "ponder";
+import { client, graphql } from "ponder";
 import { db } from "ponder:api";
 import schema from "ponder:schema";
 import { ALLOWED_ORIGINS } from "../constants/origins";
@@ -31,6 +31,7 @@ app.use("/graphql", async (c, next) => {
 });
 app.use("/graphql", cors({ origin: ALLOWED_ORIGINS }));
 app.use("/graphql", graphql({ db, schema }));
+app.use("/sql/*", cors({ origin: ALLOWED_ORIGINS }));
 
 // require key (internal dev, external apps)
 app.use("/graphql/:key", async (c, next) => {
@@ -40,5 +41,7 @@ app.use("/graphql/:key", async (c, next) => {
 });
 app.use("/graphql/:key", keyAuthMiddleware);
 app.use("/graphql/:key", graphql({ db, schema }));
+app.use("/sql/:key/*", keyAuthMiddleware);
+app.use("/sql/:key/*", client({ db, schema }));
 
 export default app;
