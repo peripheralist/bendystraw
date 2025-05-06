@@ -31,11 +31,14 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
           balance: p.balance + amount,
         }))
         .then((p) =>
-          context.db.insert(projectMoment).values({
-            ...p,
-            block: Number(event.block.number),
-            timestamp: Number(event.block.timestamp),
-          })
+          context.db
+            .insert(projectMoment)
+            .values({
+              ...p,
+              block: Number(event.block.number),
+              timestamp: Number(event.block.timestamp),
+            })
+            .onConflictDoNothing()
         ),
 
       context.db
@@ -87,11 +90,14 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
           balance: p.balance - amountPaidOut,
         }))
         .then((p) =>
-          context.db.insert(projectMoment).values({
-            ...p,
-            block: Number(event.block.number),
-            timestamp: Number(event.block.timestamp),
-          })
+          context.db
+            .insert(projectMoment)
+            .values({
+              ...p,
+              block: Number(event.block.number),
+              timestamp: Number(event.block.timestamp),
+            })
+            .onConflictDoNothing()
         ),
 
       // create sendPayoutsEvent
@@ -232,11 +238,14 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
           balance: p.balance - reclaimAmount,
         }))
         .then((p) =>
-          context.db.insert(projectMoment).values({
-            ...p,
-            block: Number(event.block.number),
-            timestamp: Number(event.block.timestamp),
-          })
+          context.db
+            .insert(projectMoment)
+            .values({
+              ...p,
+              block: Number(event.block.number),
+              timestamp: Number(event.block.timestamp),
+            })
+            .onConflictDoNothing()
         ),
 
       // create cashOutTokensEvent
@@ -294,11 +303,14 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
           balance: p.balance - event.args.amountPaidOut,
         }))
         .then((p) =>
-          context.db.insert(projectMoment).values({
-            ...p,
-            block: Number(event.block.number),
-            timestamp: Number(event.block.timestamp),
-          })
+          context.db
+            .insert(projectMoment)
+            .values({
+              ...p,
+              block: Number(event.block.number),
+              timestamp: Number(event.block.timestamp),
+            })
+            .onConflictDoNothing()
         ),
 
       // create useAllowanceEvent
@@ -399,7 +411,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           ..._project,
           block: Number(event.block.number),
           timestamp: Number(event.block.timestamp),
-        }),
+        })
+        .onConflictDoNothing(),
 
       // insert/update payer participant
       context.db
