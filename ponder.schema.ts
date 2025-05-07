@@ -446,6 +446,26 @@ export const participantRelations = relations(participant, ({ one, many }) => ({
   }),
 }));
 
+export const participantSnapshot = onchainTable(
+  "participant",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    block: t.integer().notNull(),
+    address: t.hex().notNull(),
+    volume: t.bigint().notNull().default(BigInt(0)),
+    volumeUsd: t.bigint().notNull().default(BigInt(0)),
+    balance: t.bigint().notNull().default(BigInt(0)),
+    creditBalance: t.bigint().notNull().default(BigInt(0)),
+    erc20Balance: t.bigint().notNull().default(BigInt(0)),
+    suckerGroupId: t.text(),
+  }),
+  (t) => ({
+    addressIdx: index().on(t.address),
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.address] }),
+  })
+);
+
 export const payEvent = onchainTable("pay_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),

@@ -4,6 +4,7 @@ import {
   nft,
   nftTier,
   participant,
+  participantSnapshot,
   project,
 } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
@@ -103,7 +104,12 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           projectId,
           suckerGroupId: _project.suckerGroupId,
         })
-        .onConflictDoUpdate({ suckerGroupId: _project.suckerGroupId }),
+        .onConflictDoUpdate({ suckerGroupId: _project.suckerGroupId })
+        .then((p) =>
+          context.db
+            .insert(participantSnapshot)
+            .values({ ...p, block: Number(event.block.number) })
+        ),
 
       // update remainingSupply of tier, in case this is a mint
       context.db

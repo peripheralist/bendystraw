@@ -3,6 +3,7 @@ import {
   addToBalanceEvent,
   cashOutTokensEvent,
   participant,
+  participantSnapshot,
   payEvent,
   project,
   projectMoment,
@@ -432,7 +433,12 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           lastPaidTimestamp: Number(event.block.timestamp),
           paymentsCount: p.paymentsCount + 1,
           suckerGroupId: _project.suckerGroupId,
-        })),
+        }))
+        .then((p) =>
+          context.db
+            .insert(participantSnapshot)
+            .values({ ...p, block: Number(event.block.number) })
+        ),
 
       // insert/update payer wallet
       context.db

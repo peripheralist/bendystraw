@@ -3,11 +3,12 @@ import {
   burnEvent,
   deployErc20Event,
   participant,
+  participantSnapshot,
   project,
   suckerGroup,
 } from "ponder:schema";
-import { getEventParams } from "./util/getEventParams";
 import { insertActivityEvent } from "./util/activityEvent";
+import { getEventParams } from "./util/getEventParams";
 
 ponder.on("JBTokens:Burn", async ({ event, context }) => {
   const { projectId: _projectId, holder, count } = event.args;
@@ -150,7 +151,12 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
           creditBalance: p.creditBalance + count,
           balance: p.creditBalance + count + p.erc20Balance,
           suckerGroupId: _project.suckerGroupId,
-        })),
+        }))
+        .then((p) =>
+          context.db
+            .insert(participantSnapshot)
+            .values({ ...p, block: Number(event.block.number) })
+        ),
     ]);
   } catch (e) {
     console.error("JBTokens:TransferCredits", e);
@@ -214,7 +220,12 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         .onConflictDoUpdate((p) => ({
           creditBalance: p.creditBalance + count,
           balance: p.creditBalance + p.erc20Balance + count,
-        })),
+        }))
+        .then((p) =>
+          context.db
+            .insert(participantSnapshot)
+            .values({ ...p, block: Number(event.block.number) })
+        ),
 
       // update project
       context.db
