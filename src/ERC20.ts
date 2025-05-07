@@ -7,8 +7,8 @@ import {
   project,
 } from "ponder:schema";
 import { zeroAddress } from "viem";
-import { participantSnapshot } from "../ponder.schema";
 import { insertActivityEvent } from "./util/activityEvent";
+import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("ERC20:Transfer", async ({ event, context }) => {
   try {
@@ -87,10 +87,8 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
               balance: p.erc20Balance + value + p.creditBalance,
               suckerGroupId: _project.suckerGroupId,
             }))
-            .then((p) =>
-              context.db
-                .insert(participantSnapshot)
-                .values({ ...p, block: Number(event.block.number) })
+            .then((participant) =>
+              setParticipantSnapshot({ participant, context, event })
             ),
     ]);
   } catch (e) {

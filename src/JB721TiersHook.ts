@@ -16,6 +16,7 @@ import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
 import { ADDRESS } from "./constants/address";
+import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
@@ -105,10 +106,8 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           suckerGroupId: _project.suckerGroupId,
         })
         .onConflictDoUpdate({ suckerGroupId: _project.suckerGroupId })
-        .then((p) =>
-          context.db
-            .insert(participantSnapshot)
-            .values({ ...p, block: Number(event.block.number) })
+        .then((participant) =>
+          setParticipantSnapshot({ participant, context, event })
         ),
 
       // update remainingSupply of tier, in case this is a mint

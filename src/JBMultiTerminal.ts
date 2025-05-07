@@ -17,6 +17,7 @@ import { getEventParams } from "./util/getEventParams";
 import { getLatestPayEvent } from "./util/getLatestPayEvent";
 import { handleTrendingPayment } from "./util/trending";
 import { usdPriceForEth } from "./util/usdPrice";
+import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
@@ -434,10 +435,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           paymentsCount: p.paymentsCount + 1,
           suckerGroupId: _project.suckerGroupId,
         }))
-        .then((p) =>
-          context.db
-            .insert(participantSnapshot)
-            .values({ ...p, block: Number(event.block.number) })
+        .then((participant) =>
+          setParticipantSnapshot({ participant, context, event })
         ),
 
       // insert/update payer wallet
