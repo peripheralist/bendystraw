@@ -1,7 +1,25 @@
 import axios from "axios";
+import { project } from "ponder:schema";
 
 const API_KEY = process.env.INFURA_API_KEY;
 const API_KEY_SECRET = process.env.INFURA_API_KEY_SECRET;
+
+type ProjectMetadata = Pick<
+  typeof project.$inferSelect,
+  | "name"
+  | "infoUri"
+  | "logoUri"
+  | "coverImageUri"
+  | "description"
+  | "twitter"
+  | "telegram"
+  | "tokens"
+  | "tags"
+  | "domain"
+  | "projectTagline"
+  | "payDisclosure"
+  | "discord"
+>;
 
 export async function parseProjectMetadata(uri: string) {
   try {
@@ -32,7 +50,7 @@ export async function parseProjectMetadata(uri: string) {
         const formattedRes = `{${res.data.split("{")[1].split("}")[0]}}`;
         const normalized = normalizeMetadataString(formattedRes);
         try {
-          return JSON.parse(normalized) as object;
+          return JSON.parse(normalized) as ProjectMetadata;
         } catch (e) {
           console.log("Error formatting metadata response", formattedRes);
           return null;

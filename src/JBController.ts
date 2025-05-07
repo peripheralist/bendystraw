@@ -48,6 +48,18 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
       deployer: caller,
       metadataUri: projectUri,
       metadata,
+      name: metadata?.name,
+      infoUri: metadata?.infoUri,
+      logoUri: metadata?.logoUri,
+      coverImageUri: metadata?.coverImageUri,
+      twitter: metadata?.twitter,
+      discord: metadata?.discord,
+      telegram: metadata?.telegram,
+      tokens: metadata?.tokens,
+      domain: metadata?.domain,
+      description: metadata?.description,
+      tags: metadata?.tags,
+      projectTagline: metadata?.projectTagline,
     });
   } catch (e) {
     console.error("JBController:LaunchProject", e, event.transaction.hash);
@@ -62,9 +74,22 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
 
     const metadata = await parseProjectMetadata(uri);
 
-    await context.db
-      .update(project, { chainId, projectId })
-      .set({ metadataUri: uri, metadata });
+    await context.db.update(project, { chainId, projectId }).set({
+      metadataUri: uri,
+      metadata,
+      name: metadata?.name,
+      infoUri: metadata?.infoUri,
+      logoUri: metadata?.logoUri,
+      coverImageUri: metadata?.coverImageUri,
+      twitter: metadata?.twitter,
+      discord: metadata?.discord,
+      telegram: metadata?.telegram,
+      tokens: metadata?.tokens,
+      domain: metadata?.domain,
+      description: metadata?.description,
+      tags: metadata?.tags,
+      projectTagline: metadata?.projectTagline,
+    });
   } catch (e) {
     console.error("JBController:SetUri", e, event.transaction.hash);
   }

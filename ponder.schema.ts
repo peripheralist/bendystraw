@@ -521,6 +521,22 @@ export const project = onchainTable(
     trendingVolume: t.bigint().notNull().default(BigInt(0)),
     trendingPaymentsCount: t.integer().notNull().default(0),
     createdWithinTrendingWindow: t.boolean(),
+
+    // metadata items, intended for searchability
+    coverImageUri: t.text(),
+    description: t.text(),
+    discord: t.text(),
+    domain: t.text(),
+    infoUri: t.text(),
+    logoUri: t.text(),
+    name: t.text(),
+    payDisclosure: t.text(),
+    projectTagline: t.text(),
+    tags: t.text().array(),
+    telegram: t.text(),
+    tokens: t.text().array(),
+    twitter: t.text(),
+    version: t.integer(),
   }),
   (t) => ({
     projectIdx: index().on(t.projectId),
