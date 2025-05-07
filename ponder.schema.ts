@@ -447,7 +447,7 @@ export const participantRelations = relations(participant, ({ one, many }) => ({
 }));
 
 export const participantSnapshot = onchainTable(
-  "participant",
+  "participant_snapshot",
   (t) => ({
     ...chainId(t),
     ...projectId(t),
