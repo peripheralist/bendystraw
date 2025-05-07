@@ -23,7 +23,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     // create sucker group. creating a sucker group for all projects ensures we can query all projects by querying sucker groups
     const _suckerGroup = await context.db
       .insert(suckerGroup)
-      .values({ projects: [_project.id] });
+      .values({ projects: [_project.id], tokenSupply: _project.tokenSupply });
 
     await Promise.all([
       // update project to point to sucker group

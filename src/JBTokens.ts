@@ -4,6 +4,7 @@ import {
   deployErc20Event,
   participant,
   project,
+  suckerGroup,
 } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
 import { insertActivityEvent } from "./util/activityEvent";
@@ -64,7 +65,16 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       })
       .set((p) => ({
         tokenSupply: p.tokenSupply - count,
-      })),
+      }))
+      .then((p) => {
+        if (!p.suckerGroupId) return;
+
+        return context.db
+          .update(suckerGroup, { id: p.suckerGroupId })
+          .set((g) => ({
+            tokenSupply: g.tokenSupply - count,
+          }));
+      }),
   ]);
 });
 
@@ -214,7 +224,16 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         })
         .set((p) => ({
           tokenSupply: p.tokenSupply + count,
-        })),
+        }))
+        .then((p) => {
+          if (!p.suckerGroupId) return;
+
+          return context.db
+            .update(suckerGroup, { id: p.suckerGroupId })
+            .set((g) => ({
+              tokenSupply: g.tokenSupply + count,
+            }));
+        }),
     ]);
   } catch (e) {
     console.error("JBTokens:Mint", e);

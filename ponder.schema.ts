@@ -775,6 +775,7 @@ export const suckerGroup = onchainTable("sucker_group", (t) => ({
     .primaryKey(),
   projects: t.text().array().notNull().default([]),
   addresses: t.hex().array().notNull().default([]),
+  tokenSupply: t.bigint().notNull().default(BigInt(0)),
 }));
 
 export const suckerGroupRelations = relations(suckerGroup, ({ many }) => ({

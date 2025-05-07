@@ -1,4 +1,12 @@
-import { and, arrayOverlaps, eq, ne, or } from "drizzle-orm";
+import {
+  and,
+  arrayContained,
+  arrayOverlaps,
+  eq,
+  ne,
+  or,
+  inArray,
+} from "drizzle-orm";
 import { ponder } from "ponder:registry";
 import { project, sucker, suckerGroup } from "ponder:schema";
 
@@ -86,10 +94,18 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
         });
       });
 
+      const groupProjectsTokenSupplies = (
+        await context.db.sql
+          .select()
+          .from(project)
+          .where(inArray(project.id, groupProjects))
+      ).reduce((acc, curr) => acc + curr.tokenSupply, BigInt(0));
+
       // Create a new group from affiliated projects and addresses
       const newSuckerGroup = await context.db.insert(suckerGroup).values({
         projects: groupProjects,
         addresses: groupAddresses as `0x${string}`[],
+        tokenSupply: groupProjectsTokenSupplies,
       });
 
       // Link all affiliated projects to the newly created sucker group
