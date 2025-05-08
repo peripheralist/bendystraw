@@ -59,9 +59,25 @@ ponder.on(
           )
         );
 
-      await Promise.all([
-        // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed
-        ...ownerBannys.map((_nft) =>
+      // store decorate event
+      const { id } = await context.db.insert(decorateBannyEvent).values({
+        ...getEventParams({ event, context }),
+        bannyBodyId: event.args.bannyBodyId,
+        outfitIds: event.args.outfitIds.map((o) => o),
+        backgroundId: event.args.backgroundId,
+        tokenUri: decoratedTokenUri,
+        tokenUriMetadata: parseTokenUri(decoratedTokenUri),
+      });
+      await insertActivityEvent("decorateBannyEvent", {
+        id,
+        event,
+        context,
+        projectId: projectId(context.network.chainId),
+      });
+
+      // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed
+      await Promise.all(
+        ownerBannys.map((_nft) =>
           context.client
             .readContract({
               abi: JB721TiersHookAbi,
@@ -92,28 +108,8 @@ ponder.on(
                   : {}),
               });
             })
-        ),
-
-        // store decorate event
-        context.db
-          .insert(decorateBannyEvent)
-          .values({
-            ...getEventParams({ event, context }),
-            bannyBodyId: event.args.bannyBodyId,
-            outfitIds: event.args.outfitIds.map((o) => o),
-            backgroundId: event.args.backgroundId,
-            tokenUri: decoratedTokenUri,
-            tokenUriMetadata: parseTokenUri(decoratedTokenUri),
-          })
-          .then(({ id }) =>
-            insertActivityEvent("decorateBannyEvent", {
-              id,
-              event,
-              context,
-              projectId: projectId(context.network.chainId),
-            })
-          ),
-      ]);
+        )
+      );
     } catch (e) {
       console.error("Banny721TokenUriResolver:DecorateBanny", e);
     }

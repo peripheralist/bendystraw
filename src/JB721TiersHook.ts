@@ -95,74 +95,67 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    await Promise.all([
-      // create participant if none exists
-      context.db
-        .insert(participant)
-        .values({
-          address: to,
-          chainId,
-          projectId,
-          suckerGroupId: _project.suckerGroupId,
-        })
-        .onConflictDoUpdate({ suckerGroupId: _project.suckerGroupId })
-        .then((participant) =>
-          setParticipantSnapshot({ participant, context, event })
-        ),
+    // create participant if none exists
+    const _participant = await context.db
+      .insert(participant)
+      .values({
+        address: to,
+        chainId,
+        projectId,
+        suckerGroupId: _project.suckerGroupId,
+      })
+      .onConflictDoUpdate({ suckerGroupId: _project.suckerGroupId });
 
-      // update remainingSupply of tier, in case this is a mint
-      context.db
-        .update(nftTier, {
-          chainId,
-          hook,
-          tierId: tier.id,
-        })
-        .set({
-          remainingSupply: tier.remainingSupply,
-        }),
+    await setParticipantSnapshot({ participant: _participant, context, event });
 
-      context.db
-        .find(nft, {
+    const existingNft = await context.db.find(nft, {
+      chainId,
+      hook,
+      tokenId,
+    });
+
+    if (existingNft) {
+      await context.db
+        .update(nft, {
           chainId,
           hook,
           tokenId,
         })
-        .then(async (existingNft) => {
-          // we first check for existingNft because we may not need to call tokenUri(). db query is cheaper than contract read
+        .set({ owner: to });
+    } else {
+      const tokenUri = await context.client.readContract({
+        abi: JB721TiersHookAbi,
+        address: hook,
+        functionName: "tokenURI",
+        args: [tokenId],
+      });
 
-          if (existingNft) {
-            return context.db
-              .update(nft, {
-                chainId,
-                hook,
-                tokenId,
-              })
-              .set({ owner: to });
-          } else {
-            const tokenUri = await context.client.readContract({
-              abi: JB721TiersHookAbi,
-              address: hook,
-              functionName: "tokenURI",
-              args: [tokenId],
-            });
+      await context.db.insert(nft).values({
+        chainId,
+        hook,
+        mintTx: event.transaction.hash,
+        tokenId,
+        category: tier.category,
+        owner: to,
+        projectId: Number(projectId),
+        createdAt: Number(event.block.timestamp),
+        customizedAt: Number(event.block.timestamp),
+        tokenUri,
+        metadata: parseTokenUri(tokenUri),
+        tierId: tier.id,
+      });
+    }
 
-            return context.db.insert(nft).values({
-              chainId,
-              hook,
-              mintTx: event.transaction.hash,
-              tokenId,
-              category: tier.category,
-              owner: to,
-              projectId: Number(projectId),
-              createdAt: Number(event.block.timestamp),
-              customizedAt: Number(event.block.timestamp),
-              tokenUri,
-              metadata: parseTokenUri(tokenUri),
-              tierId: tier.id,
-            });
-          }
-        }),
-    ]);
+    // update remainingSupply of tier, in case this is a mint
+    await context.db
+      .update(nftTier, {
+        chainId,
+        hook,
+        tierId: tier.id,
+      })
+      .set({
+        remainingSupply: tier.remainingSupply,
+      });
   } catch (e) {
     console.error("JB721TiersHook:Transfer", e);
   }
@@ -193,29 +186,30 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
 
     const projectId = Number(projectIdCall);
 
-    await Promise.all([
-      context.db
-        .insert(mintNftEvent)
-        .values({
-          ...getEventParams({ event, context }),
-          projectId,
-          hook,
-          tierId: Number(tierId),
-          tokenId,
-          beneficiary,
-          totalAmountPaid,
-        })
-        .then(({ id }) =>
-          insertActivityEvent("mintNftEvent", { id, event, context, projectId })
-        ),
+    // update project
+    await context.db
+      .update(project, {
+        projectId,
+        chainId: context.network.chainId,
+      })
+      .set((p) => ({ nftsMintedCount: p.nftsMintedCount + 1 }));
 
-      context.db
-        .update(project, {
-          projectId,
-          chainId: context.network.chainId,
-        })
-        .set((p) => ({ nftsMintedCount: p.nftsMintedCount + 1 })),
-    ]);
+    // insert mintNftEvent
+    const { id } = await context.db.insert(mintNftEvent).values({
+      ...getEventParams({ event, context }),
+      projectId,
+      hook,
+      tierId: Number(tierId),
+      tokenId,
+      beneficiary,
+      totalAmountPaid,
+    });
+    await insertActivityEvent("mintNftEvent", {
+      id,
+      event,
+      context,
+      projectId,
+    });
   } catch (e) {
     console.error("JB721TiersHook:Mint", e);
   }

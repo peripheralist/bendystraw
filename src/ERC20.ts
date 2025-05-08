@@ -37,60 +37,60 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    await Promise.all([
-      // update from participant
-      from === zeroAddress
-        ? Promise.resolve()
-        : context.db
-            .update(participant, { chainId, projectId, address: from })
-            .set((p) => ({
-              erc20Balance: p.erc20Balance - value,
-              balance: p.erc20Balance - value + p.creditBalance,
-              suckerGroupId: _project.suckerGroupId,
-            })),
+    if (to === zeroAddress) {
+      // create burn event
+      const { id } = await context.db.insert(burnEvent).values({
+        chainId,
+        txHash: event.transaction.hash,
+        timestamp: Number(event.block.timestamp),
+        from,
+        projectId,
+        amount: value,
+        erc20Amount: value,
+        creditAmount: BigInt(0),
+      });
 
-      to === zeroAddress
-        ? // create burn event
-          context.db
-            .insert(burnEvent)
-            .values({
-              chainId,
-              txHash: event.transaction.hash,
-              timestamp: Number(event.block.timestamp),
-              from,
-              projectId,
-              amount: value,
-              erc20Amount: value,
-              creditAmount: BigInt(0),
-            })
-            .then(({ id }) =>
-              insertActivityEvent("burnEvent", {
-                id,
-                event,
-                context,
-                projectId,
-              })
-            )
-        : // insert/update `to` participant
-          context.db
-            .insert(participant)
-            .values({
-              chainId,
-              projectId,
-              address: to,
-              erc20Balance: value,
-              balance: value,
-              suckerGroupId: _project.suckerGroupId,
-            })
-            .onConflictDoUpdate((p) => ({
-              erc20Balance: p.erc20Balance + value,
-              balance: p.erc20Balance + value + p.creditBalance,
-              suckerGroupId: _project.suckerGroupId,
-            }))
-            .then((participant) =>
-              setParticipantSnapshot({ participant, context, event })
-            ),
-    ]);
+      await insertActivityEvent("burnEvent", {
+        id,
+        event,
+        context,
+        projectId,
+      });
+    } else {
+      // insert/update `to` participant
+      const _to = await context.db
+        .insert(participant)
+        .values({
+          chainId,
+          projectId,
+          address: to,
+          erc20Balance: value,
+          balance: value,
+          suckerGroupId: _project.suckerGroupId,
+        })
+        .onConflictDoUpdate((p) => ({
+          erc20Balance: p.erc20Balance + value,
+          balance: p.erc20Balance + value + p.creditBalance,
+          suckerGroupId: _project.suckerGroupId,
+        }));
+
+      await setParticipantSnapshot({
+        participant: _to,
+        context,
+        event,
+      });
+    }
+
+    if (from !== zeroAddress) {
+      // update `from` participant
+      await context.db
+        .update(participant, { chainId, projectId, address: from })
+        .set((p) => ({
+          erc20Balance: p.erc20Balance - value,
+          balance: p.erc20Balance - value + p.creditBalance,
+          suckerGroupId: _project.suckerGroupId,
+        }));
+    }
   } catch (e) {
     console.error(
       "ERC20: Transfer",

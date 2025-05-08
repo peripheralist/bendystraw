@@ -11,25 +11,22 @@ import { insertActivityEvent } from "./util/activityEvent";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
-    await context.db
-      .insert(mintTokensEvent)
-      .values({
-        ...getEventParams({ event, context }),
-        projectId: Number(event.args.projectId),
-        beneficiary: event.args.beneficiary,
-        beneficiaryTokenCount: event.args.beneficiaryTokenCount,
-        memo: event.args.memo,
-        reservedPercent: event.args.reservedPercent,
-        tokenCount: event.args.tokenCount,
-      })
-      .then(({ id }) =>
-        insertActivityEvent("mintTokensEvent", {
-          id,
-          event,
-          context,
-          projectId: event.args.projectId,
-        })
-      );
+    const { id } = await context.db.insert(mintTokensEvent).values({
+      ...getEventParams({ event, context }),
+      projectId: Number(event.args.projectId),
+      beneficiary: event.args.beneficiary,
+      beneficiaryTokenCount: event.args.beneficiaryTokenCount,
+      memo: event.args.memo,
+      reservedPercent: event.args.reservedPercent,
+      tokenCount: event.args.tokenCount,
+    });
+
+    await insertActivityEvent("mintTokensEvent", {
+      id,
+      event,
+      context,
+      projectId: event.args.projectId,
+    });
   } catch (e) {
     console.error("JBController:MintTokens", e);
   }
@@ -108,7 +105,7 @@ ponder.on(
         rulesetCycleNumber,
       } = event.args;
 
-      await context.db
+      const { id } = await context.db
         .insert(sendReservedTokensToSplitsEvent)
         .values({
           ...getEventParams({ event, context }),
@@ -119,15 +116,14 @@ ponder.on(
           owner: owner,
           rulesetId: Number(rulesetId),
           rulesetCycleNumber: Number(rulesetCycleNumber),
-        })
-        .then(({ id }) =>
-          insertActivityEvent("sendReservedTokensToSplitsEvent", {
-            id,
-            event,
-            context,
-            projectId,
-          })
-        );
+        });
+
+      await insertActivityEvent("sendReservedTokensToSplitsEvent", {
+        id,
+        event,
+        context,
+        projectId,
+      });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplits", e);
     }
@@ -140,7 +136,7 @@ ponder.on(
     try {
       const { split, rulesetId, projectId, tokenCount, groupId } = event.args;
 
-      await context.db
+      const { id } = await context.db
         .insert(sendReservedTokensToSplitEvent)
         .values({
           ...getEventParams({ event, context }),
@@ -154,15 +150,14 @@ ponder.on(
           percent: split.percent,
           preferAddToBalance: split.preferAddToBalance,
           splitProjectId: Number(split.projectId),
-        })
-        .then(({ id }) =>
-          insertActivityEvent("sendReservedTokensToSplitEvent", {
-            id,
-            event,
-            context,
-            projectId,
-          })
-        );
+        });
+
+      await insertActivityEvent("sendReservedTokensToSplitEvent", {
+        id,
+        event,
+        context,
+        projectId,
+      });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplit", e);
     }

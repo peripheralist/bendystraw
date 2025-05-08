@@ -3,7 +3,6 @@ import {
   burnEvent,
   deployErc20Event,
   participant,
-  participantSnapshot,
   project,
   suckerGroup,
 } from "ponder:schema";
@@ -12,20 +11,21 @@ import { getEventParams } from "./util/getEventParams";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("JBTokens:Burn", async ({ event, context }) => {
-  const { projectId: _projectId, holder, count } = event.args;
-  const projectId = Number(_projectId);
-  const { chainId } = context.network;
+  try {
+    const { projectId: _projectId, holder, count } = event.args;
+    const projectId = Number(_projectId);
+    const { chainId } = context.network;
 
-  let burnedCredits = BigInt(0);
+    let burnedCredits = BigInt(0);
 
-  const _project = await context.db.find(project, { projectId, chainId });
+    const _project = await context.db.find(project, { projectId, chainId });
 
-  if (!_project) {
-    throw new Error("Missing project");
-  }
+    if (!_project) {
+      throw new Error("Missing project");
+    }
 
-  await Promise.all([
-    context.db
+    // update holder participant
+    await context.db
       .update(participant, { chainId, projectId, address: holder })
       .set((p) => {
         const _p = p;
@@ -44,40 +44,38 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
         _p.balance = _p.creditBalance + _p.erc20Balance;
 
         return _p;
-      }),
+      });
 
-    context.db
-      .insert(burnEvent)
-      .values({
-        ...getEventParams({ event, context }),
-        projectId,
-        holder,
-        amount: count,
-        creditAmount: burnedCredits,
-        erc20Amount: BigInt(0),
-      })
-      .then(({ id }) =>
-        insertActivityEvent("burnEvent", { id, event, context, projectId })
-      ),
-
-    context.db
+    // update suckerGroup tokenSupply
+    const { suckerGroupId } = await context.db
       .update(project, {
         chainId,
         projectId,
       })
       .set(({ tokenSupply }) => ({
         tokenSupply: tokenSupply - count,
-      }))
-      .then(({ suckerGroupId }) => {
-        if (!suckerGroupId) return;
+      }));
+    if (suckerGroupId) {
+      await context.db
+        .update(suckerGroup, { id: suckerGroupId })
+        .set(({ tokenSupply }) => ({
+          tokenSupply: tokenSupply - count,
+        }));
+    }
 
-        return context.db
-          .update(suckerGroup, { id: suckerGroupId })
-          .set(({ tokenSupply }) => ({
-            tokenSupply: tokenSupply - count,
-          }));
-      }),
-  ]);
+    // insert event
+    const { id } = await context.db.insert(burnEvent).values({
+      ...getEventParams({ event, context }),
+      projectId,
+      holder,
+      amount: count,
+      creditAmount: burnedCredits,
+      erc20Amount: BigInt(0),
+    });
+    await insertActivityEvent("burnEvent", { id, event, context, projectId });
+  } catch (e) {
+    console.error("JBTokens:Burn", e);
+  }
 });
 
 ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
@@ -123,40 +121,37 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    await Promise.all([
-      // update sender participant
-      context.db
-        .update(participant, {
-          chainId,
-          address: holder,
-          projectId,
-        })
-        .set((p) => ({
-          creditBalance: p.creditBalance - count,
-          balance: p.creditBalance - count + p.erc20Balance,
-          suckerGroupId: _project.suckerGroupId,
-        })),
+    // update sender participant
+    const sender = await context.db
+      .update(participant, {
+        chainId,
+        address: holder,
+        projectId,
+      })
+      .set((p) => ({
+        creditBalance: p.creditBalance - count,
+        balance: p.creditBalance - count + p.erc20Balance,
+        suckerGroupId: _project.suckerGroupId,
+      }));
+    await setParticipantSnapshot({ participant: sender, context, event });
 
-      // insert/update receiver participant
-      context.db
-        .insert(participant)
-        .values({
-          chainId,
-          address: recipient,
-          projectId,
-          balance: count,
-          creditBalance: count,
-          suckerGroupId: _project.suckerGroupId,
-        })
-        .onConflictDoUpdate((p) => ({
-          creditBalance: p.creditBalance + count,
-          balance: p.creditBalance + count + p.erc20Balance,
-          suckerGroupId: _project.suckerGroupId,
-        }))
-        .then((participant) =>
-          setParticipantSnapshot({ participant, context, event })
-        ),
-    ]);
+    // insert/update receiver participant
+    const receiver = await context.db
+      .insert(participant)
+      .values({
+        chainId,
+        address: recipient,
+        projectId,
+        balance: count,
+        creditBalance: count,
+        suckerGroupId: _project.suckerGroupId,
+      })
+      .onConflictDoUpdate((p) => ({
+        creditBalance: p.creditBalance + count,
+        balance: p.creditBalance + count + p.erc20Balance,
+        suckerGroupId: _project.suckerGroupId,
+      }));
+    await setParticipantSnapshot({ participant: receiver, context, event });
   } catch (e) {
     console.error("JBTokens:TransferCredits", e);
   }
@@ -166,23 +161,20 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
   try {
     const { symbol, token, name, projectId } = event.args;
 
-    await context.db
-      .insert(deployErc20Event)
-      .values({
-        ...getEventParams({ event, context }),
-        projectId: Number(projectId),
-        symbol,
-        token,
-        name,
-      })
-      .then(({ id }) =>
-        insertActivityEvent("deployErc20Event", {
-          id,
-          event,
-          context,
-          projectId,
-        })
-      );
+    const { id } = await context.db.insert(deployErc20Event).values({
+      ...getEventParams({ event, context }),
+      projectId: Number(projectId),
+      symbol,
+      token,
+      name,
+    });
+
+    await insertActivityEvent("deployErc20Event", {
+      id,
+      event,
+      context,
+      projectId,
+    });
   } catch (e) {
     console.error("JBTokens:DeployERC20", e);
   }
@@ -200,23 +192,22 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     // update project
-    await context.db
+    const { suckerGroupId } = await context.db
       .update(project, {
         chainId,
         projectId,
       })
       .set(({ tokenSupply }) => ({
         tokenSupply: tokenSupply + count,
-      }))
-      .then(({ suckerGroupId }) => {
-        if (!suckerGroupId) return;
+      }));
 
-        return context.db
-          .update(suckerGroup, { id: suckerGroupId })
-          .set(({ tokenSupply }) => ({
-            tokenSupply: tokenSupply + count,
-          }));
-      });
+    if (suckerGroupId) {
+      await context.db
+        .update(suckerGroup, { id: suckerGroupId })
+        .set(({ tokenSupply }) => ({
+          tokenSupply: tokenSupply + count,
+        }));
+    }
 
     /**
      * We're only concerned with updating unclaimed token balance.
@@ -225,7 +216,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     if (tokensWereClaimed) return;
 
     // insert/update receiver participant
-    await context.db
+    const receiver = await context.db
       .insert(participant)
       .values({
         chainId,
@@ -237,10 +228,9 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
       .onConflictDoUpdate((p) => ({
         creditBalance: p.creditBalance + count,
         balance: p.creditBalance + p.erc20Balance + count,
-      }))
-      .then((participant) =>
-        setParticipantSnapshot({ participant, context, event })
-      );
+      }));
+
+    await setParticipantSnapshot({ participant: receiver, context, event });
   } catch (e) {
     console.error("JBTokens:Mint", e);
   }

@@ -2,6 +2,7 @@ import { ponder } from "ponder:registry";
 import { project, projectCreateEvent, suckerGroup } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
 import { insertActivityEvent } from "./util/activityEvent";
+import { projectMoment } from "ponder:schema";
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
   try {
@@ -11,7 +12,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     // create project
-    const _project = await context.db.insert(project).values({
+    let _project = await context.db.insert(project).values({
       projectId,
       owner,
       deployer: caller,
@@ -25,28 +26,32 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       .insert(suckerGroup)
       .values({ projects: [_project.id], tokenSupply: _project.tokenSupply });
 
-    await Promise.all([
-      // update project to point to sucker group
-      context.db
-        .update(project, { projectId, chainId })
-        .set({ suckerGroupId: _suckerGroup.id }),
+    // update project to point to sucker group
+    _project = await context.db
+      .update(project, { projectId, chainId })
+      .set({ suckerGroupId: _suckerGroup.id });
 
-      // create project create event
-      context.db
-        .insert(projectCreateEvent)
-        .values({
-          ...getEventParams({ event, context }),
-          projectId,
-        })
-        .then(({ id }) =>
-          insertActivityEvent("projectCreateEvent", {
-            id,
-            event,
-            context,
-            projectId,
-          })
-        ),
-    ]);
+    // insert project moment
+    await context.db
+      .insert(projectMoment)
+      .values({
+        ..._project,
+        block: Number(event.block.number),
+        timestamp: Number(event.block.timestamp),
+      })
+      .onConflictDoNothing();
+
+    // insert event
+    const { id } = await context.db.insert(projectCreateEvent).values({
+      ...getEventParams({ event, context }),
+      projectId,
+    });
+    await insertActivityEvent("projectCreateEvent", {
+      id,
+      event,
+      context,
+      projectId,
+    });
   } catch (e) {
     console.error("JBProjects:Create", e);
   }
