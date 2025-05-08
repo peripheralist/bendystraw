@@ -7,4 +7,8 @@ export const ALLOWED_ORIGINS = [
   "https://*.juicebox.money/*",
   "https://app.revnet.eth.sucks",
   "https://app.revnet.eth.sucks/*",
+  "https://revnet.app",
+  "https://revnet.app/*",
+  "https://*.revnet.app",
+  "https://*.revnet.app/*",
 ];
