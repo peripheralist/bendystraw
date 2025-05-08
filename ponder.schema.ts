@@ -49,13 +49,17 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   addToBalanceEvent: t.text(),
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
+  borrowEvent: t.text(),
   cashOutTokensEvent: t.text(),
   decorateBannyEvent: t.text(),
   deployErc20Event: t.text(),
+  liquidateEvent: t.text(),
   mintNftEvent: t.text(),
   mintTokensEvent: t.text(),
   payEvent: t.text(),
   projectCreateEvent: t.text(),
+  repayLoanEvent: t.text(),
+  reallocateLoanEvent: t.text(),
   sendPayoutsEvent: t.text(),
   sendPayoutToSplitEvent: t.text(),
   sendReservedTokensToSplitEvent: t.text(),
@@ -80,6 +84,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
     fields: [activityEvent.burnEvent],
     references: [burnEvent.id],
   }),
+  borrowEvent: one(borrowEvent, {
+    fields: [activityEvent.borrowEvent],
+    references: [borrowEvent.id],
+  }),
   cashOutTokensEvent: one(cashOutTokensEvent, {
     fields: [activityEvent.cashOutTokensEvent],
     references: [cashOutTokensEvent.id],
@@ -91,6 +99,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   deployErc20Event: one(deployErc20Event, {
     fields: [activityEvent.deployErc20Event],
     references: [deployErc20Event.id],
+  }),
+  liquidateEvent: one(liquidateEvent, {
+    fields: [activityEvent.liquidateEvent],
+    references: [liquidateEvent.id],
   }),
   mintNftEvent: one(mintNftEvent, {
     fields: [activityEvent.mintNftEvent],
@@ -107,6 +119,14 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   projectCreateEvent: one(projectCreateEvent, {
     fields: [activityEvent.projectCreateEvent],
     references: [projectCreateEvent.id],
+  }),
+  repayLoanEvent: one(repayLoanEvent, {
+    fields: [activityEvent.repayLoanEvent],
+    references: [repayLoanEvent.id],
+  }),
+  reallocateLoanEvent: one(reallocateLoanEvent, {
+    fields: [activityEvent.reallocateLoanEvent],
+    references: [reallocateLoanEvent.id],
   }),
   sendPayoutsEvent: one(sendPayoutsEvent, {
     fields: [activityEvent.sendPayoutsEvent],
@@ -160,6 +180,26 @@ export const autoIssueEvent = onchainTable("auto_issue_event", (t) => ({
 export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
   project: one(project, {
     fields: [autoIssueEvent.chainId, autoIssueEvent.projectId],
+    references: [project.chainId, project.projectId],
+  }),
+}));
+
+export const borrowEvent = onchainTable("borrow_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  borrowAmount: t.bigint().notNull(),
+  collateral: t.bigint().notNull(),
+  sourceFeeAmount: t.bigint().notNull(),
+  prepaidDuration: t.integer().notNull(),
+  prepaidFeePercent: t.integer().notNull(),
+  beneficiary: t.hex().notNull(),
+  token: t.hex().notNull(),
+  terminal: t.hex().notNull(),
+}));
+
+export const borrowEventRelations = relations(borrowEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [borrowEvent.chainId, borrowEvent.projectId],
     references: [project.chainId, project.projectId],
   }),
 }));
@@ -246,6 +286,50 @@ export const deployErc20EventRelations = relations(
     }),
   })
 );
+
+export const loan = onchainTable(
+  "loan",
+  (t) => ({
+    id: t.bigint().notNull().primaryKey(),
+    ...projectId(t),
+    ...chainId(t),
+    ...createdAt(t),
+    borrowAmount: t.bigint().notNull(),
+    collateral: t.bigint().notNull(),
+    sourceFeeAmount: t.bigint().notNull(),
+    prepaidDuration: t.integer().notNull(),
+    prepaidFeePercent: t.integer().notNull(),
+    beneficiary: t.hex().notNull(),
+    owner: t.hex().notNull(),
+    token: t.hex().notNull(),
+    terminal: t.hex().notNull(),
+    tokenUri: t.text(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.id, t.chainId] }),
+  })
+);
+
+export const loanRelations = relations(loan, ({ one }) => ({
+  project: one(project, {
+    fields: [loan.projectId, loan.chainId],
+    references: [project.projectId, project.chainId],
+  }),
+}));
+
+export const liquidateEvent = onchainTable("liquidate_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  borrowAmount: t.bigint().notNull(),
+  collateral: t.bigint().notNull(),
+}));
+
+export const liquidateEventRelations = relations(liquidateEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [liquidateEvent.chainId, liquidateEvent.projectId],
+    references: [project.chainId, project.projectId],
+  }),
+}));
 
 export const mintNftEvent = onchainTable("mint_nft_event", (t) => ({
   ...eventParams(t),
@@ -618,6 +702,43 @@ export const projectCreateEventRelations = relations(
     project: one(project, {
       fields: [projectCreateEvent.projectId, projectCreateEvent.chainId],
       references: [project.projectId, project.chainId],
+    }),
+  })
+);
+
+export const repayLoanEvent = onchainTable("repay_loan_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  loanId: t.bigint().notNull(),
+  paidOffLoanId: t.bigint().notNull(),
+  repayBorrowAmount: t.bigint().notNull(),
+  collateralCountToReturn: t.bigint().notNull(),
+}));
+
+export const repayLoanEventRelations = relations(repayLoanEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [repayLoanEvent.chainId, repayLoanEvent.projectId],
+    references: [project.chainId, project.projectId],
+  }),
+}));
+
+export const reallocateLoanEvent = onchainTable(
+  "reallocate_loan_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    loanId: t.bigint().notNull(),
+    reallocatedLoanId: t.bigint().notNull(),
+    removedCollateralCount: t.bigint().notNull(),
+  })
+);
+
+export const reallocateLoanEventRelations = relations(
+  reallocateLoanEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [reallocateLoanEvent.chainId, reallocateLoanEvent.projectId],
+      references: [project.chainId, project.projectId],
     }),
   })
 );

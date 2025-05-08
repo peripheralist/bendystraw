@@ -22,6 +22,7 @@ import { JBSuckersRegistryAbi } from "./abis/JBSuckersRegistryAbi";
 import { JBTokensAbi } from "./abis/JBTokensAbi";
 import { REVDeployerAbi } from "./abis/REVDeployerAbi";
 import { ADDRESS } from "./src/constants/address";
+import { REVLoansAbi } from "./abis/REVLoansAbi";
 
 const transportUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
@@ -274,6 +275,24 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    RevLoans: {
+      abi: REVLoansAbi,
+      address: ADDRESS.revLoans,
+      network: {
+        ethereum: {
+          startBlock: 21869096,
+        },
+        arbitrum: {
+          startBlock: 307144959,
+        },
+        base: {
+          startBlock: 26521046,
+        },
+        optimism: {
+          startBlock: 132116331,
+        },
+      },
+    },
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
       address: ADDRESS.jbSuckersRegistry,
@@ -462,6 +481,24 @@ export const testnetConfig = createConfig({
         },
         optimismSepolia: {
           startBlock: 24014488,
+        },
+      },
+    },
+    RevLoans: {
+      abi: REVLoansAbi,
+      address: ADDRESS.revLoans,
+      network: {
+        ethereumSepolia: {
+          startBlock: 7729794,
+        },
+        arbitrumSepolia: {
+          startBlock: 124752346,
+        },
+        baseSepolia: {
+          startBlock: 22031619,
+        },
+        optimismSepolia: {
+          startBlock: 24014494,
         },
       },
     },
