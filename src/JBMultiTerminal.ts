@@ -364,6 +364,24 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       ethAmount: amount,
     });
 
+    // create pay event
+    const _payEvent = await context.db.insert(payEvent).values({
+      ...getEventParams({ event, context }),
+      projectId,
+      amount,
+      amountUsd,
+      beneficiary,
+      memo,
+      newlyIssuedTokenCount,
+    });
+
+    await insertActivityEvent("payEvent", {
+      id: _payEvent.id,
+      event,
+      context,
+      projectId,
+    });
+
     await Promise.all([
       // update project
       context.db
@@ -377,22 +395,6 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
           volumeUsd: p.volumeUsd + amountUsd,
           paymentsCount: p.paymentsCount + 1,
         })),
-
-      // create pay event
-      context.db
-        .insert(payEvent)
-        .values({
-          ...getEventParams({ event, context }),
-          projectId,
-          amount,
-          amountUsd,
-          beneficiary,
-          memo,
-          newlyIssuedTokenCount,
-        })
-        .then(({ id }) =>
-          insertActivityEvent("payEvent", { id, event, context, projectId })
-        ),
 
       // will update project trending score
       handleTrendingPayment(event.block.timestamp, context),

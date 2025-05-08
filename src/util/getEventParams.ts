@@ -4,7 +4,6 @@ type Args = { caller: `0x${string}` } | {};
 
 type GetEventParamsArgs<A extends Args> = {
   event: {
-    id: string;
     args: A;
     block: { timestamp: bigint };
     log: { logIndex: number };

@@ -33,23 +33,13 @@ ponder.on("RevDeployer:StoreAutoIssuanceAmount", async ({ event, context }) => {
   try {
     const { revnetId, beneficiary, count, stageId } = event.args;
 
-    await context.db
-      .insert(storeAutoIssuanceAmountEvent)
-      .values({
-        ...getEventParams({ event, context }),
-        projectId: Number(revnetId),
-        beneficiary,
-        count,
-        stageId,
-      })
-      .then(({ id }) =>
-        insertActivityEvent("storeAutoIssuanceAmountEvent", {
-          id,
-          event,
-          context,
-          projectId: revnetId,
-        })
-      );
+    await context.db.insert(storeAutoIssuanceAmountEvent).values({
+      ...getEventParams({ event, context }),
+      projectId: Number(revnetId),
+      beneficiary,
+      count,
+      stageId,
+    });
   } catch (e) {
     console.error("RevDeployer:StoreAutoIssuanceAmount", e);
   }

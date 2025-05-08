@@ -12,7 +12,7 @@ type PGCB<
   ? ColumnTypes
   : never;
 
-export const eventId = (t: PGCB) => ({
+export const uniqueId = (t: PGCB) => ({
   id: t
     .text()
     .notNull()
@@ -29,7 +29,7 @@ export const from = (t: PGCB) => ({ from: t.hex().notNull() });
 export const projectId = (t: PGCB) => ({ projectId: t.integer().notNull() });
 
 export const eventParams = (t: PGCB) => ({
-  ...eventId(t),
+  ...uniqueId(t),
   ...chainId(t),
   ...txHash(t),
   ...timestamp(t),
@@ -39,7 +39,7 @@ export const eventParams = (t: PGCB) => ({
 });
 
 export const activityEvent = onchainTable("activity_event", (t) => ({
-  ...eventId(t),
+  ...uniqueId(t),
   ...chainId(t),
   ...from(t),
   ...timestamp(t),
@@ -60,7 +60,6 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   sendPayoutToSplitEvent: t.text(),
   sendReservedTokensToSplitEvent: t.text(),
   sendReservedTokensToSplitsEvent: t.text(),
-  storeAutoIssuanceAmountEvent: t.text(),
   useAllowanceEvent: t.text(),
 }));
 
@@ -125,10 +124,6 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
     fields: [activityEvent.sendReservedTokensToSplitsEvent],
     references: [sendReservedTokensToSplitsEvent.id],
   }),
-  storeAutoIssuanceAmountEvent: one(storeAutoIssuanceAmountEvent, {
-    fields: [activityEvent.storeAutoIssuanceAmountEvent],
-    references: [storeAutoIssuanceAmountEvent.id],
-  }),
   useAllowanceEvent: one(useAllowanceEvent, {
     fields: [activityEvent.useAllowanceEvent],
     references: [useAllowanceEvent.id],
@@ -170,7 +165,7 @@ export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
 }));
 
 export const burnEvent = onchainTable("burn_event", (t) => ({
-  ...eventId(t),
+  ...uniqueId(t),
   ...chainId(t),
   ...from(t),
   ...timestamp(t),
