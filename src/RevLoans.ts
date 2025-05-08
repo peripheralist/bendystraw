@@ -1,15 +1,11 @@
 import { ponder } from "ponder:registry";
-import {
-  borrowEvent,
-  liquidateEvent,
-  loan,
-  reallocateLoanEvent,
-  repayLoanEvent,
-} from "ponder:schema";
+import { loan, reallocateLoanEvent, repayLoanEvent } from "ponder:schema";
 import { REVLoansAbi } from "../abis/REVLoansAbi";
 import { ADDRESS } from "./constants/address";
 import { getEventParams } from "./util/getEventParams";
 import { insertActivityEvent } from "./util/activityEvent";
+import { borrowLoanEvent } from "ponder:schema";
+import { liquidateLoanEvent } from "ponder:schema";
 
 ponder.on("RevLoans:Borrow", async ({ event, context }) => {
   try {
@@ -51,7 +47,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       tokenUri,
     });
 
-    const { id } = await context.db.insert(borrowEvent).values({
+    const { id } = await context.db.insert(borrowLoanEvent).values({
       ...getEventParams({ event, context }),
       projectId,
       beneficiary,
@@ -63,7 +59,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       prepaidDuration: _loan.prepaidDuration,
       prepaidFeePercent: _loan.prepaidFeePercent,
     });
-    await insertActivityEvent("borrowEvent", {
+    await insertActivityEvent("borrowLoanEvent", {
       id,
       event,
       context,
@@ -90,13 +86,13 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
         borrowAmount: _loan.amount,
       });
 
-    const { id } = await context.db.insert(liquidateEvent).values({
+    const { id } = await context.db.insert(liquidateLoanEvent).values({
       ...getEventParams({ event, context }),
       projectId,
       borrowAmount: _loan.amount,
       collateral: _loan.collateral,
     });
-    await insertActivityEvent("liquidateEvent", {
+    await insertActivityEvent("liquidateLoanEvent", {
       id,
       event,
       context,
