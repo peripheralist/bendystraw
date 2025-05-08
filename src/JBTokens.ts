@@ -65,16 +65,16 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
         chainId,
         projectId,
       })
-      .set((p) => ({
-        tokenSupply: p.tokenSupply - count,
+      .set(({ tokenSupply }) => ({
+        tokenSupply: tokenSupply - count,
       }))
-      .then((p) => {
-        if (!p.suckerGroupId) return;
+      .then(({ suckerGroupId }) => {
+        if (!suckerGroupId) return;
 
         return context.db
-          .update(suckerGroup, { id: p.suckerGroupId })
-          .set((g) => ({
-            tokenSupply: g.tokenSupply - count,
+          .update(suckerGroup, { id: suckerGroupId })
+          .set(({ tokenSupply }) => ({
+            tokenSupply: tokenSupply - count,
           }));
       }),
   ]);
@@ -199,50 +199,48 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     const { chainId } = context.network;
     const projectId = Number(_projectId);
 
+    // update project
+    await context.db
+      .update(project, {
+        chainId,
+        projectId,
+      })
+      .set(({ tokenSupply }) => ({
+        tokenSupply: tokenSupply + count,
+      }))
+      .then(({ suckerGroupId }) => {
+        if (!suckerGroupId) return;
+
+        return context.db
+          .update(suckerGroup, { id: suckerGroupId })
+          .set(({ tokenSupply }) => ({
+            tokenSupply: tokenSupply + count,
+          }));
+      });
+
     /**
      * We're only concerned with updating unclaimed token balance.
      * "Claimed" ERC20 tokens will be handled separately.
      */
     if (tokensWereClaimed) return;
 
-    await Promise.all([
-      // insert/update receiver participant
-      context.db
-        .insert(participant)
-        .values({
-          chainId,
-          address: holder,
-          projectId,
-          creditBalance: count,
-          balance: count,
-        })
-        .onConflictDoUpdate((p) => ({
-          creditBalance: p.creditBalance + count,
-          balance: p.creditBalance + p.erc20Balance + count,
-        }))
-        .then((participant) =>
-          setParticipantSnapshot({ participant, context, event })
-        ),
-
-      // update project
-      context.db
-        .update(project, {
-          chainId,
-          projectId,
-        })
-        .set((p) => ({
-          tokenSupply: p.tokenSupply + count,
-        }))
-        .then((p) => {
-          if (!p.suckerGroupId) return;
-
-          return context.db
-            .update(suckerGroup, { id: p.suckerGroupId })
-            .set((g) => ({
-              tokenSupply: g.tokenSupply + count,
-            }));
-        }),
-    ]);
+    // insert/update receiver participant
+    await context.db
+      .insert(participant)
+      .values({
+        chainId,
+        address: holder,
+        projectId,
+        creditBalance: count,
+        balance: count,
+      })
+      .onConflictDoUpdate((p) => ({
+        creditBalance: p.creditBalance + count,
+        balance: p.creditBalance + p.erc20Balance + count,
+      }))
+      .then((participant) =>
+        setParticipantSnapshot({ participant, context, event })
+      );
   } catch (e) {
     console.error("JBTokens:Mint", e);
   }
