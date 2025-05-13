@@ -625,6 +625,7 @@ export const project = onchainTable(
     trendingScore: t.bigint().notNull().default(BigInt(0)),
     trendingVolume: t.bigint().notNull().default(BigInt(0)),
     trendingPaymentsCount: t.integer().notNull().default(0),
+    contributorsCount: t.integer().notNull().default(0),
     createdWithinTrendingWindow: t.boolean(),
 
     // metadata items, intended for searchability

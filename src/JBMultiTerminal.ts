@@ -331,6 +331,12 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       ethAmount: amount,
     });
 
+    const payerParticipant = await context.db.find(participant, {
+      address: payer,
+      projectId,
+      chainId,
+    });
+
     // update project
     await context.db
       .update(project, {
@@ -342,6 +348,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         volume: p.volume + amount,
         volumeUsd: p.volumeUsd + amountUsd,
         paymentsCount: p.paymentsCount + 1,
+        contributorsCount: p.contributorsCount + (payerParticipant ? 0 : 1),
       }));
 
     // will update project trending score
