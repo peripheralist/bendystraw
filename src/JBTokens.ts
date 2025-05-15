@@ -55,13 +55,13 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       .set(({ tokenSupply }) => ({
         tokenSupply: tokenSupply - count,
       }));
-    if (suckerGroupId) {
-      await context.db
-        .update(suckerGroup, { id: suckerGroupId })
-        .set(({ tokenSupply }) => ({
-          tokenSupply: tokenSupply - count,
-        }));
-    }
+
+    // update sucker group
+    await context.db
+      .update(suckerGroup, { id: suckerGroupId })
+      .set(({ tokenSupply }) => ({
+        tokenSupply: tokenSupply - count,
+      }));
 
     // insert event
     const { id } = await context.db.insert(burnEvent).values({
@@ -201,13 +201,12 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         tokenSupply: tokenSupply + count,
       }));
 
-    if (suckerGroupId) {
-      await context.db
-        .update(suckerGroup, { id: suckerGroupId })
-        .set(({ tokenSupply }) => ({
-          tokenSupply: tokenSupply + count,
-        }));
-    }
+    // update sucker group
+    await context.db
+      .update(suckerGroup, { id: suckerGroupId })
+      .set(({ tokenSupply }) => ({
+        tokenSupply: tokenSupply + count,
+      }));
 
     /**
      * We're only concerned with updating unclaimed token balance.
@@ -224,6 +223,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         projectId,
         creditBalance: count,
         balance: count,
+        suckerGroupId,
       })
       .onConflictDoUpdate((p) => ({
         creditBalance: p.creditBalance + count,

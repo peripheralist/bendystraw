@@ -45,7 +45,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   ...timestamp(t),
   ...txHash(t),
   ...projectId(t),
-  suckerGroupId: t.text(),
+  suckerGroupId: t.text().notNull(),
   addToBalanceEvent: t.text(),
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
@@ -507,7 +507,7 @@ export const participant = onchainTable(
     balance: t.bigint().notNull().default(BigInt(0)),
     creditBalance: t.bigint().notNull().default(BigInt(0)),
     erc20Balance: t.bigint().notNull().default(BigInt(0)),
-    suckerGroupId: t.text(),
+    suckerGroupId: t.text().notNull(),
   }),
   (t) => ({
     addressIdx: index().on(t.address),
@@ -606,7 +606,7 @@ export const project = onchainTable(
     ...chainId(t),
     ...projectId(t),
     ...createdAt(t),
-    suckerGroupId: t.text(),
+    suckerGroupId: t.text().notNull(),
     handle: t.text(),
     metadataUri: t.text(),
     metadata: t.json(),
@@ -918,12 +918,51 @@ export const suckerGroup = onchainTable("sucker_group", (t) => ({
     .primaryKey(),
   projects: t.text().array().notNull().default([]),
   addresses: t.hex().array().notNull().default([]),
+
+  // stats
+  paymentsCount: t.integer().notNull().default(0),
+  redeemCount: t.integer().notNull().default(0),
+  volume: t.bigint().notNull().default(BigInt(0)),
+  volumeUsd: t.bigint().notNull().default(BigInt(0)),
+  redeemVolume: t.bigint().notNull().default(BigInt(0)),
+  redeemVolumeUsd: t.bigint().notNull().default(BigInt(0)),
+  nftsMintedCount: t.integer().notNull().default(0),
+  balance: t.bigint().notNull().default(BigInt(0)),
   tokenSupply: t.bigint().notNull().default(BigInt(0)),
+  trendingScore: t.bigint().notNull().default(BigInt(0)),
+  trendingVolume: t.bigint().notNull().default(BigInt(0)),
+  trendingPaymentsCount: t.integer().notNull().default(0),
+  contributorsCount: t.integer().notNull().default(0),
 }));
 
 export const suckerGroupRelations = relations(suckerGroup, ({ many }) => ({
   projects: many(project),
 }));
+
+export const suckerGroupMoment = onchainTable(
+  "sucker_group_moment",
+  (t) => ({
+    suckerGroupId: t.text().notNull(),
+    block: t.integer().notNull(),
+    timestamp: t.integer().notNull(),
+    paymentsCount: t.integer().notNull().default(0),
+    redeemCount: t.integer().notNull().default(0),
+    volume: t.bigint().notNull().default(BigInt(0)),
+    volumeUsd: t.bigint().notNull().default(BigInt(0)),
+    redeemVolume: t.bigint().notNull().default(BigInt(0)),
+    redeemVolumeUsd: t.bigint().notNull().default(BigInt(0)),
+    nftsMintedCount: t.integer().notNull().default(0),
+    balance: t.bigint().notNull().default(BigInt(0)),
+    tokenSupply: t.bigint().notNull().default(BigInt(0)),
+    trendingScore: t.bigint().notNull().default(BigInt(0)),
+    trendingVolume: t.bigint().notNull().default(BigInt(0)),
+    trendingPaymentsCount: t.integer().notNull().default(0),
+    contributorsCount: t.integer().notNull().default(0),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.suckerGroupId, t.block] }),
+  })
+);
 
 export const useAllowanceEvent = onchainTable("use_allowance_event", (t) => ({
   ...eventParams(t),
