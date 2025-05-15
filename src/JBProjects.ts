@@ -31,6 +31,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       projects: [_project.id],
       tokenSupply: _project.tokenSupply,
       id: suckerGroupId,
+      createdAt: Number(block.timestamp),
     });
 
     // // insert project moment

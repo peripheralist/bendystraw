@@ -918,6 +918,7 @@ export const suckerGroup = onchainTable("sucker_group", (t) => ({
     .primaryKey(),
   projects: t.text().array().notNull().default([]),
   addresses: t.hex().array().notNull().default([]),
+  createdAt: t.integer().notNull(),
 
   // stats
   paymentsCount: t.integer().notNull().default(0),

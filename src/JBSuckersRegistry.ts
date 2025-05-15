@@ -106,6 +106,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
         projects: groupProjects,
         addresses: groupAddresses as `0x${string}`[],
         tokenSupply: groupProjectsTokenSupplies,
+        createdAt: Number(event.block.timestamp),
       });
 
       // Link all affiliated projects to the newly created sucker group
