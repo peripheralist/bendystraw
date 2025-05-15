@@ -1,7 +1,7 @@
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { client, graphql } from "ponder";
+import { graphql } from "ponder";
 import { db } from "ponder:api";
 import schema from "ponder:schema";
 import { ALLOWED_ORIGINS } from "../constants/origins";
@@ -11,12 +11,6 @@ import { getParticipantSnapshots } from "./participants";
 
 const app = new Hono();
 
-// public testing
-if (process.env.NODE_ENV !== "development") {
-  app.use("/", rateLimitMiddleware);
-}
-app.use("/", graphql({ db, schema }));
-
 app.get(
   "/favicon.ico",
   serveStatic({
@@ -24,31 +18,21 @@ app.get(
   })
 );
 
-// origin restricted (internal apps)
-app.use("/graphql", async (c, next) => {
-  // only allow requests, not yoga UI (GET)
-  if (c.req.method !== "POST") return c.text("Not allowed", 401);
-  await next();
-});
-app.use("/graphql", cors({ origin: ALLOWED_ORIGINS }));
-app.use("/graphql", graphql({ db, schema }));
-app.use("/sql/*", cors({ origin: ALLOWED_ORIGINS }));
+// public testing
+if (process.env.NODE_ENV !== "development") {
+  app.use("/", rateLimitMiddleware);
+}
+app.use("/", graphql({ db, schema }));
 
-// require key (internal dev, external apps)
-app.use("/graphql/:key", async (c, next) => {
-  // only allow requests, not yoga UI (GET)
-  if (c.req.method !== "POST") return c.text("Not allowed", 401);
-  await next();
-});
-app.use("/graphql/:key", keyAuthMiddleware);
-app.use("/graphql/:key", graphql({ db, schema }));
-app.use("/sql/:key/*", keyAuthMiddleware);
-app.use("/sql/:key/*", client({ db, schema }));
+app.post("/graphql", cors({ origin: ALLOWED_ORIGINS }));
+app.post("/participants", cors({ origin: ALLOWED_ORIGINS }));
 
-// app.use("/participants", cors({ origin: ALLOWED_ORIGINS }));
+app.post("/:key/*", keyAuthMiddleware);
+
+app.post("/graphql", graphql({ db, schema }));
+app.post("/:key/graphql", graphql({ db, schema }));
+
 app.post("/participants", getParticipantSnapshots);
-
-// app.use("/participants/:key", keyAuthMiddleware);
-// app.post("/participants/:key", getParticipantSnapshots);
+app.post("/:key/participants", getParticipantSnapshots);
 
 export default app;
