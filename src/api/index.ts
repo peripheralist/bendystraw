@@ -45,10 +45,10 @@ app.use("/graphql/:key", graphql({ db, schema }));
 app.use("/sql/:key/*", keyAuthMiddleware);
 app.use("/sql/:key/*", client({ db, schema }));
 
-// app.use("/", cors({ origin: ALLOWED_ORIGINS }));
-app.post("/", getParticipantSnapshots);
+// app.use("/participants", cors({ origin: ALLOWED_ORIGINS }));
+app.post("/participants", getParticipantSnapshots);
 
-// app.use("/:key", keyAuthMiddleware);
-// app.post("/:key", getParticipantSnapshots);
+// app.use("/participants/:key", keyAuthMiddleware);
+// app.post("/participants/:key", getParticipantSnapshots);
 
 export default app;
