@@ -41,7 +41,11 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
         block: Number(event.block.number),
         timestamp: Number(event.block.timestamp),
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate(() => ({
+        ..._project,
+        block: Number(event.block.number),
+        timestamp: Number(event.block.timestamp),
+      }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId,

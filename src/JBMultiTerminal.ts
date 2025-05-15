@@ -40,7 +40,11 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
         block: Number(event.block.number),
         timestamp: Number(event.block.timestamp),
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate(() => ({
+        ..._project,
+        block: Number(event.block.number),
+        timestamp: Number(event.block.timestamp),
+      }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
@@ -99,7 +103,11 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         block: Number(event.block.number),
         timestamp: Number(event.block.timestamp),
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate(() => ({
+        ..._project,
+        block: Number(event.block.number),
+        timestamp: Number(event.block.timestamp),
+      }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
@@ -243,7 +251,11 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
         block: Number(event.block.number),
         timestamp: Number(event.block.timestamp),
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate(() => ({
+        ..._project,
+        block: Number(event.block.number),
+        timestamp: Number(event.block.timestamp),
+      }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
@@ -307,7 +319,11 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
         block: Number(event.block.number),
         timestamp: Number(event.block.timestamp),
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate(() => ({
+        ..._project,
+        block: Number(event.block.number),
+        timestamp: Number(event.block.timestamp),
+      }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
@@ -396,7 +412,11 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         block: Number(event.block.number),
         timestamp: Number(event.block.timestamp),
       })
-      .onConflictDoNothing();
+      .onConflictDoUpdate(() => ({
+        ..._project,
+        block: Number(event.block.number),
+        timestamp: Number(event.block.timestamp),
+      }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
