@@ -13,8 +13,8 @@ import {
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { getLatestPayEvent } from "./util/getLatestPayEvent";
+import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
-import { tryUpdateSuckerGroup } from "./util/suckerGroup";
 import { handleTrendingPayment } from "./util/trending";
 import { usdPriceForEth } from "./util/usdPrice";
 
@@ -23,7 +23,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
     const { projectId, amount, memo, metadata, returnedFees } = event.args;
 
     // update project
-    const _project = await context.db
+    const { suckerGroupId } = await context.db
       .update(project, {
         chainId: context.network.chainId,
         projectId: Number(projectId),
@@ -32,21 +32,8 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
         balance: p.balance + amount,
       }));
 
-    // await context.db
-    //   .insert(projectMoment)
-    //   .values({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   })
-    //   .onConflictDoUpdate(() => ({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   }));
-
-    await tryUpdateSuckerGroup({
-      suckerGroupId: _project.suckerGroupId,
+    await onProjectStatsUpdated({
+      projectId,
       event,
       context,
     });
@@ -54,7 +41,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(addToBalanceEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId,
       projectId: Number(projectId),
       amount,
       memo,
@@ -87,7 +74,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     // update project
-    const _project = await context.db
+    const { suckerGroupId } = await context.db
       .update(project, {
         chainId: context.network.chainId,
         projectId: projectId,
@@ -96,21 +83,8 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         balance: p.balance - amountPaidOut,
       }));
 
-    // await context.db
-    //   .insert(projectMoment)
-    //   .values({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   })
-    //   .onConflictDoUpdate(() => ({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   }));
-
-    await tryUpdateSuckerGroup({
-      suckerGroupId: _project.suckerGroupId,
+    await onProjectStatsUpdated({
+      projectId,
       event,
       context,
     });
@@ -118,7 +92,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(sendPayoutsEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId,
       projectId: Number(projectId),
       amount,
       amountUsd: await usdPriceForEth({
@@ -243,7 +217,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
     });
 
     // update project
-    const _project = await context.db
+    const { suckerGroupId } = await context.db
       .update(project, {
         projectId,
         chainId,
@@ -255,21 +229,8 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
         balance: p.balance - reclaimAmount,
       }));
 
-    // await context.db
-    //   .insert(projectMoment)
-    //   .values({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   })
-    //   .onConflictDoUpdate(() => ({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   }));
-
-    await tryUpdateSuckerGroup({
-      suckerGroupId: _project.suckerGroupId,
+    await onProjectStatsUpdated({
+      projectId,
       event,
       context,
     });
@@ -277,7 +238,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(cashOutTokensEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId,
       projectId,
       cashOutCount,
       beneficiary,
@@ -315,7 +276,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
     } = event.args;
 
     // update project
-    const _project = await context.db
+    const { suckerGroupId } = await context.db
       .update(project, {
         chainId: context.network.chainId,
         projectId: Number(projectId),
@@ -324,21 +285,8 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
         balance: p.balance - event.args.amountPaidOut,
       }));
 
-    // await context.db
-    //   .insert(projectMoment)
-    //   .values({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   })
-    //   .onConflictDoUpdate(() => ({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   }));
-
-    await tryUpdateSuckerGroup({
-      suckerGroupId: _project.suckerGroupId,
+    await onProjectStatsUpdated({
+      projectId,
       event,
       context,
     });
@@ -346,7 +294,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(useAllowanceEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId,
       projectId: Number(projectId),
       amount,
       amountPaidOut,
@@ -395,7 +343,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     });
 
     // update project
-    await context.db
+    const { suckerGroupId } = await context.db
       .update(project, {
         projectId,
         chainId,
@@ -411,28 +359,9 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     // will update project trending score
     await handleTrendingPayment(event.block.timestamp, context);
 
-    // load updated project
-    const _project = await context.db.find(project, { projectId, chainId });
-    if (!_project) {
-      throw new Error("Missing project");
-    }
-
-    // // ...NOW insert project moment
-    // await context.db
-    //   .insert(projectMoment)
-    //   .values({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   })
-    //   .onConflictDoUpdate(() => ({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   }));
-
-    await tryUpdateSuckerGroup({
-      suckerGroupId: _project.suckerGroupId,
+    // ...NOW handle project update
+    await onProjectStatsUpdated({
+      projectId,
       event,
       context,
     });
@@ -447,14 +376,14 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         volume: amount,
         volumeUsd: amountUsd,
         lastPaidTimestamp: Number(event.block.timestamp),
-        suckerGroupId: _project.suckerGroupId,
+        suckerGroupId,
       })
       .onConflictDoUpdate((p) => ({
         volume: p.volume + amount,
         volumeUsd: p.volumeUsd + amountUsd,
         lastPaidTimestamp: Number(event.block.timestamp),
         paymentsCount: p.paymentsCount + 1,
-        suckerGroupId: _project.suckerGroupId,
+        suckerGroupId,
       }));
     await setParticipantSnapshot({ participant: _participant, context, event });
 
@@ -474,7 +403,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(payEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId,
       projectId,
       amount,
       amountUsd,

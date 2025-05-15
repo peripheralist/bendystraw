@@ -1,9 +1,8 @@
 import { ponder } from "ponder:registry";
 import { project, projectCreateEvent, suckerGroup } from "ponder:schema";
-import { getEventParams } from "./util/getEventParams";
 import { insertActivityEvent } from "./util/activityEvent";
-import { projectMoment } from "ponder:schema";
-import { tryUpdateSuckerGroup } from "./util/suckerGroup";
+import { getEventParams } from "./util/getEventParams";
+import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { generateId } from "./util/id";
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
@@ -13,6 +12,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     const { chainId } = context.network;
     const projectId = Number(_projectId);
 
+    // generate suckerGroupId manually so we can create project + suckerGroup simultaneously
     const suckerGroupId = generateId();
 
     // create project
@@ -34,22 +34,8 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       createdAt: Number(block.timestamp),
     });
 
-    // // insert project moment
-    // await context.db
-    //   .insert(projectMoment)
-    //   .values({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   })
-    //   .onConflictDoUpdate(() => ({
-    //     ..._project,
-    //     block: Number(event.block.number),
-    //     timestamp: Number(event.block.timestamp),
-    //   }));
-
-    await tryUpdateSuckerGroup({
-      suckerGroupId,
+    await onProjectStatsUpdated({
+      projectId,
       event,
       context,
     });
@@ -57,7 +43,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(projectCreateEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId,
       projectId,
     });
     await insertActivityEvent("projectCreateEvent", {

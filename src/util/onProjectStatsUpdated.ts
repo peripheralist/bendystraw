@@ -2,12 +2,15 @@ import { eq } from "ponder";
 import { Context } from "ponder:registry";
 import { project, suckerGroup, suckerGroupMoment } from "ponder:schema";
 
-export async function tryUpdateSuckerGroup({
-  suckerGroupId,
+/**
+ * Handles everything that should happen after a project's **stats** are updated. Inserts a projectMoment and updates the project's suckerGroup's stats.
+ */
+export async function onProjectStatsUpdated({
+  projectId,
   context,
   event,
 }: {
-  suckerGroupId: string | null;
+  projectId: bigint | number;
   context: Context;
   event: {
     block: {
@@ -16,13 +19,43 @@ export async function tryUpdateSuckerGroup({
     };
   };
 }) {
-  if (!suckerGroupId) return;
-
-  const _suckerGroup = await context.db.find(suckerGroup, {
-    id: suckerGroupId,
+  const _project = await context.db.find(project, {
+    chainId: context.network.chainId,
+    projectId: Number(projectId),
   });
 
-  if (!_suckerGroup) return;
+  if (!_project) {
+    throw new Error("[onProjectStatsUpdated] Missing project");
+  }
+
+  // // insert project moment
+  // NOT WORKING due to duplicate key bs
+  // await context.db
+  //   .insert(projectMoment)
+  //   .values({
+  //     projectId: Number(projectId),
+  //     chainId: context.network.chainId,
+  //     block: Number(event.block.number),
+  //     timestamp: Number(event.block.timestamp),
+  //     balance: _project.balance,
+  //     volume: _project.volume,
+  //     volumeUsd: _project.volumeUsd,
+  //     trendingScore: _project.trendingScore,
+  //   })
+  //   .onConflictDoUpdate(() => ({
+  //     balance: _project.balance,
+  //     volume: _project.volume,
+  //     volumeUsd: _project.volumeUsd,
+  //     trendingScore: _project.trendingScore,
+  //   }));
+
+  const _suckerGroup = await context.db.find(suckerGroup, {
+    id: _project.suckerGroupId,
+  });
+
+  if (!_suckerGroup) {
+    throw new Error("[onProjectStatsUpdated] Missing suckerGroup");
+  }
 
   const projects = await Promise.all(
     _suckerGroup.projects.map((id) =>
@@ -67,7 +100,7 @@ export async function tryUpdateSuckerGroup({
     );
 
   const updatedSuckerGroup = await context.db
-    .update(suckerGroup, { id: suckerGroupId })
+    .update(suckerGroup, { id: _project.suckerGroupId })
     .set(aggregateStats);
 
   await context.db
