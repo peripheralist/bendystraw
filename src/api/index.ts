@@ -7,6 +7,7 @@ import schema from "ponder:schema";
 import { ALLOWED_ORIGINS } from "../constants/origins";
 import { keyAuthMiddleware } from "../middleware/keyAuth";
 import { rateLimitMiddleware } from "../middleware/rateLimit";
+import { getParticipantSnapshots } from "./participants";
 
 const app = new Hono();
 
@@ -43,5 +44,11 @@ app.use("/graphql/:key", keyAuthMiddleware);
 app.use("/graphql/:key", graphql({ db, schema }));
 app.use("/sql/:key/*", keyAuthMiddleware);
 app.use("/sql/:key/*", client({ db, schema }));
+
+// app.use("/", cors({ origin: ALLOWED_ORIGINS }));
+app.post("/", getParticipantSnapshots);
+
+// app.use("/:key", keyAuthMiddleware);
+// app.post("/:key", getParticipantSnapshots);
 
 export default app;
