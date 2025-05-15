@@ -1,5 +1,13 @@
 import { Context } from "hono";
+import { and, desc, eq, lte } from "ponder";
 import { db } from "ponder:api";
+import { participant, participantSnapshot } from "ponder:schema";
+import { Address } from "viem";
+
+// @ts-ignore
+BigInt.prototype.toJSON = function () {
+  return String(this);
+};
 
 export async function getParticipantSnapshots(c: Context) {
   try {
@@ -18,24 +26,36 @@ export async function getParticipantSnapshots(c: Context) {
       return c.text("timestamp must be a number");
     }
 
-    const snapshots = await db.execute(`SELECT ps.*
-SELECT ps.*
-FROM ParticipantSnapshot ps
-JOIN (
-  SELECT address, MAX(timestamp) AS maxTimestamp
-  FROM ParticipantSnapshot
-  WHERE timestamp <= ${timestamp}
-  AND suckerGroupId = ${suckerGroupId}
-  GROUP BY address
-) latest
-ON ps.address = latest.address 
-AND ps.timestamp = latest.maxTimestamp
-AND ps.suckerGroupId = ${suckerGroupId};`);
+    const participants = await db.query.participant.findMany({
+      where: and(
+        eq(participant.suckerGroupId, suckerGroupId),
+        lte(participant.createdAt, parseInt(timestamp))
+      ),
+    });
 
-    console.log("asdf", snapshots);
+    // de-duped addresses list
+    const addresses = participants.reduce(
+      (acc, { address }) => (acc.includes(address) ? acc : [...acc, address]),
+      [] as Address[]
+    );
+
+    const snapshots = await Promise.all(
+      addresses.map((address) =>
+        db.query.participantSnapshot.findFirst({
+          orderBy: desc(participantSnapshot.timestamp),
+          where: and(
+            eq(participantSnapshot.address, address),
+            lte(participantSnapshot.timestamp, parseInt(timestamp))
+          ),
+        })
+      )
+    );
 
     return c.json(snapshots);
   } catch (e) {
-    console.error("Error", c.req.path, e);
+    console.error("Error getting participants snapshot", e);
+
+    c.status(500);
+    return c.json({ error: (e as Error).message });
   }
 }

@@ -511,6 +511,7 @@ export const participant = onchainTable(
     ...chainId(t),
     ...projectId(t),
     ...suckerGroupId(t),
+    ...createdAt(t),
     address: t.hex().notNull(),
     volume: t.bigint().notNull().default(BigInt(0)),
     volumeUsd: t.bigint().notNull().default(BigInt(0)),

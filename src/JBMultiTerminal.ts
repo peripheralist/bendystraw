@@ -373,6 +373,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         address: payer,
         chainId,
         projectId,
+        createdAt: Number(event.block.timestamp),
         volume: amount,
         volumeUsd: amountUsd,
         lastPaidTimestamp: Number(event.block.timestamp),

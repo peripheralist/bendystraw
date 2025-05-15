@@ -102,6 +102,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         address: to,
         chainId,
         projectId,
+        createdAt: Number(event.block.timestamp),
         suckerGroupId: _project.suckerGroupId,
       })
       .onConflictDoUpdate({ suckerGroupId: _project.suckerGroupId });
