@@ -83,7 +83,7 @@ ponder.on(
               abi: JB721TiersHookAbi,
               address: BANNY_RETAIL_HOOK,
               functionName: "tokenURI",
-              args: [_nft.tokenId],
+              args: [_nft.tokenId] as const,
             })
             .then((tokenUri) => {
               const metadata = parseTokenUri<{

@@ -66,8 +66,8 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(burnEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId,
       projectId,
-      holder,
       amount: count,
       creditAmount: burnedCredits,
       erc20Amount: BigInt(0),
@@ -161,8 +161,18 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
   try {
     const { symbol, token, name, projectId } = event.args;
 
+    const _project = await context.db.find(project, {
+      projectId: Number(event.args.projectId),
+      chainId: context.network.chainId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     const { id } = await context.db.insert(deployErc20Event).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId: Number(projectId),
       symbol,
       token,

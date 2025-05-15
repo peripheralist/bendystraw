@@ -11,8 +11,18 @@ import { insertActivityEvent } from "./util/activityEvent";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
+    const _project = await context.db.find(project, {
+      projectId: Number(event.args.projectId),
+      chainId: context.network.chainId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     const { id } = await context.db.insert(mintTokensEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId: Number(event.args.projectId),
       beneficiary: event.args.beneficiary,
       beneficiaryTokenCount: event.args.beneficiaryTokenCount,
@@ -105,10 +115,20 @@ ponder.on(
         rulesetCycleNumber,
       } = event.args;
 
+      const _project = await context.db.find(project, {
+        projectId: Number(event.args.projectId),
+        chainId: context.network.chainId,
+      });
+
+      if (!_project) {
+        throw new Error("Missing project");
+      }
+
       const { id } = await context.db
         .insert(sendReservedTokensToSplitsEvent)
         .values({
           ...getEventParams({ event, context }),
+          suckerGroupId: _project.suckerGroupId,
           projectId: Number(projectId),
           from: event.transaction.from,
           tokenCount: tokenCount,
@@ -136,10 +156,20 @@ ponder.on(
     try {
       const { split, rulesetId, projectId, tokenCount, groupId } = event.args;
 
+      const _project = await context.db.find(project, {
+        projectId: Number(event.args.projectId),
+        chainId: context.network.chainId,
+      });
+
+      if (!_project) {
+        throw new Error("Missing project");
+      }
+
       const { id } = await context.db
         .insert(sendReservedTokensToSplitEvent)
         .values({
           ...getEventParams({ event, context }),
+          suckerGroupId: _project.suckerGroupId,
           projectId: Number(projectId),
           rulesetId: Number(rulesetId),
           tokenCount,

@@ -187,7 +187,7 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
     const projectId = Number(projectIdCall);
 
     // update project
-    await context.db
+    const _project = await context.db
       .update(project, {
         projectId,
         chainId: context.network.chainId,
@@ -198,6 +198,7 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
     const { id } = await context.db.insert(mintNftEvent).values({
       ...getEventParams({ event, context }),
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       hook,
       tierId: Number(tierId),
       tokenId,

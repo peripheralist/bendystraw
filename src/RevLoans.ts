@@ -6,6 +6,7 @@ import { getEventParams } from "./util/getEventParams";
 import { insertActivityEvent } from "./util/activityEvent";
 import { borrowLoanEvent } from "ponder:schema";
 import { liquidateLoanEvent } from "ponder:schema";
+import { project } from "ponder:schema";
 
 ponder.on("RevLoans:Borrow", async ({ event, context }) => {
   try {
@@ -22,6 +23,15 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
     } = event.args;
 
     const projectId = Number(revnetId);
+
+    const _project = await context.db.find(project, {
+      projectId: Number(event.args.revnetId),
+      chainId: context.network.chainId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
 
     const tokenUri = await context.client.readContract({
       abi: REVLoansAbi,
@@ -50,6 +60,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
     const { id } = await context.db.insert(borrowLoanEvent).values({
       ...getEventParams({ event, context }),
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       beneficiary,
       borrowAmount,
       collateral: collateralCount,
@@ -76,6 +87,15 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
+    const _project = await context.db.find(project, {
+      projectId: Number(event.args.revnetId),
+      chainId: context.network.chainId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     await context.db
       .update(loan, {
         id: loanId,
@@ -88,6 +108,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
 
     const { id } = await context.db.insert(liquidateLoanEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId,
       borrowAmount: _loan.amount,
       collateral: _loan.collateral,
@@ -122,6 +143,15 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
     const shouldCreateLoan = loanId !== paidOffLoanId;
 
+    const _project = await context.db.find(project, {
+      projectId: Number(event.args.revnetId),
+      chainId: context.network.chainId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     if (shouldCreateLoan) {
       // loan is partially paid off. old loan is burned, we create new loan from `paidOffLoan`. old loan handled by Transfer
       await context.db.insert(loan).values({
@@ -153,6 +183,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
     const { id } = await context.db.insert(repayLoanEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId,
       loanId,
       paidOffLoanId,
@@ -208,6 +239,15 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
+    const _project = await context.db.find(project, {
+      projectId: Number(event.args.revnetId),
+      chainId: context.network.chainId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     await context.db.insert(loan).values({
       id: reallocatedLoanId,
       projectId,
@@ -226,6 +266,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
 
     const { id } = await context.db.insert(reallocateLoanEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       loanId,
       reallocatedLoanId,
       projectId,

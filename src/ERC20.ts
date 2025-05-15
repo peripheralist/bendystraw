@@ -41,6 +41,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
       // create burn event
       const { id } = await context.db.insert(burnEvent).values({
         chainId,
+        suckerGroupId: _project.suckerGroupId,
         txHash: event.transaction.hash,
         timestamp: Number(event.block.timestamp),
         from,

@@ -54,6 +54,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(addToBalanceEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId: Number(projectId),
       amount,
       memo,
@@ -117,6 +118,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(sendPayoutsEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId: Number(projectId),
       amount,
       amountUsd: await usdPriceForEth({
@@ -163,9 +165,19 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
     } = event.args;
     const projectId = Number(_projectId);
 
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId: context.network.chainId,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     // insert event
     const { id } = await context.db.insert(sendPayoutToSplitEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId: projectId,
       amount,
       amountUsd: await usdPriceForEth({
@@ -265,6 +277,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(cashOutTokensEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId,
       cashOutCount,
       beneficiary,
@@ -333,6 +346,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(useAllowanceEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId: Number(projectId),
       amount,
       amountPaidOut,
@@ -460,6 +474,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(payEvent).values({
       ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
       projectId,
       amount,
       amountUsd,

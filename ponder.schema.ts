@@ -27,6 +27,9 @@ export const txHash = (t: PGCB) => ({ txHash: t.hex().notNull() });
 export const caller = (t: PGCB) => ({ caller: t.hex().notNull() });
 export const from = (t: PGCB) => ({ from: t.hex().notNull() });
 export const projectId = (t: PGCB) => ({ projectId: t.integer().notNull() });
+export const suckerGroupId = (t: PGCB) => ({
+  suckerGroupId: t.text().notNull(),
+});
 
 export const eventParams = (t: PGCB) => ({
   ...uniqueId(t),
@@ -45,7 +48,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   ...timestamp(t),
   ...txHash(t),
   ...projectId(t),
-  suckerGroupId: t.text().notNull(),
+  ...suckerGroupId(t),
   addToBalanceEvent: t.text(),
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
@@ -153,6 +156,7 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
 export const addToBalanceEvent = onchainTable("add_to_balance_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   amount: t.bigint().notNull(),
   memo: t.text(),
   metadata: t.hex().notNull(),
@@ -187,6 +191,7 @@ export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
 export const borrowLoanEvent = onchainTable("borrow_loan_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   borrowAmount: t.bigint().notNull(),
   collateral: t.bigint().notNull(),
   sourceFeeAmount: t.bigint().notNull(),
@@ -214,6 +219,7 @@ export const burnEvent = onchainTable("burn_event", (t) => ({
   ...timestamp(t),
   ...txHash(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   amount: t.bigint().notNull(),
   creditAmount: t.bigint().notNull(),
   erc20Amount: t.bigint().notNull(),
@@ -231,6 +237,7 @@ export const cashOutTokensEvent = onchainTable(
   (t) => ({
     ...eventParams(t),
     ...projectId(t),
+    ...suckerGroupId(t),
     cashOutCount: t.bigint().notNull(),
     beneficiary: t.hex().notNull(),
     holder: t.hex().notNull(),
@@ -275,6 +282,7 @@ export const decorateBannyEventRelations = relations(
 export const deployErc20Event = onchainTable("deploy_erc20_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   symbol: t.text().notNull(),
   name: t.text().notNull(),
   token: t.hex().notNull(),
@@ -323,6 +331,7 @@ export const loanRelations = relations(loan, ({ one }) => ({
 export const liquidateLoanEvent = onchainTable("liquidate_loan_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   borrowAmount: t.bigint().notNull(),
   collateral: t.bigint().notNull(),
 }));
@@ -340,6 +349,7 @@ export const liquidateLoanEventRelations = relations(
 export const mintNftEvent = onchainTable("mint_nft_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   hook: t.hex().notNull(),
   beneficiary: t.hex().notNull(),
   tierId: t.integer().notNull(),
@@ -365,6 +375,7 @@ export const mintNftEventRelations = relations(mintNftEvent, ({ one }) => ({
 export const mintTokensEvent = onchainTable("mint_tokens_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   beneficiary: t.hex().notNull(),
   beneficiaryTokenCount: t.bigint().notNull(),
   reservedPercent: t.bigint().notNull(),
@@ -499,6 +510,7 @@ export const participant = onchainTable(
   (t) => ({
     ...chainId(t),
     ...projectId(t),
+    ...suckerGroupId(t),
     address: t.hex().notNull(),
     volume: t.bigint().notNull().default(BigInt(0)),
     volumeUsd: t.bigint().notNull().default(BigInt(0)),
@@ -507,7 +519,6 @@ export const participant = onchainTable(
     balance: t.bigint().notNull().default(BigInt(0)),
     creditBalance: t.bigint().notNull().default(BigInt(0)),
     erc20Balance: t.bigint().notNull().default(BigInt(0)),
-    suckerGroupId: t.text().notNull(),
   }),
   (t) => ({
     addressIdx: index().on(t.address),
@@ -536,6 +547,7 @@ export const participantSnapshot = onchainTable(
   (t) => ({
     ...chainId(t),
     ...projectId(t),
+    ...suckerGroupId(t),
     block: t.integer().notNull(),
     address: t.hex().notNull(),
     volume: t.bigint().notNull().default(BigInt(0)),
@@ -543,7 +555,6 @@ export const participantSnapshot = onchainTable(
     balance: t.bigint().notNull().default(BigInt(0)),
     creditBalance: t.bigint().notNull().default(BigInt(0)),
     erc20Balance: t.bigint().notNull().default(BigInt(0)),
-    suckerGroupId: t.text(),
   }),
   (t) => ({
     addressIdx: index().on(t.address),
@@ -554,6 +565,7 @@ export const participantSnapshot = onchainTable(
 export const payEvent = onchainTable("pay_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   distributionFromProjectId: t.integer(),
   beneficiary: t.hex().notNull(),
   amount: t.bigint().notNull(),
@@ -575,6 +587,7 @@ export const permissionHolder = onchainTable(
   (t) => ({
     ...chainId(t),
     ...projectId(t),
+    ...suckerGroupId(t),
     account: t.hex().notNull(),
     operator: t.hex().notNull(),
     permissions: t.integer().notNull().array(),
@@ -606,7 +619,7 @@ export const project = onchainTable(
     ...chainId(t),
     ...projectId(t),
     ...createdAt(t),
-    suckerGroupId: t.text().notNull(),
+    ...suckerGroupId(t),
     handle: t.text(),
     metadataUri: t.text(),
     metadata: t.json(),
@@ -701,6 +714,7 @@ export const projectMomentRelations = relations(projectMoment, ({ one }) => ({
 export const projectCreateEvent = onchainTable("project_create_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
 }));
 
 export const projectCreateEventRelations = relations(
@@ -716,6 +730,7 @@ export const projectCreateEventRelations = relations(
 export const repayLoanEvent = onchainTable("repay_loan_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   loanId: t.bigint().notNull(),
   paidOffLoanId: t.bigint().notNull(),
   repayBorrowAmount: t.bigint().notNull(),
@@ -734,6 +749,7 @@ export const reallocateLoanEvent = onchainTable(
   (t) => ({
     ...eventParams(t),
     ...projectId(t),
+    ...suckerGroupId(t),
     loanId: t.bigint().notNull(),
     reallocatedLoanId: t.bigint().notNull(),
     removedCollateralCount: t.bigint().notNull(),
@@ -753,6 +769,7 @@ export const reallocateLoanEventRelations = relations(
 export const sendPayoutsEvent = onchainTable("send_payouts_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   amount: t.bigint().notNull(),
   amountUsd: t.bigint().notNull(),
   amountPaidOut: t.bigint().notNull(),
@@ -779,6 +796,7 @@ export const sendPayoutToSplitEvent = onchainTable(
   (t) => ({
     ...eventParams(t),
     ...projectId(t),
+    ...suckerGroupId(t),
     amount: t.bigint().notNull(),
     netAmount: t.bigint().notNull(),
     amountUsd: t.bigint().notNull(),
@@ -811,6 +829,7 @@ export const sendReservedTokensToSplitEvent = onchainTable(
   (t) => ({
     ...eventParams(t),
     ...projectId(t),
+    ...suckerGroupId(t),
     rulesetId: t.integer().notNull(),
     tokenCount: t.bigint().notNull(),
     groupId: t.bigint().notNull(),
@@ -841,6 +860,7 @@ export const sendReservedTokensToSplitsEvent = onchainTable(
   (t) => ({
     ...eventParams(t),
     ...projectId(t),
+    ...suckerGroupId(t),
     rulesetCycleNumber: t.integer().notNull(),
     rulesetId: t.integer().notNull(),
     tokenCount: t.bigint().notNull(),
@@ -943,7 +963,7 @@ export const suckerGroupRelations = relations(suckerGroup, ({ many }) => ({
 export const suckerGroupMoment = onchainTable(
   "sucker_group_moment",
   (t) => ({
-    suckerGroupId: t.text().notNull(),
+    ...suckerGroupId(t),
     block: t.integer().notNull(),
     timestamp: t.integer().notNull(),
     paymentsCount: t.integer().notNull().default(0),
@@ -968,6 +988,7 @@ export const suckerGroupMoment = onchainTable(
 export const useAllowanceEvent = onchainTable("use_allowance_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
+  ...suckerGroupId(t),
   amount: t.bigint().notNull(),
   amountPaidOut: t.bigint().notNull(),
   netAmountPaidOut: t.bigint().notNull(),
