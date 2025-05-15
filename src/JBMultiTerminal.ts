@@ -5,7 +5,6 @@ import {
   participant,
   payEvent,
   project,
-  projectMoment,
   sendPayoutsEvent,
   sendPayoutToSplitEvent,
   useAllowanceEvent,
@@ -33,18 +32,18 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
         balance: p.balance + amount,
       }));
 
-    await context.db
-      .insert(projectMoment)
-      .values({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      })
-      .onConflictDoUpdate(() => ({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      }));
+    // await context.db
+    //   .insert(projectMoment)
+    //   .values({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   })
+    //   .onConflictDoUpdate(() => ({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
@@ -96,18 +95,18 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         balance: p.balance - amountPaidOut,
       }));
 
-    await context.db
-      .insert(projectMoment)
-      .values({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      })
-      .onConflictDoUpdate(() => ({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      }));
+    // await context.db
+    //   .insert(projectMoment)
+    //   .values({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   })
+    //   .onConflictDoUpdate(() => ({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
@@ -244,18 +243,18 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
         balance: p.balance - reclaimAmount,
       }));
 
-    await context.db
-      .insert(projectMoment)
-      .values({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      })
-      .onConflictDoUpdate(() => ({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      }));
+    // await context.db
+    //   .insert(projectMoment)
+    //   .values({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   })
+    //   .onConflictDoUpdate(() => ({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
@@ -312,18 +311,18 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
         balance: p.balance - event.args.amountPaidOut,
       }));
 
-    await context.db
-      .insert(projectMoment)
-      .values({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      })
-      .onConflictDoUpdate(() => ({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      }));
+    // await context.db
+    //   .insert(projectMoment)
+    //   .values({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   })
+    //   .onConflictDoUpdate(() => ({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,
@@ -404,19 +403,19 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    // ...NOW insert project moment
-    await context.db
-      .insert(projectMoment)
-      .values({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      })
-      .onConflictDoUpdate(() => ({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      }));
+    // // ...NOW insert project moment
+    // await context.db
+    //   .insert(projectMoment)
+    //   .values({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   })
+    //   .onConflictDoUpdate(() => ({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId: _project.suckerGroupId,

@@ -33,19 +33,19 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       id: suckerGroupId,
     });
 
-    // insert project moment
-    await context.db
-      .insert(projectMoment)
-      .values({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      })
-      .onConflictDoUpdate(() => ({
-        ..._project,
-        block: Number(event.block.number),
-        timestamp: Number(event.block.timestamp),
-      }));
+    // // insert project moment
+    // await context.db
+    //   .insert(projectMoment)
+    //   .values({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   })
+    //   .onConflictDoUpdate(() => ({
+    //     ..._project,
+    //     block: Number(event.block.number),
+    //     timestamp: Number(event.block.timestamp),
+    //   }));
 
     await tryUpdateSuckerGroup({
       suckerGroupId,
