@@ -548,6 +548,7 @@ export const participantSnapshot = onchainTable(
     ...chainId(t),
     ...projectId(t),
     ...suckerGroupId(t),
+    ...timestamp(t),
     block: t.integer().notNull(),
     address: t.hex().notNull(),
     volume: t.bigint().notNull().default(BigInt(0)),

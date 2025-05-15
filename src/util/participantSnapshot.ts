@@ -13,11 +13,16 @@ export function setParticipantSnapshot({
   event: {
     block: {
       number: bigint;
+      timestamp: bigint;
     };
   };
 }) {
   return context.db
     .insert(participantSnapshot)
-    .values({ ...participant, block: Number(event.block.number) })
+    .values({
+      ...participant,
+      block: Number(event.block.number),
+      timestamp: Number(event.block.timestamp),
+    })
     .onConflictDoUpdate({ ...participant, block: Number(event.block.number) });
 }
