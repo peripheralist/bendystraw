@@ -154,21 +154,35 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
     if (shouldCreateLoan) {
       // loan is partially paid off. old loan is burned, we create new loan from `paidOffLoan`. old loan handled by Transfer
-      await context.db.insert(loan).values({
-        id: paidOffLoanId,
-        projectId,
-        chainId: context.network.chainId,
-        createdAt: paidOffLoan.createdAt,
-        borrowAmount: paidOffLoan.amount,
-        collateral: paidOffLoan.collateral,
-        prepaidDuration: paidOffLoan.prepaidDuration,
-        prepaidFeePercent: paidOffLoan.prepaidFeePercent,
-        token: paidOffLoan.source.token,
-        terminal: paidOffLoan.source.terminal,
-        beneficiary,
-        sourceFeeAmount,
-        owner: caller,
-      });
+      await context.db
+        .insert(loan)
+        .values({
+          id: paidOffLoanId,
+          projectId,
+          chainId: context.network.chainId,
+          createdAt: paidOffLoan.createdAt,
+          borrowAmount: paidOffLoan.amount,
+          collateral: paidOffLoan.collateral,
+          prepaidDuration: paidOffLoan.prepaidDuration,
+          prepaidFeePercent: paidOffLoan.prepaidFeePercent,
+          token: paidOffLoan.source.token,
+          terminal: paidOffLoan.source.terminal,
+          beneficiary,
+          sourceFeeAmount,
+          owner: caller,
+        })
+        .onConflictDoUpdate(() => ({
+          createdAt: paidOffLoan.createdAt,
+          borrowAmount: paidOffLoan.amount,
+          collateral: paidOffLoan.collateral,
+          prepaidDuration: paidOffLoan.prepaidDuration,
+          prepaidFeePercent: paidOffLoan.prepaidFeePercent,
+          token: paidOffLoan.source.token,
+          terminal: paidOffLoan.source.terminal,
+          beneficiary,
+          sourceFeeAmount,
+          owner: caller,
+        }));
     } else {
       // loan is completely paid off and burned. (owner updated on Transfer)
       await context.db
