@@ -24,5 +24,9 @@ export function setParticipantSnapshot({
       block: Number(event.block.number),
       timestamp: Number(event.block.timestamp),
     })
-    .onConflictDoUpdate({ ...participant, block: Number(event.block.number) });
+    .onConflictDoUpdate({
+      ...participant,
+      block: Number(event.block.number),
+      timestamp: Number(event.block.timestamp),
+    });
 }
