@@ -27,7 +27,7 @@ app.use("/", graphql({ db, schema }));
 app.post("/graphql", cors({ origin: ALLOWED_ORIGINS }));
 app.post("/participants", cors({ origin: ALLOWED_ORIGINS }));
 
-app.post("/:key/*", keyAuthMiddleware);
+// app.post("/:key/*", keyAuthMiddleware);
 
 app.post("/graphql", graphql({ db, schema }));
 app.post("/:key/graphql", graphql({ db, schema }));
