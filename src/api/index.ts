@@ -27,12 +27,12 @@ app.use("/", graphql({ db, schema }));
 app.post("/graphql", cors({ origin: ALLOWED_ORIGINS }));
 app.post("/participants", cors({ origin: ALLOWED_ORIGINS }));
 
-// app.post("/:key/*", keyAuthMiddleware);
-
 app.post("/graphql", graphql({ db, schema }));
+app.post("/:key/graphql", keyAuthMiddleware);
 app.post("/:key/graphql", graphql({ db, schema }));
 
 app.post("/participants", getParticipantSnapshots);
+app.post("/:key/participants", keyAuthMiddleware);
 app.post("/:key/participants", getParticipantSnapshots);
 
 export default app;
