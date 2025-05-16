@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { permissionHolder, project } from "ponder:schema";
+import { permissionHolder } from "ponder:schema";
 
 ponder.on(
   "JBPermissions:OperatorPermissionsSet",
@@ -14,21 +14,11 @@ ponder.on(
       const { chainId } = context.network;
       const projectId = Number(_projectId);
 
-      const _project = await context.db.find(project, {
-        projectId,
-        chainId: context.network.chainId,
-      });
-
-      if (!_project) {
-        throw new Error("Missing project");
-      }
-
       await context.db
         .insert(permissionHolder)
         .values({
           chainId,
           projectId,
-          suckerGroupId: _project.suckerGroupId,
           operator,
           account,
           permissions: [...permissionIds],

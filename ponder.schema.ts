@@ -589,7 +589,6 @@ export const permissionHolder = onchainTable(
   (t) => ({
     ...chainId(t),
     ...projectId(t),
-    ...suckerGroupId(t),
     account: t.hex().notNull(),
     operator: t.hex().notNull(),
     permissions: t.integer().notNull().array(),
