@@ -72,10 +72,9 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
         })
         .onConflictDoUpdate((p) => ({
           erc20Balance: p.erc20Balance + value,
-          balance: p.erc20Balance + value + p.creditBalance,
+          balance: p.balance + value,
           suckerGroupId: _project.suckerGroupId,
         }));
-
       await setParticipantSnapshot({
         participant: _to,
         context,
@@ -85,13 +84,18 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
 
     if (from !== zeroAddress) {
       // update `from` participant
-      await context.db
+      const _from = await context.db
         .update(participant, { chainId, projectId, address: from })
         .set((p) => ({
           erc20Balance: p.erc20Balance - value,
-          balance: p.erc20Balance - value + p.creditBalance,
+          balance: p.balance - value,
           suckerGroupId: _project.suckerGroupId,
         }));
+      await setParticipantSnapshot({
+        participant: _from,
+        context,
+        event,
+      });
     }
   } catch (e) {
     console.error(

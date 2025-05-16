@@ -25,7 +25,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
     }
 
     // update holder participant
-    await context.db
+    const _holder = await context.db
       .update(participant, { chainId, projectId, address: holder })
       .set((p) => {
         const _p = p;
@@ -45,6 +45,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
 
         return _p;
       });
+    await setParticipantSnapshot({ participant: _holder, context, event });
 
     // update suckerGroup tokenSupply
     const { suckerGroupId } = await context.db
@@ -93,17 +94,18 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
     // participant will have been created by previous transferCredits event to holder
 
     // only update staked balance, erc20 balance will be updated by erc20 mint event
-    await context.db
+    const _participant = await context.db
       .update(participant, {
         chainId,
         address: holder,
         projectId,
       })
       .set((p) => ({
+        // balance does not change, only exchanging credits for erc20
         creditBalance: creditBalance - count,
-        balance: p.erc20Balance + creditBalance - count,
         suckerGroupId: _project.suckerGroupId,
       }));
+    await setParticipantSnapshot({ participant: _participant, context, event });
   } catch (e) {
     console.error("JBTokens:ClaimTokens", e);
   }
@@ -130,7 +132,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
       })
       .set((p) => ({
         creditBalance: p.creditBalance - count,
-        balance: p.creditBalance - count + p.erc20Balance,
+        balance: p.balance - count,
         suckerGroupId: _project.suckerGroupId,
       }));
     await setParticipantSnapshot({ participant: sender, context, event });
@@ -149,7 +151,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
       })
       .onConflictDoUpdate((p) => ({
         creditBalance: p.creditBalance + count,
-        balance: p.creditBalance + count + p.erc20Balance,
+        balance: p.balance + count,
         suckerGroupId: _project.suckerGroupId,
       }));
     await setParticipantSnapshot({ participant: receiver, context, event });
@@ -239,9 +241,8 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
       })
       .onConflictDoUpdate((p) => ({
         creditBalance: p.creditBalance + count,
-        balance: p.creditBalance + p.erc20Balance + count,
+        balance: p.balance + count,
       }));
-
     await setParticipantSnapshot({ participant: receiver, context, event });
   } catch (e) {
     console.error("JBTokens:Mint", e);
