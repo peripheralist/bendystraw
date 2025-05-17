@@ -118,7 +118,7 @@ const JBTokens = {
 } as const;
 
 export const mainnetConfig = createConfig({
-  ordering: "multichain",
+  ordering: "omnichain",
   chains: {
     ethereum: { id: mainnet.id, rpc: rpcUrl("eth-mainnet") },
     arbitrum: { id: arbitrum.id, rpc: rpcUrl("arb-mainnet") },
@@ -312,6 +312,7 @@ export const mainnetConfig = createConfig({
 });
 
 export const testnetConfig = createConfig({
+  ordering: "omnichain",
   chains: {
     ethereumSepolia: {
       id: sepolia.id,
