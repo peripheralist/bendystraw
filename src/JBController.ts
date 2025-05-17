@@ -13,7 +13,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
     });
 
     if (!_project) {
@@ -47,7 +47,7 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   // If the controller emits a launchProject event, the project launch tx was called via the JBController, and we want to prefer its `caller` param over any existing value
   const { projectId: _projectId, caller, projectUri } = event.args;
   const projectId = Number(_projectId);
-  const chainId = context.network.chainId;
+  const chainId = context.chain.id;
   try {
     const metadata = await parseProjectMetadata(projectUri);
 
@@ -77,7 +77,7 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
   try {
     const { projectId: _projectId, uri } = event.args;
     const projectId = Number(_projectId);
-    const chainId = context.network.chainId;
+    const chainId = context.chain.id;
 
     const metadata = await parseProjectMetadata(uri);
 
@@ -117,7 +117,7 @@ ponder.on(
 
       const _project = await context.db.find(project, {
         projectId: Number(event.args.projectId),
-        chainId: context.network.chainId,
+        chainId: context.chain.id,
       });
 
       if (!_project) {
@@ -158,7 +158,7 @@ ponder.on(
 
       const _project = await context.db.find(project, {
         projectId: Number(event.args.projectId),
-        chainId: context.network.chainId,
+        chainId: context.chain.id,
       });
 
       if (!_project) {

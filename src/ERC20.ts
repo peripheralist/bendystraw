@@ -14,7 +14,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
   try {
     const { from, to, value } = event.args;
     const { address: token } = event.log;
-    const { chainId } = context.network;
+    const { id: chainId } = context.chain;
 
     const _deployErc20Event =
       await context.db.sql.query.deployErc20Event.findFirst({
@@ -100,7 +100,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
   } catch (e) {
     console.error(
       "ERC20: Transfer",
-      context.network.chainId,
+      context.chain.id,
       event.log.address,
       event.transaction.hash,
       e

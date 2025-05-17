@@ -28,7 +28,7 @@ ponder.on(
   "Banny721TokenUriResolver:DecorateBanny",
   async ({ event, context }) => {
     try {
-      const chainId = context.network.chainId;
+      const chainId = context.chain.id;
       const { bannyBodyId: tokenId } = event.args;
 
       const decoratedTokenUri = await context.client.readContract({
@@ -72,7 +72,7 @@ ponder.on(
         id,
         event,
         context,
-        projectId: projectId(context.network.chainId),
+        projectId: projectId(context.chain.id),
       });
 
       // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed
@@ -121,7 +121,7 @@ ponder.on(
   async ({ event, context }) => {
     try {
       const hook = BANNY_RETAIL_HOOK;
-      const { chainId } = context.network;
+      const { id: chainId } = context.chain;
       const tierId = Number(event.args.upc);
 
       const svg = await getBannySvg({ context, tierId: event.args.upc });
@@ -181,7 +181,7 @@ ponder.on(
     } catch (e) {
       console.error(
         "Banny721TokenUriResolver:SetSvgContent",
-        context.network.chainId,
+        context.chain.id,
         event.args.upc,
         e
       );
@@ -202,7 +202,7 @@ ponder.on(
       await context.db
         .update(nftTier, {
           hook: BANNY_RETAIL_HOOK,
-          chainId: context.network.chainId,
+          chainId: context.chain.id,
           tierId: Number(event.args.upc),
         })
         .set({
@@ -226,7 +226,7 @@ ponder.on(
           context.db
             .update(nftTier, {
               hook: BANNY_RETAIL_HOOK,
-              chainId: context.network.chainId,
+              chainId: context.chain.id,
               tierId: id,
             })
             .set({

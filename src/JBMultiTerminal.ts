@@ -25,7 +25,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
     // update project
     const { suckerGroupId } = await context.db
       .update(project, {
-        chainId: context.network.chainId,
+        chainId: context.chain.id,
         projectId: Number(projectId),
       })
       .set((p) => ({
@@ -76,7 +76,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
     // update project
     const { suckerGroupId } = await context.db
       .update(project, {
-        chainId: context.network.chainId,
+        chainId: context.chain.id,
         projectId: projectId,
       })
       .set((p) => ({
@@ -141,7 +141,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       projectId,
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
     });
 
     if (!_project) {
@@ -206,7 +206,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       rulesetCycleNumber,
       rulesetId,
     } = event.args;
-    const { chainId } = context.network;
+    const { id: chainId } = context.chain;
 
     const projectId = Number(_projectId);
 
@@ -278,7 +278,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
     // update project
     const { suckerGroupId } = await context.db
       .update(project, {
-        chainId: context.network.chainId,
+        chainId: context.chain.id,
         projectId: Number(projectId),
       })
       .set((p) => ({
@@ -326,7 +326,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       newlyIssuedTokenCount,
       payer,
     } = event.args;
-    const { chainId } = context.network;
+    const { id: chainId } = context.chain;
 
     const projectId = Number(_projectId);
 
@@ -422,7 +422,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     // beneficiary participant/wallet will be handled on token mint
   } catch (error) {
     console.error("JBMultiTerminal:Pay", {
-      chain: context.network.chainId,
+      chain: context.chain.id,
       tx: event.transaction.hash,
       error,
     });
@@ -438,7 +438,7 @@ ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
     if (latestPayEvent?.projectId !== 1) {
       throw new Error(
         "Latest PayEvent projectId != 1" +
-          ` (${latestPayEvent?.projectId}), tx: ${context.network.chainId} ${event.transaction.hash}`
+          ` (${latestPayEvent?.projectId}), tx: ${context.chain.id} ${event.transaction.hash}`
       );
     }
 

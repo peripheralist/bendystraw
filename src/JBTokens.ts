@@ -14,7 +14,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
   try {
     const { projectId: _projectId, holder, count } = event.args;
     const projectId = Number(_projectId);
-    const { chainId } = context.network;
+    const { id: chainId } = context.chain;
 
     let burnedCredits = BigInt(0);
 
@@ -83,7 +83,7 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
   try {
     const { projectId: _projectId, holder, count, creditBalance } = event.args;
     const projectId = Number(_projectId);
-    const { chainId } = context.network;
+    const { id: chainId } = context.chain;
 
     const _project = await context.db.find(project, { projectId, chainId });
 
@@ -115,7 +115,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
   try {
     const { projectId: _projectId, holder, recipient, count } = event.args;
     const projectId = Number(_projectId);
-    const { chainId } = context.network;
+    const { id: chainId } = context.chain;
 
     const _project = await context.db.find(project, { projectId, chainId });
 
@@ -166,7 +166,7 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
     });
 
     if (!_project) {
@@ -201,7 +201,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
       holder,
       count,
     } = event.args;
-    const { chainId } = context.network;
+    const { id: chainId } = context.chain;
     const projectId = Number(_projectId);
 
     // update project

@@ -9,7 +9,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
   try {
     const { args, transaction, block } = event;
     const { projectId: _projectId, owner, caller } = args;
-    const { chainId } = context.network;
+    const { id: chainId } = context.chain;
     const projectId = Number(_projectId);
 
     // generate suckerGroupId manually so we can create project + suckerGroup simultaneously
@@ -61,7 +61,7 @@ ponder.on("JBProjects:Transfer", async ({ event, context }) => {
   try {
     await context.db
       .update(project, {
-        chainId: context.network.chainId,
+        chainId: context.chain.id,
         projectId: Number(event.args.tokenId),
       })
       .set({

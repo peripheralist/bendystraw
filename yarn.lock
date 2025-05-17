@@ -510,10 +510,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@ponder/utils@0.2.3":
-  version "0.2.3"
-  resolved "https://registry.yarnpkg.com/@ponder/utils/-/utils-0.2.3.tgz#7baa50b331e33bd08cb873fc8a60ceb4569f89b0"
-  integrity sha512-QdlRXrn48nRM/QxNHRffO3PnIFvUf9qHE+rXSut44r74E4iiq9UrIPMhSMyCbJN68yU4QyTupZ/qpqE5PNAo8A==
+"@ponder/utils@0.2.7":
+  version "0.2.7"
+  resolved "https://registry.yarnpkg.com/@ponder/utils/-/utils-0.2.7.tgz#79eaba37f5f19783dff5da817c575f9e02c0afc2"
+  integrity sha512-7BcDd8y6Dmi+Bys4D0m+BULH9ug2XZ5Lsa4CwGSsJrY4OIQJerib6TENzTFHGR65XBV1gu9xLct9pMz7RpvAKg==
 
 "@repeaterjs/repeater@^3.0.4":
   version "3.0.6"
@@ -2031,10 +2031,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@^0.10.18:
-  version "0.10.18"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.10.18.tgz#d774d331b32db18fdb2eeffc06362fcfa8667add"
-  integrity sha512-6H8XKquYiKwUTXaoS165E9cQPcaNUMX2awE67SbgV+XEb91W2oxdhoEqe6S8Pi0CUm2VLiS8dlG1PRPVDc1l7A==
+ponder@^0.11.2:
+  version "0.11.2"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.11.2.tgz#29490a9ff5a319ce6a60c0d72df0640a6ca8ae1c"
+  integrity sha512-ZFaZfeXCRWTsJtZ76ZBNDGrKc93wb4ZAHyUjhDa/YrhoJOI2boo/n51hD8w/5OULccwR4Rat4L0NL3ayzR1g0g==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"
@@ -2043,7 +2043,7 @@ ponder@^0.10.18:
     "@escape.tech/graphql-armor-max-depth" "^2.2.0"
     "@escape.tech/graphql-armor-max-tokens" "^2.3.0"
     "@hono/node-server" "1.13.3"
-    "@ponder/utils" "0.2.3"
+    "@ponder/utils" "0.2.7"
     abitype "^0.10.2"
     ansi-escapes "^7.0.0"
     commander "^12.0.0"

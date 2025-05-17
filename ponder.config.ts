@@ -24,7 +24,7 @@ import { REVDeployerAbi } from "./abis/REVDeployerAbi";
 import { ADDRESS } from "./src/constants/address";
 import { REVLoansAbi } from "./abis/REVLoansAbi";
 
-const transportUrl = (prefix: string) =>
+const rpcUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 
 const deployErc20FactoryConfig = factory({
@@ -43,7 +43,7 @@ const JB721TiersHookDeployer = {
   mainnet: {
     abi: JB721TiersHookDeployerAbi,
     address: ADDRESS.jb721TiersHookDeployer,
-    network: {
+    chain: {
       ethereum: {
         startBlock: 21863981,
       },
@@ -61,7 +61,7 @@ const JB721TiersHookDeployer = {
   testnet: {
     abi: JB721TiersHookDeployerAbi,
     address: ADDRESS.jb721TiersHookDeployer,
-    network: {
+    chain: {
       ethereumSepolia: {
         startBlock: 7724790,
       },
@@ -82,7 +82,7 @@ const JBTokens = {
   mainnet: {
     abi: JBTokensAbi,
     address: ADDRESS.jbTokens,
-    network: {
+    chain: {
       ethereum: {
         startBlock: 21863179,
       },
@@ -100,7 +100,7 @@ const JBTokens = {
   testnet: {
     abi: JBTokensAbi,
     address: ADDRESS.jbTokens,
-    network: {
+    chain: {
       ethereumSepolia: {
         startBlock: 7724144,
       },
@@ -119,17 +119,17 @@ const JBTokens = {
 
 export const mainnetConfig = createConfig({
   ordering: "multichain",
-  networks: {
-    ethereum: { chainId: mainnet.id, transport: transportUrl("eth-mainnet") },
-    arbitrum: { chainId: arbitrum.id, transport: transportUrl("arb-mainnet") },
-    base: { chainId: base.id, transport: transportUrl("base-mainnet") },
-    optimism: { chainId: optimism.id, transport: transportUrl("opt-mainnet") },
+  chains: {
+    ethereum: { id: mainnet.id, rpc: rpcUrl("eth-mainnet") },
+    arbitrum: { id: arbitrum.id, rpc: rpcUrl("arb-mainnet") },
+    base: { id: base.id, rpc: rpcUrl("base-mainnet") },
+    optimism: { id: optimism.id, rpc: rpcUrl("opt-mainnet") },
   },
   contracts: {
     JBProjects: {
       abi: JBProjectsAbi,
       address: ADDRESS.jbProjects,
-      network: {
+      chain: {
         ethereum: {
           startBlock: 21863142,
         },
@@ -147,7 +147,7 @@ export const mainnetConfig = createConfig({
     JBController: {
       abi: JBControllerAbi,
       address: ADDRESS.jbController,
-      network: {
+      chain: {
         ethereum: {
           startBlock: 21863191,
         },
@@ -165,7 +165,7 @@ export const mainnetConfig = createConfig({
     JBMultiTerminal: {
       abi: JBMultiTerminalAbi,
       address: ADDRESS.jbMultiTerminal,
-      network: {
+      chain: {
         ethereum: {
           startBlock: 21863215,
         },
@@ -184,21 +184,18 @@ export const mainnetConfig = createConfig({
     JB721TiersHook: {
       abi: JB721TiersHookAbi,
       address: hookDeployedFactoryConfig,
-      network: {
+      chain: {
         ethereum: {
-          startBlock:
-            JB721TiersHookDeployer.mainnet.network.ethereum.startBlock,
+          startBlock: JB721TiersHookDeployer.mainnet.chain.ethereum.startBlock,
         },
         arbitrum: {
-          startBlock:
-            JB721TiersHookDeployer.mainnet.network.arbitrum.startBlock,
+          startBlock: JB721TiersHookDeployer.mainnet.chain.arbitrum.startBlock,
         },
         base: {
-          startBlock: JB721TiersHookDeployer.mainnet.network.base.startBlock,
+          startBlock: JB721TiersHookDeployer.mainnet.chain.base.startBlock,
         },
         optimism: {
-          startBlock:
-            JB721TiersHookDeployer.mainnet.network.optimism.startBlock,
+          startBlock: JB721TiersHookDeployer.mainnet.chain.optimism.startBlock,
         },
       },
     },
@@ -206,25 +203,25 @@ export const mainnetConfig = createConfig({
     ERC20: {
       abi: erc20Abi,
       address: deployErc20FactoryConfig,
-      network: {
+      chain: {
         ethereum: {
-          startBlock: JBTokens.mainnet.network.ethereum.startBlock,
+          startBlock: JBTokens.mainnet.chain.ethereum.startBlock,
         },
         arbitrum: {
-          startBlock: JBTokens.mainnet.network.arbitrum.startBlock,
+          startBlock: JBTokens.mainnet.chain.arbitrum.startBlock,
         },
         base: {
-          startBlock: JBTokens.mainnet.network.base.startBlock,
+          startBlock: JBTokens.mainnet.chain.base.startBlock,
         },
         optimism: {
-          startBlock: JBTokens.mainnet.network.optimism.startBlock,
+          startBlock: JBTokens.mainnet.chain.optimism.startBlock,
         },
       },
     },
     JBPermissions: {
       address: ADDRESS.jbPermissions,
       abi: JBPermissionsAbi,
-      network: {
+      chain: {
         ethereum: {
           startBlock: 21863136,
         },
@@ -242,7 +239,7 @@ export const mainnetConfig = createConfig({
     Banny721TokenUriResolver: {
       abi: Banny721TokenUriResolverAbi,
       address: ADDRESS.banny721TokenUriResolver,
-      network: {
+      chain: {
         ethereum: {
           startBlock: 22039034,
         },
@@ -260,7 +257,7 @@ export const mainnetConfig = createConfig({
     RevDeployer: {
       abi: REVDeployerAbi,
       address: ADDRESS.revDeployer,
-      network: {
+      chain: {
         ethereum: {
           startBlock: 21869094,
         },
@@ -278,7 +275,7 @@ export const mainnetConfig = createConfig({
     RevLoans: {
       abi: REVLoansAbi,
       address: ADDRESS.revLoans,
-      network: {
+      chain: {
         ethereum: {
           startBlock: 21869096,
         },
@@ -296,7 +293,7 @@ export const mainnetConfig = createConfig({
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
       address: ADDRESS.jbSuckersRegistry,
-      network: {
+      chain: {
         ethereum: {
           startBlock: 21863660,
         },
@@ -315,29 +312,29 @@ export const mainnetConfig = createConfig({
 });
 
 export const testnetConfig = createConfig({
-  networks: {
+  chains: {
     ethereumSepolia: {
-      chainId: sepolia.id,
-      transport: transportUrl("eth-sepolia"),
+      id: sepolia.id,
+      rpc: rpcUrl("eth-sepolia"),
     },
     arbitrumSepolia: {
-      chainId: arbitrumSepolia.id,
-      transport: transportUrl("arb-sepolia"),
+      id: arbitrumSepolia.id,
+      rpc: rpcUrl("arb-sepolia"),
     },
     baseSepolia: {
-      chainId: baseSepolia.id,
-      transport: transportUrl("base-sepolia"),
+      id: baseSepolia.id,
+      rpc: rpcUrl("base-sepolia"),
     },
     optimismSepolia: {
-      chainId: optimismSepolia.id,
-      transport: transportUrl("opt-sepolia"),
+      id: optimismSepolia.id,
+      rpc: rpcUrl("opt-sepolia"),
     },
   },
   contracts: {
     JBProjects: {
       abi: JBProjectsAbi,
       address: ADDRESS.jbProjects,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock: 7724105,
         },
@@ -355,7 +352,7 @@ export const testnetConfig = createConfig({
     JBController: {
       abi: JBControllerAbi,
       address: ADDRESS.jbController,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock: 7724149,
         },
@@ -373,7 +370,7 @@ export const testnetConfig = createConfig({
     JBMultiTerminal: {
       abi: JBMultiTerminalAbi,
       address: ADDRESS.jbMultiTerminal,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock: 7724161,
         },
@@ -392,22 +389,22 @@ export const testnetConfig = createConfig({
     JB721TiersHook: {
       abi: JB721TiersHookAbi,
       address: hookDeployedFactoryConfig,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock:
-            JB721TiersHookDeployer.testnet.network.ethereumSepolia.startBlock,
+            JB721TiersHookDeployer.testnet.chain.ethereumSepolia.startBlock,
         },
         arbitrumSepolia: {
           startBlock:
-            JB721TiersHookDeployer.testnet.network.arbitrumSepolia.startBlock,
+            JB721TiersHookDeployer.testnet.chain.arbitrumSepolia.startBlock,
         },
         baseSepolia: {
           startBlock:
-            JB721TiersHookDeployer.testnet.network.baseSepolia.startBlock,
+            JB721TiersHookDeployer.testnet.chain.baseSepolia.startBlock,
         },
         optimismSepolia: {
           startBlock:
-            JB721TiersHookDeployer.testnet.network.optimismSepolia.startBlock,
+            JB721TiersHookDeployer.testnet.chain.optimismSepolia.startBlock,
         },
       },
     },
@@ -415,25 +412,25 @@ export const testnetConfig = createConfig({
     ERC20: {
       abi: erc20Abi,
       address: deployErc20FactoryConfig,
-      network: {
+      chain: {
         ethereumSepolia: {
-          startBlock: JBTokens.testnet.network.ethereumSepolia.startBlock,
+          startBlock: JBTokens.testnet.chain.ethereumSepolia.startBlock,
         },
         arbitrumSepolia: {
-          startBlock: JBTokens.testnet.network.arbitrumSepolia.startBlock,
+          startBlock: JBTokens.testnet.chain.arbitrumSepolia.startBlock,
         },
         baseSepolia: {
-          startBlock: JBTokens.testnet.network.baseSepolia.startBlock,
+          startBlock: JBTokens.testnet.chain.baseSepolia.startBlock,
         },
         optimismSepolia: {
-          startBlock: JBTokens.testnet.network.optimismSepolia.startBlock,
+          startBlock: JBTokens.testnet.chain.optimismSepolia.startBlock,
         },
       },
     },
     JBPermissions: {
       address: ADDRESS.jbPermissions,
       abi: JBPermissionsAbi,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock: 7724077,
         },
@@ -451,7 +448,7 @@ export const testnetConfig = createConfig({
     Banny721TokenUriResolver: {
       abi: Banny721TokenUriResolverAbi,
       address: ADDRESS.banny721TokenUriResolver,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock: 7894609,
         },
@@ -469,7 +466,7 @@ export const testnetConfig = createConfig({
     RevDeployer: {
       abi: REVDeployerAbi,
       address: ADDRESS.revDeployer,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock: 7729792,
         },
@@ -487,7 +484,7 @@ export const testnetConfig = createConfig({
     RevLoans: {
       abi: REVLoansAbi,
       address: ADDRESS.revLoans,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock: 7729794,
         },
@@ -505,7 +502,7 @@ export const testnetConfig = createConfig({
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
       address: ADDRESS.jbSuckersRegistry,
-      network: {
+      chain: {
         ethereumSepolia: {
           startBlock: 7724468,
         },

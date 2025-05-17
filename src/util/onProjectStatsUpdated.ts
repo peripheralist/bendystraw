@@ -20,7 +20,7 @@ export async function onProjectStatsUpdated({
   };
 }) {
   const _project = await context.db.find(project, {
-    chainId: context.network.chainId,
+    chainId: context.chain.id,
     projectId: Number(projectId),
   });
 
@@ -34,7 +34,7 @@ export async function onProjectStatsUpdated({
   //   .insert(projectMoment)
   //   .values({
   //     projectId: Number(projectId),
-  //     chainId: context.network.chainId,
+  //     chainId: context.chain.id,
   //     block: Number(event.block.number),
   //     timestamp: Number(event.block.timestamp),
   //     balance: _project.balance,

@@ -11,7 +11,7 @@ ponder.on(
         permissionIds,
         account,
       } = event.args;
-      const { chainId } = context.network;
+      const { id: chainId } = context.chain;
       const projectId = Number(_projectId);
 
       await context.db

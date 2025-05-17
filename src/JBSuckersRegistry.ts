@@ -14,7 +14,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
   try {
     const { projectId: _projectId, sucker: address } = event.args;
     const projectId = Number(_projectId);
-    const chainId = context.network.chainId;
+    const chainId = context.chain.id;
 
     const thisProject = await context.db.find(project, {
       chainId,

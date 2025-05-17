@@ -26,7 +26,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
     });
 
     if (!_project) {
@@ -43,7 +43,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
     await context.db.insert(loan).values({
       id: loanId,
       projectId,
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
       owner: caller,
       beneficiary,
       borrowAmount,
@@ -89,7 +89,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
     });
 
     if (!_project) {
@@ -99,7 +99,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
     await context.db
       .update(loan, {
         id: loanId,
-        chainId: context.network.chainId,
+        chainId: context.chain.id,
       })
       .set({
         collateral: _loan.collateral,
@@ -145,7 +145,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
     });
 
     if (!_project) {
@@ -159,7 +159,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
         .values({
           id: paidOffLoanId,
           projectId,
-          chainId: context.network.chainId,
+          chainId: context.chain.id,
           createdAt: paidOffLoan.createdAt,
           borrowAmount: paidOffLoan.amount,
           collateral: paidOffLoan.collateral,
@@ -186,7 +186,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
     } else {
       // loan is completely paid off and burned. (owner updated on Transfer)
       await context.db
-        .update(loan, { id: loanId, chainId: context.network.chainId })
+        .update(loan, { id: loanId, chainId: context.chain.id })
         .set({
           borrowAmount: BigInt(0),
           collateral: BigInt(0),
@@ -231,7 +231,7 @@ ponder.on("RevLoans:SetTokenUriResolver", async ({ event, context }) => {
         });
 
         return context.db
-          .update(loan, { id: l.id, chainId: context.network.chainId })
+          .update(loan, { id: l.id, chainId: context.chain.id })
           .set({ tokenUri });
       })
     );
@@ -255,7 +255,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
     });
 
     if (!_project) {
@@ -265,7 +265,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
     await context.db.insert(loan).values({
       id: reallocatedLoanId,
       projectId,
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
       createdAt: reallocatedLoan.createdAt,
       borrowAmount: reallocatedLoan.amount,
       collateral: reallocatedLoan.collateral,
@@ -307,13 +307,13 @@ ponder.on("RevLoans:Transfer", async ({ event, context }) => {
     // Instead we will only create loans at Borrow/RepayLoan
     const existingLoan = await context.db.find(loan, {
       id: tokenId,
-      chainId: context.network.chainId,
+      chainId: context.chain.id,
     });
 
     if (!existingLoan) return;
 
     await context.db
-      .update(loan, { id: tokenId, chainId: context.network.chainId })
+      .update(loan, { id: tokenId, chainId: context.chain.id })
       .set({ owner: to });
   } catch (e) {
     console.error("RevLoans:Transfer", e);

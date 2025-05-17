@@ -8,7 +8,7 @@ import { parseTokenUri } from "./util/tokenUri";
 
 ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
   const { hook } = event.args;
-  const { client, db, network } = context;
+  const { client, db, chain } = context;
 
   try {
     const [nameCall, symbolCall] = await Promise.all([
@@ -25,7 +25,7 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
     ]);
 
     await db.insert(nftHook).values({
-      chainId: network.chainId,
+      chainId: chain.id,
       address: hook,
       projectId: Number(event.args.projectId),
       createdAt: Number(event.block.timestamp),
@@ -47,7 +47,7 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
 
         return db.insert(nftTier).values({
           tierId: Number(tierId),
-          chainId: network.chainId,
+          chainId: chain.id,
           price: tier.price,
           hook,
           projectId: Number(event.args.projectId),

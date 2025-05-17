@@ -21,7 +21,7 @@ export const getEventParams = <A extends Args>({
   context,
 }: GetEventParamsArgs<A>) =>
   ({
-    chainId: context.network.chainId,
+    chainId: context.chain.id,
     txHash: event.transaction.hash,
     logIndex: event.log.logIndex,
     timestamp: Number(event.block.timestamp),
