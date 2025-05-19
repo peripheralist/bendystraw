@@ -4,6 +4,7 @@ import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { generateId } from "./util/id";
+import { ADDRESS } from "./constants/address";
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
   try {
@@ -20,6 +21,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       projectId,
       owner,
       deployer: caller,
+      isRevnet: caller.toLowerCase() === ADDRESS.revDeployer.toLowerCase(),
       creator: transaction.from,
       createdAt: Number(block.timestamp),
       chainId,

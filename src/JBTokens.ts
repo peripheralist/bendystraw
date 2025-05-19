@@ -148,11 +148,13 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
         balance: count,
         creditBalance: count,
         suckerGroupId: _project.suckerGroupId,
+        isRevnet: _project.isRevnet,
       })
       .onConflictDoUpdate((p) => ({
         creditBalance: p.creditBalance + count,
         balance: p.balance + count,
         suckerGroupId: _project.suckerGroupId,
+        isRevnet: _project.isRevnet,
       }));
     await setParticipantSnapshot({ participant: receiver, context, event });
   } catch (e) {
@@ -205,7 +207,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     // update project
-    const { suckerGroupId } = await context.db
+    const { suckerGroupId, isRevnet } = await context.db
       .update(project, {
         chainId,
         projectId,
@@ -238,10 +240,13 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         creditBalance: count,
         balance: count,
         suckerGroupId,
+        isRevnet,
       })
       .onConflictDoUpdate((p) => ({
         creditBalance: p.creditBalance + count,
         balance: p.balance + count,
+        suckerGroupId,
+        isRevnet,
       }));
     await setParticipantSnapshot({ participant: receiver, context, event });
   } catch (e) {

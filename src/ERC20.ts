@@ -69,11 +69,13 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
           erc20Balance: value,
           balance: value,
           suckerGroupId: _project.suckerGroupId,
+          isRevnet: _project.isRevnet
         })
         .onConflictDoUpdate((p) => ({
           erc20Balance: p.erc20Balance + value,
           balance: p.balance + value,
           suckerGroupId: _project.suckerGroupId,
+          isRevnet: _project.isRevnet
         }));
       await setParticipantSnapshot({
         participant: _to,

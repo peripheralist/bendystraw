@@ -104,8 +104,12 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         projectId,
         createdAt: Number(event.block.timestamp),
         suckerGroupId: _project.suckerGroupId,
+        isRevnet: _project.isRevnet,
       })
-      .onConflictDoUpdate({ suckerGroupId: _project.suckerGroupId });
+      .onConflictDoUpdate({
+        suckerGroupId: _project.suckerGroupId,
+        isRevnet: _project.isRevnet,
+      });
     await setParticipantSnapshot({ participant: _participant, context, event });
 
     const existingNft = await context.db.find(nft, {

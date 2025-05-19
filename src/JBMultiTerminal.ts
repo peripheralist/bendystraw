@@ -343,7 +343,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     });
 
     // update project
-    const { suckerGroupId } = await context.db
+    const { suckerGroupId, isRevnet } = await context.db
       .update(project, {
         projectId,
         chainId,
@@ -378,6 +378,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         volumeUsd: amountUsd,
         lastPaidTimestamp: Number(event.block.timestamp),
         suckerGroupId,
+        isRevnet,
       })
       .onConflictDoUpdate((p) => ({
         volume: p.volume + amount,
@@ -385,6 +386,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         lastPaidTimestamp: Number(event.block.timestamp),
         paymentsCount: p.paymentsCount + 1,
         suckerGroupId,
+        isRevnet,
       }));
     await setParticipantSnapshot({ participant: _participant, context, event });
 
