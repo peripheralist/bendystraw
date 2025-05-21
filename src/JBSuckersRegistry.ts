@@ -144,14 +144,20 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
         );
 
       // Update any existing tables with suckerGroupId pointing to old suckerGroup
+      // for (const table of [projectCreateEvent, activityEvent] as const) {
+      //   await context.db.sql
+      //     .update(table)
+      //     .set({ suckerGroupId: newSuckerGroup.id })
+      //     .where(eq(table.suckerGroupId, suckerGroup.id));
+      // }
       await context.db.sql
         .update(projectCreateEvent)
         .set({ suckerGroupId: newSuckerGroup.id })
-        .where(eq(projectCreateEvent.suckerGroupId, suckerGroup.id));
+        .where(eq(projectCreateEvent.suckerGroupId, thisProject.suckerGroupId));
       await context.db.sql
         .update(activityEvent)
         .set({ suckerGroupId: newSuckerGroup.id })
-        .where(eq(activityEvent.suckerGroupId, suckerGroup.id));
+        .where(eq(activityEvent.suckerGroupId, thisProject.suckerGroupId));
     }
 
     // Finally, create the sucker for this event which may be used by this function in later transactions.
