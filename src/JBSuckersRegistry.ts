@@ -8,7 +8,13 @@ import {
   inArray,
 } from "drizzle-orm";
 import { ponder } from "ponder:registry";
-import { project, sucker, suckerGroup } from "ponder:schema";
+import {
+  activityEvent,
+  project,
+  projectCreateEvent,
+  sucker,
+  suckerGroup,
+} from "ponder:schema";
 
 ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
   try {
@@ -136,6 +142,16 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
             )
           )
         );
+
+      // Update any existing tables with suckerGroupId pointing to old suckerGroup
+      await context.db.sql
+        .update(projectCreateEvent)
+        .set({ suckerGroupId: newSuckerGroup.id })
+        .where(eq(projectCreateEvent.suckerGroupId, suckerGroup.id));
+      await context.db.sql
+        .update(activityEvent)
+        .set({ suckerGroupId: newSuckerGroup.id })
+        .where(eq(activityEvent.suckerGroupId, suckerGroup.id));
     }
 
     // Finally, create the sucker for this event which may be used by this function in later transactions.
