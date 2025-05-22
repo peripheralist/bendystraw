@@ -1,10 +1,11 @@
 import { ponder } from "ponder:registry";
 import { project, projectCreateEvent, suckerGroup } from "ponder:schema";
+import { isAddressEqual } from "viem";
+import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { generateId } from "./util/id";
-import { ADDRESS } from "./constants/address";
+import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
   try {
@@ -21,7 +22,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       projectId,
       owner,
       deployer: caller,
-      isRevnet: caller.toLowerCase() === ADDRESS.revDeployer.toLowerCase(),
+      isRevnet: isAddressEqual(caller, ADDRESS.revDeployer),
       creator: transaction.from,
       createdAt: Number(block.timestamp),
       chainId,

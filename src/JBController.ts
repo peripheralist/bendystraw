@@ -8,6 +8,8 @@ import {
 import { getEventParams } from "./util/getEventParams";
 import { parseProjectMetadata } from "./util/projectMetadata";
 import { insertActivityEvent } from "./util/activityEvent";
+import { isAddressEqual } from "viem";
+import { ADDRESS } from "./constants/address";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
@@ -53,6 +55,7 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
 
     await context.db.update(project, { chainId, projectId }).set({
       deployer: caller,
+      isRevnet: isAddressEqual(caller, ADDRESS.revDeployer),
       metadataUri: projectUri,
       metadata,
       name: metadata?.name,
