@@ -32,6 +32,7 @@ export const insertActivityEvent = async <
   return context.db.insert(activityEvent).values({
     ...params, // exclude id from params to use generated id
     [key]: id, // NOTE: using the id from `getEventParams` ensures that if this function is called in the same function that inserts the target event, the ID will match
+    type: key,
     projectId: Number(projectId),
     suckerGroupId: _project.suckerGroupId,
   });

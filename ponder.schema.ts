@@ -1,4 +1,10 @@
-import { index, onchainTable, primaryKey, relations } from "ponder";
+import {
+  index,
+  onchainEnum,
+  onchainTable,
+  primaryKey,
+  relations,
+} from "ponder";
 import { generateId } from "./src/util/id";
 
 // hacky extraction of `PgColumnsBuilders` type that isn't exported by ponder
@@ -41,6 +47,33 @@ export const eventParams = (t: PGCB) => ({
   ...logIndex(t),
 });
 
+type _ActivityEventType = Extract<
+  keyof typeof activityEvent.$inferInsert,
+  `${string}Event`
+>;
+
+export const activityEventType = onchainEnum("activity_event_type", [
+  "addToBalanceEvent",
+  "autoIssueEvent",
+  "borrowLoanEvent",
+  "burnEvent",
+  "cashOutTokensEvent",
+  "decorateBannyEvent",
+  "deployErc20Event",
+  "liquidateLoanEvent",
+  "mintNftEvent",
+  "mintTokensEvent",
+  "payEvent",
+  "projectCreateEvent",
+  "reallocateLoanEvent",
+  "repayLoanEvent",
+  "sendPayoutToSplitEvent",
+  "sendPayoutsEvent",
+  "sendReservedTokensToSplitEvent",
+  "sendReservedTokensToSplitsEvent",
+  "useAllowanceEvent",
+]);
+
 export const activityEvent = onchainTable("activity_event", (t) => ({
   ...uniqueId(t),
   ...chainId(t),
@@ -49,6 +82,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   ...txHash(t),
   ...projectId(t),
   ...suckerGroupId(t),
+  type: activityEventType("activity_event_type"),
   addToBalanceEvent: t.text(),
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
