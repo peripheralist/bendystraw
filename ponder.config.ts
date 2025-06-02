@@ -162,6 +162,24 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    JBController4_1: {
+      abi: JBControllerAbi,
+      address: ADDRESS.jbController4_1,
+      chain: {
+        ethereum: {
+          startBlock: 22616691,
+        },
+        arbitrum: {
+          startBlock: 342458190,
+        },
+        base: {
+          startBlock: 31037161,
+        },
+        optimism: {
+          startBlock: 136549785,
+        },
+      },
+    },
     JBMultiTerminal: {
       abi: JBMultiTerminalAbi,
       address: ADDRESS.jbMultiTerminal,
@@ -365,6 +383,24 @@ export const testnetConfig = createConfig({
         },
         optimismSepolia: {
           startBlock: 23975952,
+        },
+      },
+    },
+    JBController4_1: {
+      abi: JBControllerAbi,
+      address: ADDRESS.jbController4_1,
+      chain: {
+        ethereumSepolia: {
+          startBlock: 8442492,
+        },
+        arbitrumSepolia: {
+          startBlock: 158513639,
+        },
+        baseSepolia: {
+          startBlock: 26440087,
+        },
+        optimismSepolia: {
+          startBlock: 28422961,
         },
       },
     },
