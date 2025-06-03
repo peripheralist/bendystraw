@@ -11,7 +11,7 @@ import { insertActivityEvent } from "./util/activityEvent";
 import { isAddressEqual } from "viem";
 import { ADDRESS } from "./constants/address";
 
-ponder.on("JBController:MintTokens", async ({ event, context }) => {
+ponder.on("JBController4_1:MintTokens", async ({ event, context }) => {
   try {
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
@@ -40,11 +40,11 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
       projectId: event.args.projectId,
     });
   } catch (e) {
-    console.error("JBController:MintTokens", e);
+    console.error("JBController4_1:MintTokens", e);
   }
 });
 
-ponder.on("JBController:LaunchProject", async ({ event, context }) => {
+ponder.on("JBController4_1:LaunchProject", async ({ event, context }) => {
   // Emitted after JBProjects:Create. This is only needed to set deployer + metadataUri
   // If the controller emits a launchProject event, the project launch tx was called via the JBController, and we want to prefer its `caller` param over any existing value
   const { projectId: _projectId, caller, projectUri } = event.args;
@@ -72,11 +72,11 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
       projectTagline: metadata?.projectTagline,
     });
   } catch (e) {
-    console.error("JBController:LaunchProject", e, event.transaction.hash);
+    console.error("JBController4_1:LaunchProject", e, event.transaction.hash);
   }
 });
 
-ponder.on("JBController:SetUri", async ({ event, context }) => {
+ponder.on("JBController4_1:SetUri", async ({ event, context }) => {
   try {
     const { projectId: _projectId, uri } = event.args;
     const projectId = Number(_projectId);
@@ -101,12 +101,12 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
       projectTagline: metadata?.projectTagline,
     });
   } catch (e) {
-    console.error("JBController:SetUri", e, event.transaction.hash);
+    console.error("JBController4_1:SetUri", e, event.transaction.hash);
   }
 });
 
 ponder.on(
-  "JBController:SendReservedTokensToSplits",
+  "JBController4_1:SendReservedTokensToSplits",
   async ({ event, context }) => {
     try {
       const {
@@ -148,13 +148,13 @@ ponder.on(
         projectId,
       });
     } catch (e) {
-      console.error("JBController:SendReservedTokensToSplits", e);
+      console.error("JBController4_1:SendReservedTokensToSplits", e);
     }
   }
 );
 
 ponder.on(
-  "JBController:SendReservedTokensToSplit",
+  "JBController4_1:SendReservedTokensToSplit",
   async ({ event, context }) => {
     try {
       const { split, rulesetId, projectId, tokenCount, groupId } = event.args;
@@ -192,7 +192,7 @@ ponder.on(
         projectId,
       });
     } catch (e) {
-      console.error("JBController:SendReservedTokensToSplit", e);
+      console.error("JBController4_1:SendReservedTokensToSplit", e);
     }
   }
 );
