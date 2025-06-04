@@ -16,10 +16,12 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
+    "@types/markdown-it": "^14.1.2",
     "@unkey/api": "^0.35.0",
     "@unkey/ratelimit": "^0.5.5",
     "axios": "^1.8.4",
     "hono": "4.5.0",
+    "markdown-it": "^14.1.0",
     "ponder": "^0.11.2",
     "viem": "^2.21.3"
   },

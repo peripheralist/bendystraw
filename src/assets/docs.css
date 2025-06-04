@@ -1,0 +1,102 @@
+:root {
+  --blue: 190;
+  --pink: 310;
+  --yellow: 48;
+  --body: hsl(var(--blue) 100 28);
+  --stroke: hsl(var(--blue) 44 72);
+}
+
+@font-face {
+  font-family: 'Capsules';
+  src: url('/CapsulesVF.woff2') format('woff2') tech('variations');
+  font-weight: 100 700;
+}
+
+body {
+  font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+  background: hsl(var(--yellow) 100 99);
+  color: var(--body);
+  font-size: 1.1rem;
+}
+
+h1 {
+  font-size: 3rem;
+}
+
+h1, h2, h3, h4, h5, h6, th {
+  color: hsl(var(--blue) 100 24);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 48px;
+}
+
+a {
+  color: hsl(var(--pink) 100 50);
+}
+
+a:visited {
+  color: hsl(var(--pink) 100 32);
+}
+
+a:hover {
+  opacity: .7;
+}
+
+.container {
+  margin: 0 auto;
+  padding: 16px 0px;
+  max-width: 800px;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid var(--stroke);
+  margin: 0px;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+td {
+  color: var(--body);
+}
+
+code {
+  font-family: 'Roboto Mono', monospace;
+  display: inline-block;
+  font-size: 0.85rem;
+  background: hsl(var(--yellow) 80 94);
+  color: hsl(var(--yellow) 100 36);
+  padding: 0px 4px;
+  border-radius: 4px;
+  user-select: all;
+  white-space: pre;
+}
+
+td > code {
+  background: none;
+  padding: 0px;
+}
+
+blockquote {
+  margin: 16px 0px;
+}
+
+blockquote > p {
+  margin: 0px;
+  padding: 8px;
+  background: hsl(var(--blue) 100 96);
+  border-radius: 4px;
+}
+
+hr {
+  height: 1px;
+  background: var(--stroke);
+  font-size: 0;
+  border: 0;
+  margin: 48px 0px;
+}
