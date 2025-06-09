@@ -11,7 +11,7 @@ BigInt.prototype.toJSON = function () {
 
 export async function getParticipantSnapshots(c: Context) {
   try {
-    const { suckerGroupId, timestamp } = await c.req.parseBody<{
+    const { suckerGroupId, timestamp } = await c.req.json<{
       suckerGroupId: string;
       timestamp: string;
     }>();
