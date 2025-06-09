@@ -13,7 +13,7 @@ export async function getParticipantSnapshots(c: Context) {
   try {
     const { suckerGroupId, timestamp } = await c.req.json<{
       suckerGroupId: string;
-      timestamp: string;
+      timestamp: number;
     }>();
 
     if (typeof suckerGroupId !== "string") {
@@ -21,7 +21,7 @@ export async function getParticipantSnapshots(c: Context) {
       return c.text("suckerGroupId must be a string");
     }
 
-    if (typeof timestamp !== "string" || isNaN(parseInt(timestamp))) {
+    if (typeof timestamp !== "number") {
       c.status(400);
       return c.text("timestamp must be a number");
     }
@@ -29,7 +29,7 @@ export async function getParticipantSnapshots(c: Context) {
     const participants = await db.query.participant.findMany({
       where: and(
         eq(participant.suckerGroupId, suckerGroupId),
-        lte(participant.createdAt, parseInt(timestamp))
+        lte(participant.createdAt, timestamp)
       ),
     });
 
@@ -45,7 +45,7 @@ export async function getParticipantSnapshots(c: Context) {
           orderBy: desc(participantSnapshot.timestamp),
           where: and(
             eq(participantSnapshot.address, address),
-            lte(participantSnapshot.timestamp, parseInt(timestamp))
+            lte(participantSnapshot.timestamp, timestamp)
           ),
         })
       )
