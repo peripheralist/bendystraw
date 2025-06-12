@@ -10,6 +10,7 @@ import { ALLOWED_ORIGINS } from "../constants/origins";
 import { keyAuthMiddleware } from "../middleware/keyAuth";
 import { rateLimitMiddleware } from "../middleware/rateLimit";
 import { getParticipantSnapshots } from "./participants";
+import axios from "axios";
 
 const app = new Hono();
 
@@ -45,6 +46,16 @@ app.get("/", (c) => {
       </body>
     </html>
   `);
+});
+
+app.get("/badge", async (c) => {
+  const isReady = await axios.get("/ready").then((res) => res.status === 200);
+
+  return c.html(
+    `<div style="color:${isReady ? "green" : "red"}">${
+      isReady ? "Ready" : "Error"
+    }</div>`
+  );
 });
 
 if (process.env.NODE_ENV !== "development") {
