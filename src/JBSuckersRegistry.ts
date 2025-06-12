@@ -1,18 +1,10 @@
-import {
-  and,
-  arrayContained,
-  arrayOverlaps,
-  eq,
-  ne,
-  or,
-  inArray,
-} from "drizzle-orm";
+import { and, arrayOverlaps, eq, inArray, ne, or } from "drizzle-orm";
 import { ponder } from "ponder:registry";
 import {
+  _sucker,
   activityEvent,
   project,
   projectCreateEvent,
-  sucker,
   suckerGroup,
 } from "ponder:schema";
 
@@ -37,14 +29,17 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
     // First we look for other suckers that may overlap by address or projectId.
 
     // Would have been emitted by a project on a different chain linking to this project. (May be only 1)
-    const addressMatchingSucker = await context.db.sql.query.sucker.findFirst({
-      where: eq(sucker.address, address.toLowerCase() as `0x${string}`),
+    const addressMatchingSucker = await context.db.sql.query._sucker.findFirst({
+      where: eq(_sucker.address, address.toLowerCase() as `0x${string}`),
       with: { project: true },
     });
 
     // Would have been emitted by this project to link projects on different chains. (May be multiple)
-    const projectMatchingSuckers = await context.db.sql.query.sucker.findMany({
-      where: and(eq(sucker.projectId, projectId), eq(sucker.chainId, chainId)),
+    const projectMatchingSuckers = await context.db.sql.query._sucker.findMany({
+      where: and(
+        eq(_sucker.projectId, projectId),
+        eq(_sucker.chainId, chainId)
+      ),
       with: { project: true },
     });
 
@@ -161,7 +156,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
     }
 
     // Finally, create the sucker for this event which may be used by this function in later transactions.
-    await context.db.insert(sucker).values({
+    await context.db.insert(_sucker).values({
       chainId,
       projectId,
       address: address.toLowerCase() as `0x${string}`,

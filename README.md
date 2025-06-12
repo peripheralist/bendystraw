@@ -167,9 +167,13 @@ Because Bendystraw indexes data from multiple chains, nearly every table include
 
 A sucker group is a group of linked projects on different chains. These projects act as a single omnichain project, with shared revenue and tokens. While the `projects` table has a compound primary key of `projectId` + `chainId`, the `suckerGroups` table uses a single `id` primary key.
 
-Most tables (`participants`, `activityEvents`, etc) include a `suckerGroupId` column, which can be used to filter rows in a graphQL response. 
+Most tables (`participants`, `activityEvents`, etc) include a `suckerGroupId` column, which can be used to filter rows in a graphQL response.
 
 > `projectIds` of projects within a sucker group are **not guaranteed to be consistent** across chains, so filtering by `projectId` is only recommended when also filtering by `chainId`.
+
+### Unique IDs
+
+Always obtain unique IDs (e.g. `suckerGroup.id`) in real time. Unique IDs may change anytime Bendystraw is updated, and should not be relied on to remain consistent.
 
 ---
 

@@ -47,11 +47,6 @@ export const eventParams = (t: PGCB) => ({
   ...logIndex(t),
 });
 
-type _ActivityEventType = Extract<
-  keyof typeof activityEvent.$inferInsert,
-  `${string}Event`
->;
-
 export const activityEventType = onchainEnum("activity_event_type", [
   "addToBalanceEvent",
   "autoIssueEvent",
@@ -919,11 +914,12 @@ export const sendReservedTokensToSplitsEventRelations = relations(
   })
 );
 
-export const stats = onchainTable("stats", (t) => ({
-  chainId: t.integer().notNull().primaryKey(),
-  volume: t.bigint().notNull(),
-  volumeUsd: t.bigint().notNull(),
-}));
+// TODO
+// export const stats = onchainTable("stats", (t) => ({
+//   chainId: t.integer().notNull().primaryKey(),
+//   volume: t.bigint().notNull(),
+//   volumeUsd: t.bigint().notNull(),
+// }));
 
 export const storeAutoIssuanceAmountEvent = onchainTable(
   "store_auto_issuance_amount_event",
@@ -949,8 +945,8 @@ export const storeAutoIssuanceAmountEventRelations = relations(
   })
 );
 
-export const sucker = onchainTable(
-  "sucker",
+export const _sucker = onchainTable(
+  "_sucker",
   (t) => ({
     ...projectId(t),
     ...chainId(t),
@@ -961,18 +957,15 @@ export const sucker = onchainTable(
   })
 );
 
-export const suckerRelations = relations(sucker, ({ one }) => ({
+export const suckerRelations = relations(_sucker, ({ one }) => ({
   project: one(project, {
-    fields: [sucker.projectId, sucker.chainId],
+    fields: [_sucker.projectId, _sucker.chainId],
     references: [project.projectId, project.chainId],
   }),
 }));
 
 export const suckerGroup = onchainTable("sucker_group", (t) => ({
-  id: t
-    .text()
-    .$default(() => generateId())
-    .primaryKey(),
+  ...uniqueId(t),
   projects: t.text().array().notNull().default([]),
   addresses: t.hex().array().notNull().default([]),
   createdAt: t.integer().notNull(),
