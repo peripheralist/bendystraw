@@ -40,22 +40,38 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       args: [loanId],
     });
 
-    await context.db.insert(loan).values({
-      id: loanId,
-      projectId,
-      chainId: context.chain.id,
-      owner: caller,
-      beneficiary,
-      borrowAmount,
-      collateral: collateralCount,
-      createdAt: _loan.createdAt,
-      token: source.token,
-      terminal: source.terminal,
-      sourceFeeAmount,
-      prepaidDuration: _loan.prepaidDuration,
-      prepaidFeePercent: _loan.prepaidFeePercent,
-      tokenUri,
-    });
+    await context.db
+      .insert(loan)
+      .values({
+        id: loanId,
+        projectId,
+        chainId: context.chain.id,
+        owner: caller,
+        beneficiary,
+        borrowAmount,
+        collateral: collateralCount,
+        createdAt: _loan.createdAt,
+        token: source.token,
+        terminal: source.terminal,
+        sourceFeeAmount,
+        prepaidDuration: _loan.prepaidDuration,
+        prepaidFeePercent: _loan.prepaidFeePercent,
+        tokenUri,
+      })
+      // TODO Not sure why there would be a conflict, but duplicate key errors are being thrown
+      .onConflictDoUpdate({
+        owner: caller,
+        beneficiary,
+        borrowAmount,
+        collateral: collateralCount,
+        createdAt: _loan.createdAt,
+        token: source.token,
+        terminal: source.terminal,
+        sourceFeeAmount,
+        prepaidDuration: _loan.prepaidDuration,
+        prepaidFeePercent: _loan.prepaidFeePercent,
+        tokenUri,
+      });
 
     const { id } = await context.db.insert(borrowLoanEvent).values({
       ...getEventParams({ event, context }),
