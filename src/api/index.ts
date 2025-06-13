@@ -48,14 +48,24 @@ app.get("/", (c) => {
   `);
 });
 
-app.get("/badge", async (c) => {
-  const isReady = await axios.get("/ready").then((res) => res.status === 200);
+app.get("/badge.svg", async (c) => {
+  const isReady = await axios
+    .get(`${new URL(c.req.url).origin}/ready`)
+    .then((res) => res.status === 200)
+    .catch(() => false);
 
-  return c.html(
-    `<div style="color:${isReady ? "green" : "red"}">${
-      isReady ? "Ready" : "Error"
-    }</div>`
-  );
+  const color = isReady ? "limegreen" : "crimson";
+  const label = isReady ? "Running" : "Error";
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="20">
+  <rect width="100" height="20" fill="${color}"/>
+  <text x="50%" y="14" font-family="Roboto Mono, monospace" font-size="11" fill="#fff" text-anchor="middle">${label}</text>
+</svg>`;
+
+  return c.body(svg, 200, {
+    "Content-Type": "image/svg+xml",
+    "Cache-Control": "no-cache",
+  });
 });
 
 if (process.env.NODE_ENV !== "development") {
