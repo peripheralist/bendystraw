@@ -163,7 +163,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       rulesetId: Number(rulesetId),
       group,
       beneficiary: split.beneficiary,
-      lockedUntil: split.lockedUntil,
+      lockedUntil: BigInt(split.lockedUntil),
       hook: split.hook,
       percent: split.percent,
       preferAddToBalance: split.preferAddToBalance,

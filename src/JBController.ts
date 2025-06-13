@@ -179,7 +179,7 @@ ponder.on(
           groupId,
           beneficiary: split.beneficiary,
           hook: split.hook,
-          lockedUntil: split.lockedUntil,
+          lockedUntil: BigInt(split.lockedUntil),
           percent: split.percent,
           preferAddToBalance: split.preferAddToBalance,
           splitProjectId: Number(split.projectId),
