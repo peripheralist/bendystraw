@@ -278,21 +278,34 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    await context.db.insert(loan).values({
-      id: reallocatedLoanId,
-      projectId,
-      chainId: context.chain.id,
-      createdAt: reallocatedLoan.createdAt,
-      borrowAmount: reallocatedLoan.amount,
-      collateral: reallocatedLoan.collateral,
-      prepaidDuration: reallocatedLoan.prepaidDuration,
-      prepaidFeePercent: reallocatedLoan.prepaidFeePercent,
-      token: reallocatedLoan.source.token,
-      terminal: reallocatedLoan.source.terminal,
-      beneficiary: caller,
-      sourceFeeAmount: BigInt(0),
-      owner: caller,
-    });
+    await context.db
+      .insert(loan)
+      .values({
+        id: reallocatedLoanId,
+        projectId,
+        chainId: context.chain.id,
+        createdAt: reallocatedLoan.createdAt,
+        borrowAmount: reallocatedLoan.amount,
+        collateral: reallocatedLoan.collateral,
+        prepaidDuration: reallocatedLoan.prepaidDuration,
+        prepaidFeePercent: reallocatedLoan.prepaidFeePercent,
+        token: reallocatedLoan.source.token,
+        terminal: reallocatedLoan.source.terminal,
+        beneficiary: caller,
+        sourceFeeAmount: BigInt(0),
+        owner: caller,
+      })
+      .onConflictDoUpdate({
+        borrowAmount: reallocatedLoan.amount,
+        collateral: reallocatedLoan.collateral,
+        prepaidDuration: reallocatedLoan.prepaidDuration,
+        prepaidFeePercent: reallocatedLoan.prepaidFeePercent,
+        token: reallocatedLoan.source.token,
+        terminal: reallocatedLoan.source.terminal,
+        beneficiary: caller,
+        sourceFeeAmount: BigInt(0),
+        owner: caller,
+      });
 
     const { id } = await context.db.insert(reallocateLoanEvent).values({
       ...getEventParams({ event, context }),
