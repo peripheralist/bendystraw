@@ -7,7 +7,7 @@ Ponder indexes events emitted by the protocol, and stores data in two databases 
 | Base URL | bendystraw.xyz | testnet.bendystraw.xyz |
 | -- | -- | -- |
 | Chains | Ethereum<br/>Arbitrum<br/>Base<br/>Optimism | Sepolia<br/>Arbitrum Sepolia<br/>Base Sepolia<br/>Optimism Sepolia |
-| Status | ![status](https://bendystraw.xyz/badge.svg) | ![status](https://bendystraw.xyz/badge.svg) |
+| Status | ![status](https://bendystraw.xyz/badge.svg) | ![status](https://testnet.bendystraw.xyz/badge.svg) |
 | | [Playground](https://bendystraw.xyz/schema) | [Playground](https://testnet.bendystraw.xyz/schema) |
 
 ---
