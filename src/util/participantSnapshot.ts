@@ -17,6 +17,8 @@ export function setParticipantSnapshot({
     };
   };
 }) {
+  const { chainId, projectId, address, ...partialParticipant } = participant;
+
   return context.db
     .insert(participantSnapshot)
     .values({
@@ -25,7 +27,7 @@ export function setParticipantSnapshot({
       timestamp: Number(event.block.timestamp),
     })
     .onConflictDoUpdate({
-      ...participant,
+      ...partialParticipant,
       block: Number(event.block.number),
       timestamp: Number(event.block.timestamp),
     });

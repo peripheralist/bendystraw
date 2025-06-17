@@ -27,23 +27,21 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
     // update holder participant
     const _holder = await context.db
       .update(participant, { chainId, projectId, address: holder })
-      .set((p) => {
-        const _p = p;
-
-        _p.suckerGroupId = _project.suckerGroupId;
+      .set(({ chainId, projectId, address, ...partial }) => {
+        partial.suckerGroupId = _project.suckerGroupId;
 
         // Only update stakedBalance, since erc20Balance will be updated by erc20 handler
-        if (count > _p.creditBalance) {
-          burnedCredits = _p.creditBalance;
-          _p.creditBalance = BigInt(0);
+        if (count > partial.creditBalance) {
+          burnedCredits = partial.creditBalance;
+          partial.creditBalance = BigInt(0);
         } else {
           burnedCredits = count;
-          _p.creditBalance = _p.creditBalance - count;
+          partial.creditBalance = partial.creditBalance - count;
         }
 
-        _p.balance = _p.creditBalance + _p.erc20Balance;
+        partial.balance = partial.creditBalance + partial.erc20Balance;
 
-        return _p;
+        return partial;
       });
     await setParticipantSnapshot({ participant: _holder, context, event });
 
