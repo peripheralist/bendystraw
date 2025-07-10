@@ -2,11 +2,16 @@ import axios from "axios";
 import * as dotenv from "dotenv";
 import { NETWORKS } from "../src/constants/networks";
 import { getBsStatus } from "../src/lib/getBsStatus";
+import { IS_DEV } from "../src/constants/dev";
 
-const webhookUrl = dotenv.config({ path: ".env.local" }).parsed?.STATUS_WEBHOOK;
+const webhookUrl = dotenv.config({ path: IS_DEV ? ".env.local" : ".env" })
+  .parsed?.STATUS_WEBHOOK;
 
 async function main() {
-  if (!webhookUrl) return;
+  if (!webhookUrl) {
+    console.warn("Missing STATUS_WEBHOOK");
+    return;
+  }
 
   const statuses = await getBsStatus();
 
@@ -26,6 +31,8 @@ async function main() {
       await axios.post(webhookUrl, {
         content,
       });
+
+      console.info(content);
     } catch (e) {
       console.error(
         `Error sending webhook: ${n.name}, ${secsBehind} behind, (${
