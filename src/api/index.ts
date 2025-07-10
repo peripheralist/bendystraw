@@ -7,42 +7,19 @@ import MarkdownIt from "markdown-it";
 import { graphql } from "ponder";
 import { db } from "ponder:api";
 import schema from "ponder:schema";
-import { ChainId, MAINNETS, NETWORKS, TESTNETS } from "../constants/networks";
+import { IS_DEV } from "../constants/dev";
+import { NETWORKS } from "../constants/networks";
 import { ALLOWED_ORIGINS } from "../constants/origins";
+import { getBsStatus } from "../lib/getBsStatus";
 import { keyAuthMiddleware } from "../middleware/keyAuth";
 import { rateLimitMiddleware } from "../middleware/rateLimit";
 import { getParticipantSnapshots } from "./participants";
 
-const isDev = process.env.NODE_ENV === "development";
-
-function getBlockHeight(chainId: ChainId) {
-  return axios
-    .get<{ result: `0x${string}` }>(
-      `https://api.etherscan.io/v2/api?chainId=${chainId}&module=proxy&action=eth_blockNumber&apiKey=${process.env.ETHERSCAN_API_KEY}`
-    )
-    .then((res) => parseInt(res.data.result, 16) ?? JSON.stringify(res.data))
-    .catch((e) => {
-      console.warn(`Error getting block height for ${chainId}: ${e}`);
-      return 0;
-    });
-}
-
-function getBsStatus(testnet?: boolean) {
-  return axios
-    .get<
-      Record<
-        string,
-        { id: ChainId; block: { number: number; timestamp: number } }
-      >
-    >(
-      isDev
-        ? `http://localhost:42069/status`
-        : `https://${testnet ? "testnet." : ""}bendystraw.xyz/status`
-    )
-    .then((res) => res.data);
-}
-
 const app = new Hono();
+
+if (process.env.WATCH_STATUS) {
+  app.get("/", async () => {});
+}
 
 app.get(
   "/favicon.ico",
@@ -55,7 +32,7 @@ app.get(
 app.get("/", async (c) => {
   let markdown = readFileSync("README.md", "utf-8");
 
-  if (isDev) {
+  if (IS_DEV) {
     markdown = markdown.replaceAll(
       "https://testnet.bendystraw.xyz",
       "http://localhost:42069"
@@ -72,7 +49,7 @@ app.get("/", async (c) => {
 
   await axios
     .get(
-      isDev
+      IS_DEV
         ? "http://localhost:42069/status-table"
         : "https://bendystraw.xyz/status-table"
     )
@@ -105,49 +82,10 @@ app.get("/", async (c) => {
 
 // Serve a markdown file as HTML
 app.get("/status-table", async (c) => {
-  const mainnetStatus = await getBsStatus();
-  const testnetStatus = await getBsStatus(true);
-
-  const chainStatuses = [
-    ...Object.values(mainnetStatus),
-    ...Object.values(testnetStatus),
-  ].map((s) => ({
-    chainId: s.id,
-    block: s.block.number,
-    timestamp: s.block.timestamp,
-  }));
-
-  const mainnetsBlockHeights = await Promise.all(
-    MAINNETS.map(async (chain) => ({
-      chainId: chain.id,
-      blockHeight: await getBlockHeight(chain.id),
-    }))
-  );
-
-  await new Promise((r) => setTimeout(() => r(null), 1100)); // avoid rate limit with getting block height (max 5 req/s)
-
-  const testnetsBlockHeights = await Promise.all(
-    TESTNETS.map(async (chain) => ({
-      chainId: chain.id,
-      blockHeight: await getBlockHeight(chain.id),
-    }))
-  );
-
-  const blockHeights = [...mainnetsBlockHeights, ...testnetsBlockHeights];
+  const statuses = await getBsStatus();
 
   const rows = NETWORKS.map((n) => {
-    const blockHeight = blockHeights.find(({ chainId }) => n.id === chainId)
-      ?.blockHeight!;
-
-    const bsBlockHeight = chainStatuses.find(({ chainId }) => n.id === chainId)
-      ?.block!;
-
-    const blocksBehind = Math.max(blockHeight - bsBlockHeight, 0);
-
-    const bsTimestamp = chainStatuses.find(({ chainId }) => n.id === chainId)
-      ?.timestamp!;
-
-    const secsBehind = Math.max(Math.floor(Date.now() / 1000) - bsTimestamp, 0);
+    const { block, blocksBehind, secsBehind } = statuses[n.id];
 
     const behindTimeStr = isNaN(secsBehind)
       ? ""
@@ -160,7 +98,7 @@ app.get("/status-table", async (c) => {
     else if (secsBehind > 60) className = "warn";
 
     return `<tr><td>${n.name}</td><td><code style="color: var(--body);">${
-      bsBlockHeight ?? "--"
+      block ?? "--"
     }</code></td><td><span class="${className}">${
       isNaN(blocksBehind) ? "Offline" : blocksBehind
     } ${behindTimeStr}</span></td></tr>`;

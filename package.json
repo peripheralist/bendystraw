@@ -7,6 +7,7 @@
     "dev": "ponder dev",
     "start": "ponder start",
     "db": "ponder db",
+    "status": "tsx scripts/status.ts",
     "serve": "ponder serve --schema=public",
     "codegen": "ponder codegen",
     "lint": "eslint .",
@@ -20,6 +21,7 @@
     "@unkey/api": "^0.35.0",
     "@unkey/ratelimit": "^0.5.5",
     "axios": "^1.8.4",
+    "dotenv": "^17.2.0",
     "hono": "4.5.0",
     "markdown-it": "^14.1.0",
     "ponder": "^0.11.17",
@@ -30,6 +32,7 @@
     "eslint": "^8.53.0",
     "eslint-config-ponder": "^0.10.9",
     "husky": "^9.1.7",
+    "tsx": "^4.20.3",
     "typescript": "^5.2.2"
   },
   "engines": {
