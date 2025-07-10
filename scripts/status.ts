@@ -2,11 +2,8 @@ import axios from "axios";
 import * as dotenv from "dotenv";
 import { NETWORKS } from "../src/constants/networks";
 import { getBsStatus } from "../src/lib/getBsStatus";
-import { IS_DEV } from "../src/constants/dev";
 
-if (IS_DEV) {
-  dotenv.config({ path: ".env.local" });
-}
+dotenv.config({ path: ".env.local" });
 
 const webhookUrl = process.env.STATUS_WEBHOOK;
 
@@ -18,33 +15,41 @@ async function main() {
 
   const statuses = await getBsStatus();
 
-  for (const n of NETWORKS) {
-    const { secsBehind, blocksBehind } = statuses[n.id];
+  const fields = [];
 
-    let content = "";
+  let shouldAlert = false;
+
+  for (const { id, name } of NETWORKS) {
+    const { secsBehind, blocksBehind } = statuses[id];
+
+    let value = "";
     if (secsBehind > 60 * 10) {
-      content = `🚨 ${n.name} is **HURTIN -- ${blocksBehind} blocks (${secsBehind}s) behind!**`;
+      value = `🚨 ${blocksBehind} blocks, ${secsBehind} seconds behind!`;
+      shouldAlert = true;
     } else if (isNaN(secsBehind)) {
-      content = `🚨 ${n.name} is **offline**??`;
+      value = `🚨 Offline?`;
+      shouldAlert = true;
     } else {
-      content = `${n.name} is **chillin** (${secsBehind}s behind)`;
+      value = `${blocksBehind} blocks, ${secsBehind} seconds behind`;
     }
 
-    try {
-      await axios.post(webhookUrl, {
-        content,
-      });
+    fields.push({
+      name,
+      value,
+    });
 
-      console.info(content);
-    } catch (e) {
-      console.error(
-        `Error sending webhook: ${n.name}, ${secsBehind} behind, (${
-          (e as Error).message
-        })`
-      );
-    }
+    console.info(`${name}: ${value}`);
+  }
 
-    await new Promise((r) => setTimeout(() => r(null), 100)); // avoid rate limits
+  try {
+    await axios.post(webhookUrl, {
+      content: shouldAlert
+        ? "**<@666841845099134988> Bendystraw has issues‼️**"
+        : "Bendystraw is chillin 🟢",
+      embeds: [{ fields }],
+    });
+  } catch (e) {
+    console.error(`Error sending webhook: ${(e as Error).message}`);
   }
 }
 
