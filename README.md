@@ -4,10 +4,10 @@ Bendystraw is a GraphQL API for the [Juicebox protocol](https://juicebox.money) 
 
 Ponder indexes events emitted by the protocol, and stores data in two databases with identical schemas—one for mainnets, and one for testnets. Each has its own URL, and a playground where you can browse the schema and make queries against real data.
 
-| Base URL | bendystraw.xyz | testnet.bendystraw.xyz |
+| Base URL | <code>bendystraw.xyz</code> | <code>testnet.bendystraw.xyz</code> |
 | -- | -- | -- |
 | Chains | Ethereum<br/>Arbitrum<br/>Base<br/>Optimism | Sepolia<br/>Arbitrum Sepolia<br/>Base Sepolia<br/>Optimism Sepolia |
-| Status | ![status](https://bendystraw.xyz/badge.svg) | ![status](https://testnet.bendystraw.xyz/badge.svg) |
+| Status | ![mainnets status](https://bendystraw.xyz/status.svg) | ![testnets status](https://testnet.bendystraw.xyz/status.svg) |
 | | [Playground](https://bendystraw.xyz/schema) | [Playground](https://testnet.bendystraw.xyz/schema) |
 
 ---
@@ -28,7 +28,7 @@ To download the schema (e.g. for generating graphql types in your frontend):
 
 ### GraphQL Queries
 
-`POST https://<url>/<api-key>/graphql`
+`POST https://<base-url>/<api-key>/graphql`
 
 **Singular queries**
 

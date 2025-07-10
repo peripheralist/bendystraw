@@ -1,9 +1,9 @@
 :root {
-  --blue: 190;
+  --blue: 195;
   --pink: 310;
   --yellow: 48;
-  --body: hsl(var(--blue) 100 28);
-  --stroke: hsl(var(--blue) 44 72);
+  --body: hsl(var(--blue) 10 28);
+  --stroke: hsl(var(--blue) 10 76);
 }
 
 @font-face {
@@ -20,23 +20,19 @@ body {
 }
 
 h1 {
-  font-size: 3rem;
+  font-size: 3.6rem;
 }
 
 h1, h2, h3, h4, h5, h6, th {
-  color: hsl(var(--blue) 100 24);
+  color: hsl(var(--blue) 10 18);
 }
 
 h1, h2, h3, h4, h5, h6 {
   margin-top: 48px;
 }
 
-a {
-  color: hsl(var(--pink) 100 50);
-}
-
-a:visited {
-  color: hsl(var(--pink) 100 32);
+a, a:visited {
+  color: var(--body);
 }
 
 a:hover {
@@ -45,12 +41,17 @@ a:hover {
 
 .container {
   margin: 0 auto;
-  padding: 16px 0px;
+  padding: 16px;
   max-width: 800px;
 }
 
 table {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.85rem;
   border-collapse: collapse;
+  max-width: 100%;
+  overflow: auto;
+  display: block;
 }
 
 td, th {
@@ -69,12 +70,33 @@ code {
   font-family: 'Roboto Mono', monospace;
   display: inline-block;
   font-size: 0.85rem;
-  background: hsl(var(--yellow) 80 94);
-  color: hsl(var(--yellow) 100 36);
+  background: hsl(var(--blue) 80 94);
+  color: hsl(var(--blue) 100 30);
   padding: 0px 4px;
   border-radius: 4px;
   user-select: all;
   white-space: pre;
+}
+
+.good, .warn, .danger {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.85rem;
+  width: 100%;
+  display: block;
+  padding: 1px 4px;
+  box-sizing: border-box;
+}
+
+.good {
+  color: limegreen;
+}
+
+.warn {
+  color: orange;
+}
+
+.danger {
+  color: red;
 }
 
 td > code {
@@ -89,8 +111,13 @@ blockquote {
 blockquote > p {
   margin: 0px;
   padding: 8px;
-  background: hsl(var(--blue) 100 96);
+  background: hsl(var(--pink) 100 96);
+  color: hsl(var(--pink) 100 30);
   border-radius: 4px;
+}
+
+blockquote > p > code {
+  background: hsl(var(--pink) 100 96);
 }
 
 hr {
