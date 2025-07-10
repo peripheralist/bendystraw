@@ -18,19 +18,22 @@ async function main() {
   const fields = [];
 
   let shouldAlert = false;
+  let alertNetworks = [];
 
   for (const { id, name } of NETWORKS) {
     const { secsBehind, blocksBehind } = statuses[id];
 
     let value = "";
     if (secsBehind > 60 * 10) {
-      value = `🚨 ${blocksBehind} blocks, ${secsBehind} seconds behind!`;
+      value = `🚨 Behind ${blocksBehind} blocks, ${secsBehind} seconds!`;
       shouldAlert = true;
+      alertNetworks.push(name);
     } else if (isNaN(secsBehind)) {
       value = `🚨 Offline?`;
       shouldAlert = true;
+      alertNetworks.push(name);
     } else {
-      value = `${blocksBehind} blocks, ${secsBehind} seconds behind`;
+      value = `Behind ${blocksBehind} blocks, ${secsBehind} seconds`;
     }
 
     fields.push({
@@ -44,9 +47,20 @@ async function main() {
   try {
     await axios.post(webhookUrl, {
       content: shouldAlert
-        ? "**<@666841845099134988> Bendystraw has issues‼️**"
-        : "Bendystraw is chillin 🟢",
-      embeds: [{ fields }],
+        ? "**<@666841845099134988> Bendystraw error!**"
+        : undefined,
+      embeds: [
+        {
+          fields,
+          author: {
+            name: "bendystraw.xyz",
+            url: "https://bendystraw.xyz",
+          },
+          color: shouldAlert ? 14360591 : 1039136,
+          title: `Status: ${shouldAlert ? "ATTENTION‼️" : "chillin"}`,
+          description: alertNetworks.join(", "),
+        },
+      ],
     });
   } catch (e) {
     console.error(`Error sending webhook: ${(e as Error).message}`);
