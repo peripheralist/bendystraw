@@ -4,8 +4,11 @@ import { NETWORKS } from "../src/constants/networks";
 import { getBsStatus } from "../src/lib/getBsStatus";
 import { IS_DEV } from "../src/constants/dev";
 
-const webhookUrl = dotenv.config({ path: IS_DEV ? ".env.local" : ".env" })
-  .parsed?.STATUS_WEBHOOK;
+if (IS_DEV) {
+  dotenv.config({ path: ".env.local" });
+}
+
+const webhookUrl = process.env.STATUS_WEBHOOK;
 
 async function main() {
   if (!webhookUrl) {
