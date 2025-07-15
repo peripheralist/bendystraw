@@ -676,7 +676,7 @@ export const project = onchainTable(
     // accountingContext
     token: t.hex(),
     decimals: t.integer(),
-    currency: t.integer(),
+    currency: t.bigint(),
 
     // metadata items, intended for searchability
     coverImageUri: t.text(),

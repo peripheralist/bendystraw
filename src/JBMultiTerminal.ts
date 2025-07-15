@@ -462,7 +462,7 @@ ponder.on(
           chainId: context.chain.id,
         })
         .set({
-          currency: event.args.context.currency,
+          currency: BigInt(event.args.context.currency),
           decimals: event.args.context.decimals,
           token: event.args.context.token,
         });
