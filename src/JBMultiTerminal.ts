@@ -451,3 +451,23 @@ ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
     console.error("JBMultiTerminal:ProcessFee", e);
   }
 });
+
+ponder.on(
+  "JBMultiTerminal:SetAccountingContext",
+  async ({ event, context }) => {
+    try {
+      await context.db
+        .update(project, {
+          projectId: Number(event.args.projectId),
+          chainId: context.chain.id,
+        })
+        .set({
+          currency: event.args.context.currency,
+          decimals: event.args.context.decimals,
+          token: event.args.context.token,
+        });
+    } catch (e) {
+      console.error("JBMultiTerminal:SetAccountingContext", e);
+    }
+  }
+);

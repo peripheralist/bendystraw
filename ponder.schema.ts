@@ -673,6 +673,11 @@ export const project = onchainTable(
     contributorsCount: t.integer().notNull().default(0),
     createdWithinTrendingWindow: t.boolean(),
 
+    // accountingContext
+    token: t.hex(),
+    decimals: t.integer(),
+    currency: t.integer(),
+
     // metadata items, intended for searchability
     coverImageUri: t.text(),
     description: t.text(),
