@@ -74,7 +74,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     // update project
-    const { suckerGroupId } = await context.db
+    const { suckerGroupId, currency } = await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: projectId,
@@ -98,20 +98,23 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       amountUsd: await usdPriceForEth({
         context,
         projectId: _projectId,
-        ethAmount: amount,
+        amount,
+        currency,
       }),
       amountPaidOut,
       amountPaidOutUsd: await usdPriceForEth({
         context,
         projectId: _projectId,
-        ethAmount: amountPaidOut,
+        amount: amountPaidOut,
+        currency,
       }),
       netLeftoverPayoutAmount,
       fee,
       feeUsd: await usdPriceForEth({
         context,
         projectId: _projectId,
-        ethAmount: fee,
+        amount: fee,
+        currency,
       }),
       rulesetId: Number(rulesetId),
       rulesetCycleNumber: Number(rulesetCycleNumber),
@@ -157,7 +160,8 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       amountUsd: await usdPriceForEth({
         context,
         projectId: _projectId,
-        ethAmount: amount,
+        amount,
+        currency: _project.currency,
       }),
       netAmount,
       rulesetId: Number(rulesetId),
@@ -210,10 +214,20 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId: context.chain.id,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     const reclaimAmountUsd = await usdPriceForEth({
       context,
       projectId: _projectId,
-      ethAmount: reclaimAmount,
+      amount: reclaimAmount,
+      currency: _project.currency,
     });
 
     // update project
@@ -330,10 +344,20 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId: context.chain.id,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     const amountUsd = await usdPriceForEth({
       context,
       projectId: _projectId,
-      ethAmount: amount,
+      amount,
+      currency: _project.currency,
     });
 
     const payerParticipant = await context.db.find(participant, {
