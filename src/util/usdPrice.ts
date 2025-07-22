@@ -19,12 +19,21 @@ export async function usdPriceForEth({
 }) {
   if (!currency) return BigInt(0);
 
-  const usdPrice = await context.client.readContract({
-    abi: JBPricesAbi,
-    address: ADDRESS.jbPrices,
-    functionName: "pricePerUnitOf",
-    args: [projectId, currency, CURRENCY_USD, BigInt(18)],
-  });
+  try {
+    const usdPrice = await context.client.readContract({
+      abi: JBPricesAbi,
+      address: ADDRESS.jbPrices,
+      functionName: "pricePerUnitOf",
+      args: [projectId, currency, CURRENCY_USD, BigInt(18)],
+    });
 
-  return (amount * usdPrice) / BigInt(1e18);
+    return (amount * usdPrice) / BigInt(1e18);
+  } catch (e) {
+    console.error(
+      `Error: usdPriceForEth failed for currency: ${currency.toString()} - ${
+        (e as Error).message
+      }`
+    );
+    return BigInt(0);
+  }
 }
