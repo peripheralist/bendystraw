@@ -14,6 +14,12 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const chainId = context.chain.id;
 
+    const isArtizen =
+      (chainId === 1 && projectId === 130) ||
+      (chainId === 42161 && projectId === 66) ||
+      (chainId === 10 && projectId === 64) ||
+      (chainId === 8453 && projectId === 120);
+
     const thisProject = await context.db.find(project, {
       chainId,
       projectId,
@@ -53,6 +59,20 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
         arrayOverlaps(suckerGroup.projects, [thisProject.id])
       ),
     });
+
+    if (isArtizen) {
+      console.log(
+        `ARTIZEN sucker grouping:: projectId: ${projectId}, chainId: ${chainId}, address: ${address} || addressMatch: ${
+          addressMatchingSucker?.chainId ?? ""
+        }-${
+          addressMatchingSucker?.projectId
+        } || projectMatches: ${projectMatchingSuckers
+          .map((g) => `${g.chainId}-${g.projectId}`)
+          .join(", ")} || matchingGroups: ${matchingGroups
+          .map((g) => g.id)
+          .join(", ")}`
+      );
+    }
 
     if (
       addressMatchingSucker ||
@@ -139,12 +159,6 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
         );
 
       // Update any existing tables with suckerGroupId pointing to old suckerGroup
-      // for (const table of [projectCreateEvent, activityEvent] as const) {
-      //   await context.db.sql
-      //     .update(table)
-      //     .set({ suckerGroupId: newSuckerGroup.id })
-      //     .where(eq(table.suckerGroupId, suckerGroup.id));
-      // }
       await context.db.sql
         .update(projectCreateEvent)
         .set({ suckerGroupId: newSuckerGroup.id })

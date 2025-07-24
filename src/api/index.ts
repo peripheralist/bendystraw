@@ -100,7 +100,7 @@ app.get("/status-table", async (c) => {
     return `<tr><td>${n.name}</td><td><code style="color: var(--body);">${
       block ?? "--"
     }</code></td><td><span class="${className}">${
-      isNaN(blocksBehind) ? "Offline" : blocksBehind
+      isNaN(blocksBehind) ? "?" : blocksBehind
     } ${behindTimeStr}</span></td></tr>`;
   }).join("\n");
 
