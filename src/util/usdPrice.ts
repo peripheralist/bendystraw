@@ -4,7 +4,13 @@ import { ADDRESS } from "../constants/address";
 
 // const CURRENCY_NATIVE = BigInt(61166);
 // const CURRENCY_ETH = BigInt(1);
-const CURRENCY_USD = BigInt(2);
+const CURRENCY_USD = BigInt(3);
+
+const STABLES = new Set([
+  BigInt(281666209), // ??
+  BigInt(3181390099), // ??
+  BigInt(2), // usdc
+]);
 
 export async function usdPriceForEth({
   context,
@@ -18,6 +24,8 @@ export async function usdPriceForEth({
   currency: bigint | null;
 }) {
   if (!currency) return BigInt(0);
+
+  if (STABLES.has(currency)) return amount;
 
   try {
     const usdPrice = await context.client.readContract({
@@ -34,6 +42,7 @@ export async function usdPriceForEth({
         (e as Error).message
       }`
     );
+
     return BigInt(0);
   }
 }
