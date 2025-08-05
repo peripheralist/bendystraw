@@ -9,6 +9,7 @@ export const ADDRESS = {
   banny721TokenUriResolver: "0xa5f8911d4cfd60a6697479f078409434424fe666",
   revDeployer: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
   revLoans: "0x03de624feb08c0edeff779ca5702aef4b85d7f06",
+  revLoans1_1: "0xDE1E70fAF22024559e7D94aB814abD7e42CA849B",
   jbSuckersRegistry: "0x696c7e9b37d28edbefa3fce06e26041b7197c1a5",
   jb721TiersHookStore: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
   jbPrices: "0xe712d14b04f1a1fe464be930e3ea72b9b0a141d7",

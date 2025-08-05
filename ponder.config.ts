@@ -308,6 +308,24 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    RevLoans1_1: {
+      abi: REVLoansAbi,
+      address: ADDRESS.revLoans1_1,
+      chain: {
+        ethereum: {
+          startBlock: 23028081,
+        },
+        arbitrum: {
+          startBlock: 362958814,
+        },
+        base: {
+          startBlock: 33521227,
+        },
+        optimism: {
+          startBlock: 139181146,
+        },
+      },
+    },
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
       address: ADDRESS.jbSuckersRegistry,
@@ -533,6 +551,24 @@ export const testnetConfig = createConfig({
         },
         optimismSepolia: {
           startBlock: 24014494,
+        },
+      },
+    },
+    RevLoans1_1: {
+      abi: REVLoansAbi,
+      address: ADDRESS.revLoans1_1,
+      chain: {
+        ethereumSepolia: {
+          startBlock: 8871376,
+        },
+        arbitrumSepolia: {
+          startBlock: 178696245,
+        },
+        baseSepolia: {
+          startBlock: 29031817,
+        },
+        optimismSepolia: {
+          startBlock: 31014690,
         },
       },
     },
