@@ -4,12 +4,14 @@ import { ADDRESS } from "../constants/address";
 
 // const CURRENCY_NATIVE = BigInt(61166);
 // const CURRENCY_ETH = BigInt(1);
-const CURRENCY_USD = BigInt(3);
+const CURRENCY_USD = BigInt(3); // we never deployed the 61166 <==> 3 price feed since we never moved forward with allowing USD denominated payouts for ETH projects in v4
+
+const CURRENCY_USDC = BigInt(2);
 
 const STABLES = new Set([
   BigInt(281666209), // ??
   BigInt(3181390099), // ??
-  BigInt(2), // usdc
+  CURRENCY_USDC,
 ]);
 
 export async function usdPriceForEth({
@@ -32,13 +34,13 @@ export async function usdPriceForEth({
       abi: JBPricesAbi,
       address: ADDRESS.jbPrices,
       functionName: "pricePerUnitOf",
-      args: [projectId, currency, CURRENCY_USD, BigInt(18)],
+      args: [projectId, currency, CURRENCY_USDC, BigInt(18)],
     });
 
     return (amount * usdPrice) / BigInt(1e18);
   } catch (e) {
     console.error(
-      `Error: usdPriceForEth failed for currency: ${currency.toString()} - ${
+      `Error: usdPriceForEth failed for projectId: ${projectId}, currency: ${currency.toString()} - ${
         (e as Error).message
       }`
     );
