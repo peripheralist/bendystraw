@@ -2252,10 +2252,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@^0.12.15:
-  version "0.12.15"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.12.15.tgz#25a2ad95a4abd550e8118bd42c294790fda86c93"
-  integrity sha512-PE3vczW6LRVOnrwa1XTr4EJpsYplGBleW57BYMNtNTg4PW4Clx9wTvL9ONY5eH+Xqxiyfl55cGNv/apwSffU2g==
+ponder@0.11:
+  version "0.11.44"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.11.44.tgz#4a86dccf2c20ac0b9969bcd3435924542a0209f2"
+  integrity sha512-XqA7Eqd5WnXSe5FuFt8sBjQtLSxRqZGFy2ho+oduFIJvwQd8YQ9MlPEdW8U6Yc/OXFxmE+mEdy9BI8VxPnL60A==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"
