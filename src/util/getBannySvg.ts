@@ -2,7 +2,34 @@ import { Context } from "ponder:registry";
 import { Banny721TokenUriResolverAbi } from "../../abis/Banny721TokenUriResolverAbi";
 import { ADDRESS } from "../constants/address";
 import { BANNY_RETAIL_HOOK } from "../constants/bannyHook";
-import { config } from "ponder:internal";
+
+// copied here from config, loading config in real time here breaks
+const resolverStartBlocks = {
+  ethereum: {
+    startBlock: 22039034,
+  },
+  arbitrum: {
+    startBlock: 315299005,
+  },
+  base: {
+    startBlock: 27545253,
+  },
+  optimism: {
+    startBlock: 133140537,
+  },
+  ethereumSepolia: {
+    startBlock: 7894609,
+  },
+  arbitrumSepolia: {
+    startBlock: 132035055,
+  },
+  baseSepolia: {
+    startBlock: 23055756,
+  },
+  optimismSepolia: {
+    startBlock: 25038630,
+  },
+} as const;
 
 export function getBannySvg({
   context,
@@ -13,14 +40,10 @@ export function getBannySvg({
   tierId: bigint;
   block: bigint;
 }) {
-  const chainName = context.chain.name;
+  const resolverStartBlock = resolverStartBlocks[context.chain.name].startBlock;
 
-  const startBlocksLib = config.default.contracts.Banny721TokenUriResolver
-    .chain as Record<typeof chainName, { startBlock: number }>;
-
-  const startBlock = startBlocksLib[chainName].startBlock;
-
-  if (block < startBlock) return Promise.resolve("");
+  // current resolver contract is a redeploy from the original. some events may trigger this query in a block prior to the current resolver contract being deployed. in that case, we will just return empty.
+  if (block < resolverStartBlock) return Promise.resolve("");
 
   return context.client.readContract({
     abi: Banny721TokenUriResolverAbi,
