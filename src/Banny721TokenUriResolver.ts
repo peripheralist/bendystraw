@@ -124,7 +124,11 @@ ponder.on(
       const { id: chainId } = context.chain;
       const tierId = Number(event.args.upc);
 
-      const svg = await getBannySvg({ context, tierId: event.args.upc });
+      const svg = await getBannySvg({
+        context,
+        tierId: event.args.upc,
+        block: event.block.number,
+      });
 
       const _nftTier = await context.db.find(nftTier, {
         chainId,
@@ -233,7 +237,11 @@ ponder.on(
               resolvedUri: resolvedUri,
               metadata: parseTokenUri(resolvedUri),
               encodedIpfsUri: encodedIPFSUri,
-              svg: await getBannySvg({ context, tierId: BigInt(id) }),
+              svg: await getBannySvg({
+                context,
+                tierId: BigInt(id),
+                block: event.block.number,
+              }),
             })
         )
       );

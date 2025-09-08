@@ -42,7 +42,11 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
 
         let svg = undefined;
         if (hook == BANNY_RETAIL_HOOK) {
-          svg = await getBannySvg({ context, tierId });
+          svg = await getBannySvg({
+            context,
+            tierId,
+            block: event.block.number,
+          });
         }
 
         return db.insert(nftTier).values({

@@ -640,10 +640,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@ponder/utils@0.2.11":
-  version "0.2.11"
-  resolved "https://registry.yarnpkg.com/@ponder/utils/-/utils-0.2.11.tgz#75289cbd094f834e4bc21722cc341b89aa59cfae"
-  integrity sha512-0wkdMaq2KWMpY7qZv62YPU5oScJ8rIAH7x91pNabSX9Iph3TsEfEAU0NZVxfmb1B8S+ngvzy/PSc7QLHODT0rw==
+"@ponder/utils@0.2.12":
+  version "0.2.12"
+  resolved "https://registry.yarnpkg.com/@ponder/utils/-/utils-0.2.12.tgz#bb89c0f9a09d2f7d7af9e367a6c67d1eec82d742"
+  integrity sha512-pIlunpEoXXJlqSucidJl4r4s66DOnPRbqPY3lZ02uhBr6e2GYK7iNRg4IW7v4WnIhVoSugnWIRiEQYWA0yNLiw==
 
 "@repeaterjs/repeater@^3.0.4":
   version "3.0.6"
@@ -2252,10 +2252,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@0.11:
-  version "0.11.44"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.11.44.tgz#4a86dccf2c20ac0b9969bcd3435924542a0209f2"
-  integrity sha512-XqA7Eqd5WnXSe5FuFt8sBjQtLSxRqZGFy2ho+oduFIJvwQd8YQ9MlPEdW8U6Yc/OXFxmE+mEdy9BI8VxPnL60A==
+ponder@^0.12.21:
+  version "0.12.21"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.12.21.tgz#323b9908390c00763fbf999438b71ee9d9041f7d"
+  integrity sha512-PlaoG0AIP3T6ucjIVTBIBb5BpA7ut65u+MpMQHfoy4CyTNf0FsxbEidRCJZSieW5XWZ5ULIqWI5DUCYiJH5GFQ==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"
@@ -2264,7 +2264,7 @@ ponder@0.11:
     "@escape.tech/graphql-armor-max-depth" "^2.2.0"
     "@escape.tech/graphql-armor-max-tokens" "^2.3.0"
     "@hono/node-server" "1.13.3"
-    "@ponder/utils" "0.2.11"
+    "@ponder/utils" "0.2.12"
     abitype "^0.10.2"
     ansi-escapes "^7.0.0"
     commander "^12.0.0"
@@ -2292,6 +2292,7 @@ ponder@0.11:
     vite "5.0.7"
     vite-node "1.0.2"
     vite-tsconfig-paths "4.3.1"
+    ws "^8.18.3"
 
 postcss@^8.4.32, postcss@^8.4.43:
   version "8.5.3"
@@ -2817,6 +2818,11 @@ ws@8.18.1:
   version "8.18.1"
   resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.1.tgz#ea131d3784e1dfdff91adb0a4a116b127515e3cb"
   integrity sha512-RKW2aJZMXeMxVpnZ6bck+RswznaxmzdULiBr6KY7XkTnW8uvt0iT9H5DkHUChXrc+uurzwa0rVI16n/Xzjdz1w==
+
+ws@^8.18.3:
+  version "8.18.3"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.18.3.tgz#b56b88abffde62791c639170400c93dcb0c95472"
+  integrity sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==
 
 xtend@^4.0.0:
   version "4.0.2"
