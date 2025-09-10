@@ -57,11 +57,21 @@ export async function onProjectStatsUpdated({
     throw new Error("[onProjectStatsUpdated] Missing suckerGroup");
   }
 
-  const projects = await Promise.all(
-    _suckerGroup.projects.map((id) =>
-      context.db.sql.query.project.findFirst({ where: eq(project.id, id) })
-    )
-  );
+  // const projects = await Promise.all(
+  //   _suckerGroup.projects.map((id) =>
+  //     context.db.sql.query.project.findFirst({ where: eq(project.id, id) })
+  //   )
+  // );
+
+  // Promise.all() throws `error: savepoint "flush" does not exist`
+  const projects: (typeof project.$inferSelect)[] = [];
+  for (const id of _suckerGroup.projects) {
+    const _project = await context.db.sql.query.project.findFirst({
+      where: eq(project.id, id),
+    });
+
+    if (_project) projects.push(_project);
+  }
 
   const aggregateStats = projects
     .filter((p) => !!p)
