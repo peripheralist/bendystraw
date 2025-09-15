@@ -17,6 +17,9 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     // generate suckerGroupId manually so we can create project + suckerGroup simultaneously
     const suckerGroupId = generateId();
 
+    // set project version
+    let version = event.log.address === ADDRESS.jbProjects5 ? 5 : 4;
+
     // create project
     let _project = await context.db.insert(project).values({
       projectId,
@@ -27,6 +30,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       createdAt: Number(block.timestamp),
       chainId,
       suckerGroupId,
+      version,
     });
 
     // create sucker group. creating a sucker group for all projects ensures we can query all projects by querying sucker groups

@@ -81,7 +81,7 @@ const JB721TiersHookDeployer = {
 const JBTokens = {
   mainnet: {
     abi: JBTokensAbi,
-    address: ADDRESS.jbTokens,
+    address: [ADDRESS.jbTokens, ADDRESS.jbTokens5],
     chain: {
       ethereum: {
         startBlock: 21863179,
@@ -99,7 +99,7 @@ const JBTokens = {
   },
   testnet: {
     abi: JBTokensAbi,
-    address: ADDRESS.jbTokens,
+    address: [ADDRESS.jbTokens, ADDRESS.jbTokens5],
     chain: {
       ethereumSepolia: {
         startBlock: 7724144,
@@ -128,7 +128,7 @@ export const mainnetConfig = createConfig({
   contracts: {
     JBProjects: {
       abi: JBProjectsAbi,
-      address: ADDRESS.jbProjects,
+      address: [ADDRESS.jbProjects, ADDRESS.jbProjects5],
       chain: {
         ethereum: {
           startBlock: 21863142,
@@ -146,7 +146,11 @@ export const mainnetConfig = createConfig({
     },
     JBController: {
       abi: JBControllerAbi,
-      address: ADDRESS.jbController,
+      address: [
+        ADDRESS.jbController,
+        ADDRESS.jbController4_1,
+        ADDRESS.jbController5,
+      ],
       chain: {
         ethereum: {
           startBlock: 21863191,
@@ -162,27 +166,9 @@ export const mainnetConfig = createConfig({
         },
       },
     },
-    JBController4_1: {
-      abi: JBControllerAbi,
-      address: ADDRESS.jbController4_1,
-      chain: {
-        ethereum: {
-          startBlock: 22616691,
-        },
-        arbitrum: {
-          startBlock: 342458190,
-        },
-        base: {
-          startBlock: 31037161,
-        },
-        optimism: {
-          startBlock: 136549785,
-        },
-      },
-    },
     JBMultiTerminal: {
       abi: JBMultiTerminalAbi,
-      address: ADDRESS.jbMultiTerminal,
+      address: [ADDRESS.jbMultiTerminal, ADDRESS.jbMultiTerminal5],
       chain: {
         ethereum: {
           startBlock: 21863215,
@@ -237,8 +223,8 @@ export const mainnetConfig = createConfig({
       },
     },
     JBPermissions: {
-      address: ADDRESS.jbPermissions,
       abi: JBPermissionsAbi,
+      address: [ADDRESS.jbPermissions, ADDRESS.jbPermissions5],
       chain: {
         ethereum: {
           startBlock: 21863136,
@@ -256,7 +242,10 @@ export const mainnetConfig = createConfig({
     },
     Banny721TokenUriResolver: {
       abi: Banny721TokenUriResolverAbi,
-      address: ADDRESS.banny721TokenUriResolver,
+      address: [
+        ADDRESS.banny721TokenUriResolver,
+        ADDRESS.banny721TokenUriResolver5,
+      ],
       chain: {
         ethereum: {
           startBlock: 22039034,
@@ -328,7 +317,7 @@ export const mainnetConfig = createConfig({
     },
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
-      address: ADDRESS.jbSuckersRegistry,
+      address: [ADDRESS.jbSuckersRegistry, ADDRESS.jbSuckersRegistry5],
       chain: {
         ethereum: {
           startBlock: 21863660,
@@ -370,7 +359,7 @@ export const testnetConfig = createConfig({
   contracts: {
     JBProjects: {
       abi: JBProjectsAbi,
-      address: ADDRESS.jbProjects,
+      address: [ADDRESS.jbProjects, ADDRESS.jbProjects5],
       chain: {
         ethereumSepolia: {
           startBlock: 7724105,
@@ -388,7 +377,11 @@ export const testnetConfig = createConfig({
     },
     JBController: {
       abi: JBControllerAbi,
-      address: ADDRESS.jbController,
+      address: [
+        ADDRESS.jbController,
+        ADDRESS.jbController4_1,
+        ADDRESS.jbController5,
+      ],
       chain: {
         ethereumSepolia: {
           startBlock: 7724149,
@@ -404,27 +397,9 @@ export const testnetConfig = createConfig({
         },
       },
     },
-    JBController4_1: {
-      abi: JBControllerAbi,
-      address: ADDRESS.jbController4_1,
-      chain: {
-        ethereumSepolia: {
-          startBlock: 8442492,
-        },
-        arbitrumSepolia: {
-          startBlock: 158513639,
-        },
-        baseSepolia: {
-          startBlock: 26440087,
-        },
-        optimismSepolia: {
-          startBlock: 28422961,
-        },
-      },
-    },
     JBMultiTerminal: {
       abi: JBMultiTerminalAbi,
-      address: ADDRESS.jbMultiTerminal,
+      address: [ADDRESS.jbMultiTerminal, ADDRESS.jbMultiTerminal5],
       chain: {
         ethereumSepolia: {
           startBlock: 7724161,
@@ -483,7 +458,7 @@ export const testnetConfig = createConfig({
       },
     },
     JBPermissions: {
-      address: ADDRESS.jbPermissions,
+      address: [ADDRESS.jbPermissions, ADDRESS.jbPermissions5],
       abi: JBPermissionsAbi,
       chain: {
         ethereumSepolia: {
@@ -502,7 +477,10 @@ export const testnetConfig = createConfig({
     },
     Banny721TokenUriResolver: {
       abi: Banny721TokenUriResolverAbi,
-      address: ADDRESS.banny721TokenUriResolver,
+      address: [
+        ADDRESS.banny721TokenUriResolver,
+        ADDRESS.banny721TokenUriResolver5,
+      ],
       chain: {
         ethereumSepolia: {
           startBlock: 7894609,
@@ -574,7 +552,7 @@ export const testnetConfig = createConfig({
     },
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
-      address: ADDRESS.jbSuckersRegistry,
+      address: [ADDRESS.jbSuckersRegistry, ADDRESS.jbSuckersRegistry5],
       chain: {
         ethereumSepolia: {
           startBlock: 7724468,
