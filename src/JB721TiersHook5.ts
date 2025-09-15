@@ -20,7 +20,7 @@ import { parseTokenUri } from "./util/tokenUri";
 // we hard-code version and duplicate this logic bc no other way to dynamically determine contract version (i think)
 const version = 5;
 
-ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
+ponder.on("JB721TiersHook5:AddTier", async ({ event, context }) => {
   const hook = event.log.address;
 
   const { tier, tierId } = event.args;
@@ -63,11 +63,11 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
       version,
     });
   } catch (e) {
-    console.error("JB721TiersHook:AddTier", e);
+    console.error("JB721TiersHook5:AddTier", e);
   }
 });
 
-ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
+ponder.on("JB721TiersHook5:Transfer", async ({ event, context }) => {
   const { tokenId, to } = event.args;
   const hook = event.log.address;
   const chainId = context.chain.id;
@@ -169,11 +169,11 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         remainingSupply: tier.remainingSupply,
       });
   } catch (e) {
-    console.error("JB721TiersHook:Transfer", e);
+    console.error("JB721TiersHook5:Transfer", e);
   }
 });
 
-ponder.on("JB721TiersHook:RemoveTier", async ({ event, context }) => {
+ponder.on("JB721TiersHook5:RemoveTier", async ({ event, context }) => {
   try {
     await context.db.delete(nftTier, {
       chainId: context.chain.id,
@@ -181,11 +181,11 @@ ponder.on("JB721TiersHook:RemoveTier", async ({ event, context }) => {
       tierId: Number(event.args.tierId),
     });
   } catch (e) {
-    console.error("JB721TiersHook:RemoveTier", e);
+    console.error("JB721TiersHook5:RemoveTier", e);
   }
 });
 
-ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
+ponder.on("JB721TiersHook5:Mint", async ({ event, context }) => {
   try {
     const { beneficiary, tierId, tokenId, totalAmountPaid } = event.args;
     const hook = event.log.address;
@@ -226,6 +226,6 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
       version,
     });
   } catch (e) {
-    console.error("JB721TiersHook:Mint", e);
+    console.error("JB721TiersHook5:Mint", e);
   }
 });
