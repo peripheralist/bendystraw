@@ -18,7 +18,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     const suckerGroupId = generateId();
 
     // set project version
-    let version = event.log.address === ADDRESS.jbProjects5 ? 5 : 4;
+    const version = event.log.address === ADDRESS.jbProjects5 ? 5 : 4;
 
     // create project
     let _project = await context.db.insert(project).values({
@@ -39,10 +39,12 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       tokenSupply: _project.tokenSupply,
       id: suckerGroupId,
       createdAt: Number(block.timestamp),
+      version,
     });
 
     await onProjectStatsUpdated({
       projectId,
+      version,
       event,
       context,
     });
@@ -58,6 +60,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("JBProjects:Create", e);
@@ -66,10 +69,13 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
 
 ponder.on("JBProjects:Transfer", async ({ event, context }) => {
   try {
+    const version = event.log.address === ADDRESS.jbProjects5 ? 5 : 4;
+
     await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: Number(event.args.tokenId),
+        version,
       })
       .set({
         owner: event.args.to,

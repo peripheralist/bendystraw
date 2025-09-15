@@ -38,11 +38,16 @@ const hookDeployedFactoryConfig = factory({
   event: getAbiItem({ abi: JB721TiersHookDeployerAbi, name: "HookDeployed" }),
   parameter: "hook",
 });
+const hookDeployedFactoryConfig5 = factory({
+  address: ADDRESS.jb721TiersHookDeployer5,
+  event: getAbiItem({ abi: JB721TiersHookDeployerAbi, name: "HookDeployed" }),
+  parameter: "hook",
+});
 
 const JB721TiersHookDeployer = {
   mainnet: {
     abi: JB721TiersHookDeployerAbi,
-    address: ADDRESS.jb721TiersHookDeployer,
+    address: [ADDRESS.jb721TiersHookDeployer, ADDRESS.jb721TiersHookDeployer5],
     chain: {
       ethereum: {
         startBlock: 21863981,
@@ -60,7 +65,7 @@ const JB721TiersHookDeployer = {
   },
   testnet: {
     abi: JB721TiersHookDeployerAbi,
-    address: ADDRESS.jb721TiersHookDeployer,
+    address: [ADDRESS.jb721TiersHookDeployer, ADDRESS.jb721TiersHookDeployer5],
     chain: {
       ethereumSepolia: {
         startBlock: 7724790,
@@ -203,6 +208,24 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    JB721TiersHook5: {
+      abi: JB721TiersHookAbi,
+      address: hookDeployedFactoryConfig5,
+      chain: {
+        ethereum: {
+          startBlock: JB721TiersHookDeployer.mainnet.chain.ethereum.startBlock,
+        },
+        arbitrum: {
+          startBlock: JB721TiersHookDeployer.mainnet.chain.arbitrum.startBlock,
+        },
+        base: {
+          startBlock: JB721TiersHookDeployer.mainnet.chain.base.startBlock,
+        },
+        optimism: {
+          startBlock: JB721TiersHookDeployer.mainnet.chain.optimism.startBlock,
+        },
+      },
+    },
     JBTokens: JBTokens.mainnet,
     ERC20: {
       abi: erc20Abi,
@@ -263,7 +286,7 @@ export const mainnetConfig = createConfig({
     },
     RevDeployer: {
       abi: REVDeployerAbi,
-      address: ADDRESS.revDeployer,
+      address: [ADDRESS.revDeployer, ADDRESS.revDeployer5],
       chain: {
         ethereum: {
           startBlock: 21869094,
@@ -281,7 +304,7 @@ export const mainnetConfig = createConfig({
     },
     RevLoans: {
       abi: REVLoansAbi,
-      address: ADDRESS.revLoans,
+      address: [ADDRESS.revLoans, ADDRESS.revLoans1_1, ADDRESS.revLoans5],
       chain: {
         ethereum: {
           startBlock: 21869096,
@@ -294,24 +317,6 @@ export const mainnetConfig = createConfig({
         },
         optimism: {
           startBlock: 132116331,
-        },
-      },
-    },
-    RevLoans1_1: {
-      abi: REVLoansAbi,
-      address: ADDRESS.revLoans1_1,
-      chain: {
-        ethereum: {
-          startBlock: 23028081,
-        },
-        arbitrum: {
-          startBlock: 362958814,
-        },
-        base: {
-          startBlock: 33521227,
-        },
-        optimism: {
-          startBlock: 139181146,
         },
       },
     },
@@ -438,6 +443,28 @@ export const testnetConfig = createConfig({
         },
       },
     },
+    JB721TiersHook5: {
+      abi: JB721TiersHookAbi,
+      address: hookDeployedFactoryConfig5,
+      chain: {
+        ethereumSepolia: {
+          startBlock:
+            JB721TiersHookDeployer.testnet.chain.ethereumSepolia.startBlock,
+        },
+        arbitrumSepolia: {
+          startBlock:
+            JB721TiersHookDeployer.testnet.chain.arbitrumSepolia.startBlock,
+        },
+        baseSepolia: {
+          startBlock:
+            JB721TiersHookDeployer.testnet.chain.baseSepolia.startBlock,
+        },
+        optimismSepolia: {
+          startBlock:
+            JB721TiersHookDeployer.testnet.chain.optimismSepolia.startBlock,
+        },
+      },
+    },
     JBTokens: JBTokens.testnet,
     ERC20: {
       abi: erc20Abi,
@@ -498,7 +525,7 @@ export const testnetConfig = createConfig({
     },
     RevDeployer: {
       abi: REVDeployerAbi,
-      address: ADDRESS.revDeployer,
+      address: [ADDRESS.revDeployer, ADDRESS.revDeployer5],
       chain: {
         ethereumSepolia: {
           startBlock: 7729792,
@@ -516,7 +543,7 @@ export const testnetConfig = createConfig({
     },
     RevLoans: {
       abi: REVLoansAbi,
-      address: ADDRESS.revLoans,
+      address: [ADDRESS.revLoans, ADDRESS.revLoans1_1, ADDRESS.revLoans5],
       chain: {
         ethereumSepolia: {
           startBlock: 7729794,
@@ -529,24 +556,6 @@ export const testnetConfig = createConfig({
         },
         optimismSepolia: {
           startBlock: 24014494,
-        },
-      },
-    },
-    RevLoans1_1: {
-      abi: REVLoansAbi,
-      address: ADDRESS.revLoans1_1,
-      chain: {
-        ethereumSepolia: {
-          startBlock: 8871376,
-        },
-        arbitrumSepolia: {
-          startBlock: 178696245,
-        },
-        baseSepolia: {
-          startBlock: 29031817,
-        },
-        optimismSepolia: {
-          startBlock: 31014690,
         },
       },
     },

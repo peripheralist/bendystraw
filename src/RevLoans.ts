@@ -24,9 +24,12 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
+    const version = event.log.address === ADDRESS.revLoans5 ? 5 : 4;
+
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -91,6 +94,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("RevLoans:Borrow", e);
@@ -99,13 +103,16 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
 
 ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
   try {
-    const { loanId, revnetId, loan: _loan, caller } = event.args;
+    const { loanId, revnetId, loan: _loan } = event.args;
 
     const projectId = Number(revnetId);
+
+    const version = event.log.address === ADDRESS.revLoans5 ? 5 : 4;
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -134,6 +141,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("RevLoans:Liquidate", e);
@@ -157,11 +165,14 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
+    const version = event.log.address === ADDRESS.revLoans5 ? 5 : 4;
+
     const shouldCreateLoan = loanId !== paidOffLoanId;
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -226,6 +237,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("RevLoans:RepayLoan", e);
@@ -269,9 +281,12 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
+    const version = event.log.address === ADDRESS.revLoans5 ? 5 : 4;
+
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -321,6 +336,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("RevLoans:ReallocateCollateral", e);

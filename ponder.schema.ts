@@ -36,6 +36,7 @@ export const projectId = (t: PGCB) => ({ projectId: t.integer().notNull() });
 export const suckerGroupId = (t: PGCB) => ({
   suckerGroupId: t.text().notNull(),
 });
+export const version = (t: PGCB) => ({ version: t.integer().notNull() });
 
 export const eventParams = (t: PGCB) => ({
   ...uniqueId(t),
@@ -77,6 +78,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   ...txHash(t),
   ...projectId(t),
   ...suckerGroupId(t),
+  ...version(t),
   type: activityEventType("activity_event_type"),
   addToBalanceEvent: t.text(),
   autoIssueEvent: t.text(),
@@ -312,6 +314,7 @@ export const deployErc20Event = onchainTable("deploy_erc20_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
   ...suckerGroupId(t),
+  ...version(t),
   symbol: t.text().notNull(),
   name: t.text().notNull(),
   token: t.hex().notNull(),
@@ -498,10 +501,11 @@ export const nftTier = onchainTable(
   (t) => ({
     ...chainId(t),
     ...projectId(t),
+    ...version(t),
     hook: t.hex().notNull(),
     tierId: t.integer().notNull(),
     price: t.bigint().notNull(),
-    allowOnwerMint: t.boolean(),
+    allowOwnerMint: t.boolean(),
     encodedIpfsUri: t.hex(),
     resolvedUri: t.text(),
     metadata: t.json(),
@@ -541,6 +545,7 @@ export const participant = onchainTable(
     ...projectId(t),
     ...suckerGroupId(t),
     ...createdAt(t),
+    ...version(t),
     isRevnet: t.boolean(),
     address: t.hex().notNull(),
     volume: t.bigint().notNull().default(BigInt(0)),
@@ -598,6 +603,7 @@ export const payEvent = onchainTable("pay_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
   ...suckerGroupId(t),
+  ...version(t),
   distributionFromProjectId: t.integer(),
   beneficiary: t.hex().notNull(),
   amount: t.bigint().notNull(),
@@ -651,6 +657,7 @@ export const project = onchainTable(
     ...projectId(t),
     ...createdAt(t),
     ...suckerGroupId(t),
+    ...version(t),
     isRevnet: t.boolean(),
     handle: t.text(),
     metadataUri: t.text(),
@@ -692,11 +699,10 @@ export const project = onchainTable(
     telegram: t.text(),
     tokens: t.text().array(),
     twitter: t.text(),
-    version: t.integer(),
   }),
   (t) => ({
     projectIdx: index().on(t.projectId),
-    pk: primaryKey({ columns: [t.chainId, t.projectId] }),
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.version] }),
   })
 );
 
@@ -729,6 +735,7 @@ export const projectMoment = onchainTable(
   (t) => ({
     ...projectId(t),
     ...chainId(t),
+    ...version(t),
     block: t.integer().notNull(),
     timestamp: t.integer().notNull(),
     volume: t.bigint().notNull().default(BigInt(0)),
@@ -737,7 +744,7 @@ export const projectMoment = onchainTable(
     trendingScore: t.bigint().notNull().default(BigInt(0)),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.chainId, t.projectId, t.block] }),
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.version, t.block] }),
   })
 );
 
@@ -955,10 +962,11 @@ export const _sucker = onchainTable(
   (t) => ({
     ...projectId(t),
     ...chainId(t),
+    ...version(t),
     address: t.hex().notNull(),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.projectId, t.chainId, t.address] }),
+    pk: primaryKey({ columns: [t.projectId, t.chainId, t.version, t.address] }),
   })
 );
 
@@ -971,6 +979,7 @@ export const suckerRelations = relations(_sucker, ({ one }) => ({
 
 export const suckerGroup = onchainTable("sucker_group", (t) => ({
   ...uniqueId(t),
+  ...version(t),
   projects: t.text().array().notNull().default([]),
   addresses: t.hex().array().notNull().default([]),
   createdAt: t.integer().notNull(),
@@ -999,6 +1008,7 @@ export const suckerGroupMoment = onchainTable(
   "sucker_group_moment",
   (t) => ({
     ...suckerGroupId(t),
+    ...version(t),
     block: t.integer().notNull(),
     timestamp: t.integer().notNull(),
     paymentsCount: t.integer().notNull().default(0),
@@ -1016,7 +1026,7 @@ export const suckerGroupMoment = onchainTable(
     contributorsCount: t.integer().notNull().default(0),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.suckerGroupId, t.block] }),
+    pk: primaryKey({ columns: [t.suckerGroupId, t.version, t.block] }),
   })
 );
 

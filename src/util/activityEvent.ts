@@ -10,9 +10,11 @@ export const insertActivityEvent = async <
     context,
     id,
     projectId,
+    version,
   }: Parameters<typeof getEventParams<Args>>[0] & {
     id: string;
     projectId: bigint | number;
+    version: 4 | 5;
   }
 ) => {
   const params = getEventParams<typeof event.args>({
@@ -23,6 +25,7 @@ export const insertActivityEvent = async <
   const _project = await context.db.find(project, {
     chainId: params.chainId,
     projectId: Number(projectId),
+    version,
   });
 
   if (!_project) {
@@ -35,5 +38,6 @@ export const insertActivityEvent = async <
     type: key,
     projectId: Number(projectId),
     suckerGroupId: _project.suckerGroupId,
+    version,
   });
 };

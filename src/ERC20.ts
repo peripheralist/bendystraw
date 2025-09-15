@@ -29,9 +29,13 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
       throw new Error("Missing deployErc20Event");
     }
 
-    const { projectId } = _deployErc20Event;
+    const { projectId, version } = _deployErc20Event;
 
-    const _project = await context.db.find(project, { projectId, chainId });
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId,
+      version,
+    });
 
     if (!_project) {
       throw new Error("Missing project");
@@ -56,6 +60,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
         event,
         context,
         projectId,
+        version: version as 4 | 5, // TODO
       });
     } else {
       // insert/update `to` participant
@@ -69,13 +74,14 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
           erc20Balance: value,
           balance: value,
           suckerGroupId: _project.suckerGroupId,
-          isRevnet: _project.isRevnet
+          isRevnet: _project.isRevnet,
+          version,
         })
         .onConflictDoUpdate((p) => ({
           erc20Balance: p.erc20Balance + value,
           balance: p.balance + value,
           suckerGroupId: _project.suckerGroupId,
-          isRevnet: _project.isRevnet
+          isRevnet: _project.isRevnet,
         }));
       await setParticipantSnapshot({
         participant: _to,

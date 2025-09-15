@@ -7,6 +7,7 @@ import {
   projectCreateEvent,
   suckerGroup,
 } from "ponder:schema";
+import { ADDRESS } from "./constants/address";
 
 ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
   try {
@@ -20,9 +21,12 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
       (chainId === 10 && projectId === 64) ||
       (chainId === 8453 && projectId === 120);
 
+    const version = event.log.address === ADDRESS.jbSuckersRegistry5 ? 5 : 4;
+
     const thisProject = await context.db.find(project, {
       chainId,
       projectId,
+      version,
     });
 
     if (!thisProject) {
@@ -122,12 +126,15 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
           .where(inArray(project.id, groupProjects))
       ).reduce((acc, curr) => acc + curr.tokenSupply, BigInt(0));
 
+      const version = event.log.address === ADDRESS.jbSuckersRegistry5 ? 5 : 4;
+
       // Create a new group from affiliated projects and addresses
       const newSuckerGroup = await context.db.insert(suckerGroup).values({
         projects: groupProjects,
         addresses: groupAddresses as `0x${string}`[],
         tokenSupply: groupProjectsTokenSupplies,
         createdAt: Number(event.block.timestamp),
+        version,
       });
 
       // Link all affiliated projects to the newly created sucker group
@@ -174,6 +181,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
       chainId,
       projectId,
       address: address.toLowerCase() as `0x${string}`,
+      version,
     });
   } catch (e) {
     console.error("JBSuckersRegistry:SuckerDeployedFor", e);

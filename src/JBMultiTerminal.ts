@@ -17,16 +17,20 @@ import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { handleTrendingPayment } from "./util/trending";
 import { usdPriceForEth } from "./util/usdPrice";
+import { ADDRESS } from "./constants/address";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
     const { projectId, amount, memo, metadata, returnedFees } = event.args;
+
+    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
 
     // update project
     const { suckerGroupId } = await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: Number(projectId),
+        version,
       })
       .set((p) => ({
         balance: p.balance + amount,
@@ -34,6 +38,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
 
     await onProjectStatsUpdated({
       projectId,
+      version,
       event,
       context,
     });
@@ -53,6 +58,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("JBMultiTerminal:AddToBalance", e);
@@ -73,11 +79,14 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
+    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+
     // update project
     const { suckerGroupId, currency } = await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: projectId,
+        version,
       })
       .set((p) => ({
         balance: p.balance - amountPaidOut,
@@ -85,6 +94,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
 
     await onProjectStatsUpdated({
       projectId,
+      version,
       event,
       context,
     });
@@ -124,6 +134,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("JBMultiTerminal:SendPayouts", e);
@@ -142,9 +153,12 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
     } = event.args;
     const projectId = Number(_projectId);
 
+    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+
     const _project = await context.db.find(project, {
       projectId,
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -178,6 +192,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
 
     // DistributeToPayoutSplitEvent always occurs right after the Pay event, in the case of split payments to projects
@@ -214,9 +229,12 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
+    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+
     const _project = await context.db.find(project, {
       projectId,
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -235,6 +253,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       .update(project, {
         projectId,
         chainId,
+        version,
       })
       .set((p) => ({
         redeemCount: p.redeemCount + 1,
@@ -244,6 +263,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       }));
 
     await onProjectStatsUpdated({
+      version,
       projectId,
       event,
       context,
@@ -269,6 +289,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("JBMultiTerminal:CashOutTokens", e);
@@ -289,11 +310,14 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       rulesetId,
     } = event.args;
 
+    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+
     // update project
     const { suckerGroupId } = await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: Number(projectId),
+        version,
       })
       .set((p) => ({
         balance: p.balance - event.args.amountPaidOut,
@@ -301,6 +325,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
 
     await onProjectStatsUpdated({
       projectId,
+      version,
       event,
       context,
     });
@@ -324,6 +349,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("JBMultiTerminal:UseAllowance", e);
@@ -344,9 +370,12 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
+    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+
     const _project = await context.db.find(project, {
       projectId,
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -371,6 +400,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       .update(project, {
         projectId,
         chainId,
+        version,
       })
       .set((p) => ({
         balance: p.balance + amount,
@@ -386,6 +416,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     // ...NOW handle project update
     await onProjectStatsUpdated({
       projectId,
+      version,
       event,
       context,
     });
@@ -403,6 +434,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         lastPaidTimestamp: Number(event.block.timestamp),
         suckerGroupId,
         isRevnet,
+        version,
       })
       .onConflictDoUpdate((p) => ({
         volume: p.volume + amount,
@@ -437,12 +469,14 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       beneficiary,
       memo,
       newlyIssuedTokenCount,
+      version,
     });
     await insertActivityEvent("payEvent", {
       id,
       event,
       context,
       projectId,
+      version,
     });
 
     // beneficiary participant/wallet will be handled on token mint
@@ -480,10 +514,13 @@ ponder.on(
   "JBMultiTerminal:SetAccountingContext",
   async ({ event, context }) => {
     try {
+      const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+
       await context.db
         .update(project, {
           projectId: Number(event.args.projectId),
           chainId: context.chain.id,
+          version,
         })
         .set({
           currency: BigInt(event.args.context.currency),

@@ -9,6 +9,7 @@ import {
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
+import { ADDRESS } from "./constants/address";
 
 ponder.on("JBTokens:Burn", async ({ event, context }) => {
   try {
@@ -18,7 +19,13 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
 
     let burnedCredits = BigInt(0);
 
-    const _project = await context.db.find(project, { projectId, chainId });
+    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId,
+      version,
+    });
 
     if (!_project) {
       throw new Error("Missing project");
@@ -45,19 +52,19 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       });
     await setParticipantSnapshot({ participant: _holder, context, event });
 
-    // update suckerGroup tokenSupply
-    const { suckerGroupId } = await context.db
+    // update project + suckerGroup tokenSupply
+    await context.db
       .update(project, {
         chainId,
         projectId,
+        version,
       })
       .set(({ tokenSupply }) => ({
         tokenSupply: tokenSupply - count,
       }));
 
-    // update sucker group
     await context.db
-      .update(suckerGroup, { id: suckerGroupId })
+      .update(suckerGroup, { id: _project.suckerGroupId })
       .set(({ tokenSupply }) => ({
         tokenSupply: tokenSupply - count,
       }));
@@ -65,13 +72,19 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(burnEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId,
+      suckerGroupId: _project.suckerGroupId,
       projectId,
       amount: count,
       creditAmount: burnedCredits,
       erc20Amount: BigInt(0),
     });
-    await insertActivityEvent("burnEvent", { id, event, context, projectId });
+    await insertActivityEvent("burnEvent", {
+      id,
+      event,
+      context,
+      projectId,
+      version,
+    });
   } catch (e) {
     console.error("JBTokens:Burn", e);
   }
@@ -83,7 +96,13 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { id: chainId } = context.chain;
 
-    const _project = await context.db.find(project, { projectId, chainId });
+    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId,
+      version,
+    });
 
     if (!_project) {
       throw new Error("Missing project");
@@ -115,7 +134,13 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { id: chainId } = context.chain;
 
-    const _project = await context.db.find(project, { projectId, chainId });
+    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+
+    const _project = await context.db.find(project, {
+      projectId,
+      chainId,
+      version,
+    });
 
     if (!_project) {
       throw new Error("Missing project");
@@ -147,6 +172,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
         creditBalance: count,
         suckerGroupId: _project.suckerGroupId,
         isRevnet: _project.isRevnet,
+        version,
       })
       .onConflictDoUpdate((p) => ({
         creditBalance: p.creditBalance + count,
@@ -164,9 +190,12 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
   try {
     const { symbol, token, name, projectId } = event.args;
 
+    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -180,6 +209,7 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
       symbol,
       token,
       name,
+      version,
     });
 
     await insertActivityEvent("deployErc20Event", {
@@ -187,6 +217,7 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
       event,
       context,
       projectId,
+      version,
     });
   } catch (e) {
     console.error("JBTokens:DeployERC20", e);
@@ -204,11 +235,14 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     const { id: chainId } = context.chain;
     const projectId = Number(_projectId);
 
+    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+
     // update project
     const { suckerGroupId, isRevnet } = await context.db
       .update(project, {
         chainId,
         projectId,
+        version,
       })
       .set(({ tokenSupply }) => ({
         tokenSupply: tokenSupply + count,
@@ -239,6 +273,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         balance: count,
         suckerGroupId,
         isRevnet,
+        version,
       })
       .onConflictDoUpdate((p) => ({
         creditBalance: p.creditBalance + count,

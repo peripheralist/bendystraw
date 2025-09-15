@@ -1,5 +1,6 @@
 export const ADDRESS = {
   jb721TiersHookDeployer: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
+  jb721TiersHookDeployer5: "0xef60878d00378ac5f93d209f4616450ee8d41ca7",
   jbTokens: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
   jbTokens5: "0x4d0edd347fb1fa21589c1e109b3474924be87636",
   jbProjects: "0x0b538a02610d7d3cc91ce2870f423e0a34d646ad",
@@ -14,11 +15,14 @@ export const ADDRESS = {
   banny721TokenUriResolver: "0xa5f8911d4cfd60a6697479f078409434424fe666",
   banny721TokenUriResolver5: "0x47c011146a4498a70e0bf2e4585acf9cade85954",
   revDeployer: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
+  revDeployer5: "0x2ca27bde7e7d33e353b44c27acfcf6c78dde251d",
   revLoans: "0x03de624feb08c0edeff779ca5702aef4b85d7f06",
   revLoans1_1: "0xDE1E70fAF22024559e7D94aB814abD7e42CA849B",
+  revLoans5: "0x1880d832aa283d05b8eab68877717e25fbd550bb",
   jbSuckersRegistry: "0x696c7e9b37d28edbefa3fce06e26041b7197c1a5",
   jbSuckersRegistry5: "0x07c8c5bf08f0361883728a8a5f8824ba5724ece3",
   jb721TiersHookStore: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
+  jb721TiersHookStore5: "0x2bc696b0af74042b30b2687ab5817cc824eba8ee",
   jbPrices: "0xe712d14b04f1a1fe464be930e3ea72b9b0a141d7",
   jbPrices5: "0x9b90e507cf6b7eb681a506b111f6f50245e614c4",
 } as const;

@@ -10,6 +10,7 @@ import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
+import { ADDRESS } from "./constants/address";
 
 const projectId = (chainId: number) => {
   switch (chainId) {
@@ -68,11 +69,14 @@ ponder.on(
         tokenUri: decoratedTokenUri,
         tokenUriMetadata: parseTokenUri(decoratedTokenUri),
       });
+      const version =
+        event.log.address === ADDRESS.banny721TokenUriResolver5 ? 5 : 4;
       await insertActivityEvent("decorateBannyEvent", {
         id,
         event,
         context,
         projectId: projectId(context.chain.id),
+        version,
       });
 
       // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed

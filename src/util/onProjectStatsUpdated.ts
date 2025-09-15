@@ -7,10 +7,12 @@ import { project, suckerGroup, suckerGroupMoment } from "ponder:schema";
  */
 export async function onProjectStatsUpdated({
   projectId,
+  version,
   context,
   event,
 }: {
   projectId: bigint | number;
+  version: 4 | 5;
   context: Context;
   event: {
     block: {
@@ -22,6 +24,7 @@ export async function onProjectStatsUpdated({
   const _project = await context.db.find(project, {
     chainId: context.chain.id,
     projectId: Number(projectId),
+    version,
   });
 
   if (!_project) {

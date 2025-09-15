@@ -13,9 +13,12 @@ import { ADDRESS } from "./constants/address";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
+    const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
       chainId: context.chain.id,
+      version,
     });
 
     if (!_project) {
@@ -38,6 +41,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
       event,
       context,
       projectId: event.args.projectId,
+      version,
     });
   } catch (e) {
     console.error("JBController:MintTokens", e);
@@ -53,7 +57,9 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   try {
     const metadata = await parseProjectMetadata(projectUri);
 
-    await context.db.update(project, { chainId, projectId }).set({
+    const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+
+    await context.db.update(project, { chainId, projectId, version }).set({
       deployer: caller,
       isRevnet: isAddressEqual(caller, ADDRESS.revDeployer),
       metadataUri: projectUri,
@@ -84,7 +90,9 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
 
     const metadata = await parseProjectMetadata(uri);
 
-    await context.db.update(project, { chainId, projectId }).set({
+    const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+
+    await context.db.update(project, { chainId, projectId, version }).set({
       metadataUri: uri,
       metadata,
       name: metadata?.name,
@@ -118,9 +126,12 @@ ponder.on(
         rulesetCycleNumber,
       } = event.args;
 
+      const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+
       const _project = await context.db.find(project, {
         projectId: Number(event.args.projectId),
         chainId: context.chain.id,
+        version,
       });
 
       if (!_project) {
@@ -146,6 +157,7 @@ ponder.on(
         event,
         context,
         projectId,
+        version,
       });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplits", e);
@@ -159,9 +171,12 @@ ponder.on(
     try {
       const { split, rulesetId, projectId, tokenCount, groupId } = event.args;
 
+      const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+
       const _project = await context.db.find(project, {
         projectId: Number(event.args.projectId),
         chainId: context.chain.id,
+        version,
       });
 
       if (!_project) {
@@ -190,6 +205,7 @@ ponder.on(
         event,
         context,
         projectId,
+        version,
       });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplit", e);
