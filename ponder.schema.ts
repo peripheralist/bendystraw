@@ -799,7 +799,7 @@ export const projectMoment = onchainTable(
   }),
   (t) => ({
     pk: primaryKey({
-      columns: [t.version, t.chainId, t.projectId, t.version, t.block],
+      columns: [t.version, t.chainId, t.projectId, t.block],
     }),
   })
 );
