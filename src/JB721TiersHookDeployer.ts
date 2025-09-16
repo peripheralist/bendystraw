@@ -12,6 +12,8 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
   const { hook } = event.args;
   const { client, db, chain } = context;
 
+  const version = getVersion(event, "jb721TiersHookDeployer5");
+
   try {
     const [nameCall, symbolCall] = await Promise.all([
       client.readContract({
@@ -33,12 +35,11 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
       createdAt: Number(event.block.timestamp),
       name: nameCall,
       symbol: symbolCall,
+      version,
     });
 
     // Next we add all NFT Tiers for the collection (if any)
     const tiers = await getAllTiers({ context, hook });
-
-    const version = getVersion(event, "jb721TiersHookDeployer5");
 
     await Promise.all(
       tiers.map(async (tier) => {

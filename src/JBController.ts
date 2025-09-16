@@ -35,6 +35,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
       memo: event.args.memo,
       reservedPercent: event.args.reservedPercent,
       tokenCount: event.args.tokenCount,
+      version,
     });
 
     await insertActivityEvent("mintTokensEvent", {
@@ -151,6 +152,7 @@ ponder.on(
           owner: owner,
           rulesetId: Number(rulesetId),
           rulesetCycleNumber: Number(rulesetCycleNumber),
+          version,
         });
 
       await insertActivityEvent("sendReservedTokensToSplitsEvent", {
@@ -199,6 +201,7 @@ ponder.on(
           percent: split.percent,
           preferAddToBalance: split.preferAddToBalance,
           splitProjectId: Number(split.projectId),
+          version,
         });
 
       await insertActivityEvent("sendReservedTokensToSplitEvent", {

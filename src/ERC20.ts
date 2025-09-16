@@ -53,6 +53,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
         amount: value,
         erc20Amount: value,
         creditAmount: BigInt(0),
+        version,
       });
 
       await insertActivityEvent("burnEvent", {
@@ -93,7 +94,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
     if (from !== zeroAddress) {
       // update `from` participant
       const _from = await context.db
-        .update(participant, { chainId, projectId, address: from })
+        .update(participant, { chainId, projectId, address: from, version })
         .set((p) => ({
           erc20Balance: p.erc20Balance - value,
           balance: p.balance - value,

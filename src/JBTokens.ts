@@ -34,7 +34,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
 
     // update holder participant
     const _holder = await context.db
-      .update(participant, { chainId, projectId, address: holder })
+      .update(participant, { chainId, projectId, address: holder, version })
       .set(({ chainId, projectId, address, ...partial }) => {
         partial.suckerGroupId = _project.suckerGroupId;
 
@@ -78,6 +78,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       amount: count,
       creditAmount: burnedCredits,
       erc20Amount: BigInt(0),
+      version,
     });
     await insertActivityEvent("burnEvent", {
       id,
@@ -117,6 +118,7 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
         chainId,
         address: holder,
         projectId,
+        version,
       })
       .set((p) => ({
         // balance does not change, only exchanging credits for erc20
@@ -153,6 +155,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
         chainId,
         address: holder,
         projectId,
+        version,
       })
       .set((p) => ({
         creditBalance: p.creditBalance - count,

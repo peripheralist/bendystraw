@@ -17,6 +17,7 @@ import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
 import { ADDRESS } from "./constants/address";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
+import { getVersion } from "./util/getVersion";
 
 const version = 4;
 
@@ -95,7 +96,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
     const _project = await context.db.find(project, {
       projectId,
       chainId,
-      version: 4,
+      version,
     });
 
     if (!_project) {
@@ -112,7 +113,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         createdAt: Number(event.block.timestamp),
         suckerGroupId: _project.suckerGroupId,
         isRevnet: _project.isRevnet,
-        version: 4,
+        version,
       })
       .onConflictDoUpdate({
         suckerGroupId: _project.suckerGroupId,
@@ -124,6 +125,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
       chainId,
       hook,
       tokenId,
+      version,
     });
 
     if (existingNft) {
@@ -132,6 +134,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
           chainId,
           hook,
           tokenId,
+          version,
         })
         .set({ owner: to });
     } else {
@@ -155,6 +158,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         tokenUri,
         metadata: parseTokenUri(tokenUri),
         tierId: tier.id,
+        version,
       });
     }
 
@@ -164,6 +168,7 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
         chainId,
         hook,
         tierId: tier.id,
+        version,
       })
       .set({
         remainingSupply: tier.remainingSupply,
@@ -179,6 +184,7 @@ ponder.on("JB721TiersHook:RemoveTier", async ({ event, context }) => {
       chainId: context.chain.id,
       hook: event.log.address,
       tierId: Number(event.args.tierId),
+      version,
     });
   } catch (e) {
     console.error("JB721TiersHook:RemoveTier", e);
@@ -217,6 +223,7 @@ ponder.on("JB721TiersHook:Mint", async ({ event, context }) => {
       tokenId,
       beneficiary,
       totalAmountPaid,
+      version,
     });
     await insertActivityEvent("mintNftEvent", {
       id,

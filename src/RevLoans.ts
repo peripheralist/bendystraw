@@ -61,6 +61,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
         prepaidDuration: _loan.prepaidDuration,
         prepaidFeePercent: _loan.prepaidFeePercent,
         tokenUri,
+        version,
       })
       // TODO Not sure why there would be a conflict, but duplicate key errors are being thrown
       .onConflictDoUpdate({
@@ -89,6 +90,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       sourceFeeAmount,
       prepaidDuration: _loan.prepaidDuration,
       prepaidFeePercent: _loan.prepaidFeePercent,
+      version,
     });
     await insertActivityEvent("borrowLoanEvent", {
       id,
@@ -124,6 +126,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
       .update(loan, {
         id: loanId,
         chainId: context.chain.id,
+        version,
       })
       .set({
         collateral: _loan.collateral,
@@ -136,6 +139,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
       projectId,
       borrowAmount: _loan.amount,
       collateral: _loan.collateral,
+      version,
     });
     await insertActivityEvent("liquidateLoanEvent", {
       id,
@@ -198,6 +202,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
           beneficiary,
           sourceFeeAmount,
           owner: caller,
+          version,
         })
         .onConflictDoUpdate(() => ({
           createdAt: paidOffLoan.createdAt,
@@ -214,7 +219,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
     } else {
       // loan is completely paid off and burned. (owner updated on Transfer)
       await context.db
-        .update(loan, { id: loanId, chainId: context.chain.id })
+        .update(loan, { id: loanId, chainId: context.chain.id, version })
         .set({
           borrowAmount: BigInt(0),
           collateral: BigInt(0),
@@ -231,6 +236,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
       paidOffLoanId,
       repayBorrowAmount,
       collateralCountToReturn,
+      version,
     });
 
     await insertActivityEvent("repayLoanEvent", {
@@ -247,7 +253,9 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
 ponder.on("RevLoans:SetTokenUriResolver", async ({ event, context }) => {
   try {
-    const loans = await context.db.sql.select().from(loan);
+    const loans = await context.db.sql.query.loan.findMany();
+
+    const version = getVersion(event, "revLoans5");
 
     // update tokenUri for all loans
     await Promise.all(
@@ -260,7 +268,7 @@ ponder.on("RevLoans:SetTokenUriResolver", async ({ event, context }) => {
         });
 
         return context.db
-          .update(loan, { id: l.id, chainId: context.chain.id })
+          .update(loan, { id: l.id, chainId: context.chain.id, version })
           .set({ tokenUri });
       })
     );
@@ -310,6 +318,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
         beneficiary: caller,
         sourceFeeAmount: BigInt(0),
         owner: caller,
+        version,
       })
       .onConflictDoUpdate({
         borrowAmount: reallocatedLoan.amount,
@@ -330,6 +339,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
       reallocatedLoanId,
       projectId,
       removedCollateralCount: removedcollateralCount,
+      version,
     });
 
     await insertActivityEvent("reallocateLoanEvent", {
@@ -348,18 +358,21 @@ ponder.on("RevLoans:Transfer", async ({ event, context }) => {
   try {
     const { to, tokenId } = event.args;
 
+    const version = getVersion(event, "revLoans5");
+
     // There are three cases where a Loan NFT is minted: Borrow, ReallocateCollateral, and RepayLoan* (*where a loan is not completely repaid)
     // Mint (Transfer) event will emit before either event. But if we insert a loan here it will have 0 values (unless we do a contract call)
     // Instead we will only create loans at Borrow/RepayLoan
     const existingLoan = await context.db.find(loan, {
       id: tokenId,
       chainId: context.chain.id,
+      version,
     });
 
     if (!existingLoan) return;
 
     await context.db
-      .update(loan, { id: tokenId, chainId: context.chain.id })
+      .update(loan, { id: tokenId, chainId: context.chain.id, version })
       .set({ owner: to });
   } catch (e) {
     console.error("RevLoans:Transfer", e);

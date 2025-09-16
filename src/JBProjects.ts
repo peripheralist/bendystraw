@@ -54,6 +54,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       ...getEventParams({ event, context }),
       suckerGroupId,
       projectId,
+      version,
     });
     await insertActivityEvent("projectCreateEvent", {
       id,

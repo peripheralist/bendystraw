@@ -53,6 +53,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       memo,
       metadata,
       returnedFees,
+      version,
     });
     await insertActivityEvent("addToBalanceEvent", {
       id,
@@ -129,6 +130,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       }),
       rulesetId: Number(rulesetId),
       rulesetCycleNumber: Number(rulesetCycleNumber),
+      version,
     });
     await insertActivityEvent("sendPayoutsEvent", {
       id,
@@ -187,6 +189,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       percent: split.percent,
       preferAddToBalance: split.preferAddToBalance,
       splitProjectId: Number(split.projectId),
+      version,
     });
     await insertActivityEvent("sendPayoutToSplitEvent", {
       id,
@@ -284,6 +287,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       cashOutTaxRate,
       rulesetCycleNumber,
       rulesetId,
+      version,
     });
     await insertActivityEvent("cashOutTokensEvent", {
       id,
@@ -344,6 +348,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       memo,
       rulesetCycleNumber: Number(rulesetCycleNumber),
       rulesetId: Number(rulesetId),
+      version,
     });
     await insertActivityEvent("useAllowanceEvent", {
       id,
@@ -394,6 +399,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       address: payer,
       projectId,
       chainId,
+      version,
     });
 
     // update project

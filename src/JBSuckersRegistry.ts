@@ -98,18 +98,6 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
         version,
       });
 
-      if (projectId <= 4) {
-        console.log(
-          "asdf sucker",
-          thisProject.name,
-          thisProject.version,
-          version,
-          _projectId,
-          chainId,
-          newSuckerGroup.id
-        );
-      }
-
       // Link all affiliated projects to the newly created sucker group
       for (const p of newGroupProjects) {
         const _project = await context.db.sql.query.project.findFirst({

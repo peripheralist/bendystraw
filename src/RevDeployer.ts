@@ -8,15 +8,16 @@ ponder.on("RevDeployer:AutoIssue", async ({ event, context }) => {
   try {
     const { revnetId, beneficiary, count, stageId } = event.args;
 
+    const version = getVersion(event, "revDeployer5");
+
     const { id } = await context.db.insert(autoIssueEvent).values({
       ...getEventParams({ event, context }),
       projectId: Number(revnetId),
       beneficiary,
       count,
       stageId,
+      version,
     });
-
-    const version = getVersion(event, "revDeployer5");
 
     await insertActivityEvent("autoIssueEvent", {
       id,
@@ -34,12 +35,15 @@ ponder.on("RevDeployer:StoreAutoIssuanceAmount", async ({ event, context }) => {
   try {
     const { revnetId, beneficiary, count, stageId } = event.args;
 
+    const version = getVersion(event, "revDeployer5");
+
     await context.db.insert(storeAutoIssuanceAmountEvent).values({
       ...getEventParams({ event, context }),
       projectId: Number(revnetId),
       beneficiary,
       count,
       stageId,
+      version,
     });
 
     // note, *i think* storeAutoIssuanceAmount is emitted before project is created, so we can't create an activityEvent
