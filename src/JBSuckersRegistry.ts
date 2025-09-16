@@ -11,15 +11,11 @@ import { ADDRESS } from "./constants/address";
 
 ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
   try {
-    const { projectId: _projectId, sucker: address } = event.args;
+    const { projectId: _projectId, sucker: _suckerAddress } = event.args;
     const projectId = Number(_projectId);
     const chainId = context.chain.id;
 
-    const isArtizen =
-      (chainId === 1 && projectId === 130) ||
-      (chainId === 42161 && projectId === 66) ||
-      (chainId === 10 && projectId === 64) ||
-      (chainId === 8453 && projectId === 120);
+    const suckerAddress = _suckerAddress.toLowerCase() as `0x${string}`;
 
     const version = event.log.address === ADDRESS.jbSuckersRegistry5 ? 5 : 4;
 
@@ -40,7 +36,10 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
 
     // Would have been emitted by a project on a different chain linking to this project. (May be only 1)
     const addressMatchingSucker = await context.db.sql.query._sucker.findFirst({
-      where: eq(_sucker.address, address.toLowerCase() as `0x${string}`),
+      where: and(
+        eq(_sucker.address, suckerAddress),
+        eq(_sucker.version, version)
+      ),
       with: { project: true },
     });
 
@@ -48,7 +47,8 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
     const projectMatchingSuckers = await context.db.sql.query._sucker.findMany({
       where: and(
         eq(_sucker.projectId, projectId),
-        eq(_sucker.chainId, chainId)
+        eq(_sucker.chainId, chainId),
+        eq(_sucker.version, version)
       ),
       with: { project: true },
     });
@@ -56,27 +56,14 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
     // Groups are assembled as suckers are created. Multiple "partial" groups may be created before all sucker events linking the projects have been indexed.
     // Look for any groups that may already contain this project or sucker address. There may be one other group containing this sucker address, or multiple groups containing this project.
     const matchingGroups = await context.db.sql.query.suckerGroup.findMany({
-      where: or(
-        arrayOverlaps(suckerGroup.addresses, [
-          address.toLowerCase() as `0x${string}`,
-        ]),
-        arrayOverlaps(suckerGroup.projects, [thisProject.id])
+      where: and(
+        or(
+          arrayOverlaps(suckerGroup.addresses, [suckerAddress]),
+          arrayOverlaps(suckerGroup.projects, [thisProject.id])
+        ),
+        eq(suckerGroup.version, version)
       ),
     });
-
-    if (isArtizen) {
-      console.log(
-        `ARTIZEN sucker grouping:: projectId: ${projectId}, chainId: ${chainId}, address: ${address} || addressMatch: ${
-          addressMatchingSucker?.chainId ?? ""
-        }-${
-          addressMatchingSucker?.projectId
-        } || projectMatches: ${projectMatchingSuckers
-          .map((g) => `${g.chainId}-${g.projectId}`)
-          .join(", ")} || matchingGroups: ${matchingGroups
-          .map((g) => g.id)
-          .join(", ")}`
-      );
-    }
 
     if (
       addressMatchingSucker ||
@@ -86,7 +73,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
       // We've found matching suckers or groups, that we must consolidate into a new group.
 
       // Add any affiliated addresses from matching suckers
-      const groupAddresses = [address.toLowerCase()];
+      const groupAddresses: string[] = [suckerAddress];
       projectMatchingSuckers.forEach((s) => {
         if (!groupAddresses.includes(s.address.toLowerCase())) {
           groupAddresses.push(s.address.toLowerCase());
@@ -157,9 +144,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
           and(
             ne(suckerGroup.id, newSuckerGroup.id),
             or(
-              arrayOverlaps(suckerGroup.addresses, [
-                address.toLowerCase() as `0x${string}`,
-              ]),
+              arrayOverlaps(suckerGroup.addresses, [suckerAddress]),
               arrayOverlaps(suckerGroup.projects, [thisProject.id])
             )
           )
@@ -180,7 +165,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
     await context.db.insert(_sucker).values({
       chainId,
       projectId,
-      address: address.toLowerCase() as `0x${string}`,
+      address: suckerAddress,
       version,
     });
   } catch (e) {
