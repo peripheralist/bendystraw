@@ -2,9 +2,9 @@ import { Context } from "ponder:registry";
 import { JBPricesAbi } from "../../abis/JBPricesAbi";
 import { ADDRESS } from "../constants/address";
 
-// const CURRENCY_NATIVE = BigInt(61166);
-// const CURRENCY_ETH = BigInt(1);
-const CURRENCY_USD = BigInt(3); // we never deployed the 61166 <==> 3 price feed since we never moved forward with allowing USD denominated payouts for ETH projects in v4
+const CURRENCY_NATIVE = BigInt(61166);
+const CURRENCY_ETH = BigInt(1);
+const CURRENCY_USD = BigInt(3); // we never deployed the 61166 <==> 3 price feed since we never moved forward with allowing USD denominated payouts for ETH projects in v4, so use USDC for conversions
 
 const CURRENCY_USDC = BigInt(2);
 
@@ -25,7 +25,12 @@ export async function usdPriceForEth({
   amount: bigint;
   currency: bigint | null;
 }) {
-  if (!currency) return BigInt(0);
+  if (
+    !currency ||
+    (currency !== CURRENCY_ETH && currency !== CURRENCY_NATIVE) // TODO: need price conversion for non-ETH
+  ) {
+    return BigInt(0);
+  }
 
   if (STABLES.has(currency)) return amount;
 

@@ -676,6 +676,7 @@ export const project = onchainTable(
     tokenSupply: t.bigint().notNull().default(BigInt(0)),
     trendingScore: t.bigint().notNull().default(BigInt(0)),
     trendingVolume: t.bigint().notNull().default(BigInt(0)),
+    trendingVolumeUsd: t.bigint().notNull().default(BigInt(0)),
     trendingPaymentsCount: t.integer().notNull().default(0),
     contributorsCount: t.integer().notNull().default(0),
     createdWithinTrendingWindow: t.boolean(),
