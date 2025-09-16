@@ -11,6 +11,7 @@ import { getEventParams } from "./util/getEventParams";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
 import { ADDRESS } from "./constants/address";
+import { getVersion } from "./util/getVersion";
 
 const projectId = (chainId: number) => {
   switch (chainId) {
@@ -69,8 +70,7 @@ ponder.on(
         tokenUri: decoratedTokenUri,
         tokenUriMetadata: parseTokenUri(decoratedTokenUri),
       });
-      const version =
-        event.log.address === ADDRESS.banny721TokenUriResolver5 ? 5 : 4;
+      const version = getVersion(event, "banny721TokenUriResolver5");
       await insertActivityEvent("decorateBannyEvent", {
         id,
         event,

@@ -10,10 +10,11 @@ import { parseProjectMetadata } from "./util/projectMetadata";
 import { insertActivityEvent } from "./util/activityEvent";
 import { isAddressEqual } from "viem";
 import { ADDRESS } from "./constants/address";
+import { getVersion } from "./util/getVersion";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
-    const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+    const version = getVersion(event, "jbController5");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
@@ -57,7 +58,7 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   try {
     const metadata = await parseProjectMetadata(projectUri);
 
-    const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+    const version = getVersion(event, "jbController5");
 
     await context.db.update(project, { chainId, projectId, version }).set({
       deployer: caller,
@@ -90,7 +91,7 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
 
     const metadata = await parseProjectMetadata(uri);
 
-    const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+    const version = getVersion(event, "jbController5");
 
     await context.db.update(project, { chainId, projectId, version }).set({
       metadataUri: uri,
@@ -126,7 +127,7 @@ ponder.on(
         rulesetCycleNumber,
       } = event.args;
 
-      const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+      const version = getVersion(event, "jbController5");
 
       const _project = await context.db.find(project, {
         projectId: Number(event.args.projectId),
@@ -171,7 +172,7 @@ ponder.on(
     try {
       const { split, rulesetId, projectId, tokenCount, groupId } = event.args;
 
-      const version = event.log.address === ADDRESS.jbController5 ? 5 : 4;
+      const version = getVersion(event, "jbController5");
 
       const _project = await context.db.find(project, {
         projectId: Number(event.args.projectId),

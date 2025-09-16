@@ -8,6 +8,7 @@ import {
   suckerGroup,
 } from "ponder:schema";
 import { ADDRESS } from "./constants/address";
+import { getVersion } from "./util/getVersion";
 
 ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
   try {
@@ -17,7 +18,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
 
     const suckerAddress = _suckerAddress.toLowerCase() as `0x${string}`;
 
-    const version = event.log.address === ADDRESS.jbSuckersRegistry5 ? 5 : 4;
+    const version = getVersion(event, "jbSuckersRegistry5");
 
     const thisProject = await context.db.find(project, {
       chainId,
@@ -113,8 +114,6 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
           .where(inArray(project.id, groupProjects))
       ).reduce((acc, curr) => acc + curr.tokenSupply, BigInt(0));
 
-      const version = event.log.address === ADDRESS.jbSuckersRegistry5 ? 5 : 4;
-
       // Create a new group from affiliated projects and addresses
       const newSuckerGroup = await context.db.insert(suckerGroup).values({
         projects: groupProjects,
@@ -146,7 +145,8 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
             or(
               arrayOverlaps(suckerGroup.addresses, [suckerAddress]),
               arrayOverlaps(suckerGroup.projects, [thisProject.id])
-            )
+            ),
+            eq(suckerGroup.version, version)
           )
         );
 

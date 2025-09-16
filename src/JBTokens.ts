@@ -10,6 +10,7 @@ import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { ADDRESS } from "./constants/address";
+import { getVersion } from "./util/getVersion";
 
 ponder.on("JBTokens:Burn", async ({ event, context }) => {
   try {
@@ -19,7 +20,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
 
     let burnedCredits = BigInt(0);
 
-    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+    const version = getVersion(event, "jbTokens5");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -96,7 +97,7 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { id: chainId } = context.chain;
 
-    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+    const version = getVersion(event, "jbTokens5");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -134,7 +135,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { id: chainId } = context.chain;
 
-    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+    const version = getVersion(event, "jbTokens5");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -190,7 +191,7 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
   try {
     const { symbol, token, name, projectId } = event.args;
 
-    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+    const version = getVersion(event, "jbTokens5");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
@@ -235,7 +236,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     const { id: chainId } = context.chain;
     const projectId = Number(_projectId);
 
-    const version = event.log.address === ADDRESS.jbTokens5 ? 5 : 4;
+    const version = getVersion(event, "jbTokens5");
 
     // update project
     const { suckerGroupId, isRevnet } = await context.db

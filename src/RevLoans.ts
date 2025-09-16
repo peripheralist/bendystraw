@@ -7,6 +7,7 @@ import { insertActivityEvent } from "./util/activityEvent";
 import { borrowLoanEvent } from "ponder:schema";
 import { liquidateLoanEvent } from "ponder:schema";
 import { project } from "ponder:schema";
+import { getVersion } from "./util/getVersion";
 
 ponder.on("RevLoans:Borrow", async ({ event, context }) => {
   try {
@@ -24,7 +25,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
-    const version = event.log.address === ADDRESS.revLoans5 ? 5 : 4;
+    const version = getVersion(event, "revLoans5");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
@@ -107,7 +108,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
-    const version = event.log.address === ADDRESS.revLoans5 ? 5 : 4;
+    const version = getVersion(event, "revLoans5");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
@@ -165,7 +166,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
-    const version = event.log.address === ADDRESS.revLoans5 ? 5 : 4;
+    const version = getVersion(event, "revLoans5");
 
     const shouldCreateLoan = loanId !== paidOffLoanId;
 
@@ -281,7 +282,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
-    const version = event.log.address === ADDRESS.revLoans5 ? 5 : 4;
+    const version = getVersion(event, "revLoans5");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),

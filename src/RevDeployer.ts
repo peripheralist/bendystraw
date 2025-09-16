@@ -1,8 +1,8 @@
 import { ponder } from "ponder:registry";
 import { autoIssueEvent, storeAutoIssuanceAmountEvent } from "ponder:schema";
-import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
+import { getVersion } from "./util/getVersion";
 
 ponder.on("RevDeployer:AutoIssue", async ({ event, context }) => {
   try {
@@ -16,7 +16,7 @@ ponder.on("RevDeployer:AutoIssue", async ({ event, context }) => {
       stageId,
     });
 
-    const version = event.log.address === ADDRESS.revDeployer5 ? 5 : 4;
+    const version = getVersion(event, "revDeployer5");
 
     await insertActivityEvent("autoIssueEvent", {
       id,

@@ -18,12 +18,13 @@ import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { handleTrendingPayment } from "./util/trending";
 import { usdPriceForEth } from "./util/usdPrice";
 import { ADDRESS } from "./constants/address";
+import { getVersion } from "./util/getVersion";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
     const { projectId, amount, memo, metadata, returnedFees } = event.args;
 
-    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+    const version = getVersion(event, "jbMultiTerminal5");
 
     // update project
     const { suckerGroupId } = await context.db
@@ -79,7 +80,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
-    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+    const version = getVersion(event, "jbMultiTerminal5");
 
     // update project
     const { suckerGroupId, currency } = await context.db
@@ -153,7 +154,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
     } = event.args;
     const projectId = Number(_projectId);
 
-    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+    const version = getVersion(event, "jbMultiTerminal5");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -229,7 +230,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
-    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+    const version = getVersion(event, "jbMultiTerminal5");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -310,7 +311,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       rulesetId,
     } = event.args;
 
-    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+    const version = getVersion(event, "jbMultiTerminal5");
 
     // update project
     const { suckerGroupId } = await context.db
@@ -370,7 +371,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     const projectId = Number(_projectId);
 
-    const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+    const version = getVersion(event, "jbMultiTerminal5");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -514,7 +515,7 @@ ponder.on(
   "JBMultiTerminal:SetAccountingContext",
   async ({ event, context }) => {
     try {
-      const version = event.log.address === ADDRESS.jbMultiTerminal5 ? 5 : 4;
+      const version = getVersion(event, "jbMultiTerminal5");
 
       await context.db
         .update(project, {

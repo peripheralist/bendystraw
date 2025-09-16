@@ -6,6 +6,7 @@ import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
 import { parseTokenUri } from "./util/tokenUri";
 import { ADDRESS } from "./constants/address";
+import { getVersion } from "./util/getVersion";
 
 ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
   const { hook } = event.args;
@@ -37,8 +38,7 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
     // Next we add all NFT Tiers for the collection (if any)
     const tiers = await getAllTiers({ context, hook });
 
-    const version =
-      event.log.address === ADDRESS.jb721TiersHookDeployer5 ? 5 : 4;
+    const version = getVersion(event, "jb721TiersHookDeployer5");
 
     await Promise.all(
       tiers.map(async (tier) => {
