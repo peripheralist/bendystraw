@@ -7,7 +7,6 @@ import {
   projectCreateEvent,
   suckerGroup,
 } from "ponder:schema";
-import { ADDRESS } from "./constants/address";
 import { getVersion } from "./util/getVersion";
 
 ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
@@ -16,6 +15,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const chainId = context.chain.id;
 
+    // towLowerCase() all addresses for consistency
     const suckerAddress = _suckerAddress.toLowerCase() as `0x${string}`;
 
     const version = getVersion(event, "jbSuckersRegistry5");
@@ -30,25 +30,15 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    // NOTE: we towLowerCase() addresses because storing in an array may alter case.
     // NOTE: using promise.all() at any point in this function throws duplicate key errors on unrelated tables. Bug?
 
     // First we look for other suckers that may overlap by address or projectId.
-
-    // Would have been emitted by a project on a different chain linking to this project. (May be only 1)
-    const addressMatchingSucker = await context.db.sql.query._sucker.findFirst({
+    const matchingSuckers = await context.db.sql.query._sucker.findMany({
       where: and(
-        eq(_sucker.address, suckerAddress),
-        eq(_sucker.version, version)
-      ),
-      with: { project: true },
-    });
-
-    // Would have been emitted by this project to link projects on different chains. (May be multiple)
-    const projectMatchingSuckers = await context.db.sql.query._sucker.findMany({
-      where: and(
-        eq(_sucker.projectId, projectId),
-        eq(_sucker.chainId, chainId),
+        or(
+          eq(_sucker.address, suckerAddress), // Match would have been emitted by a project on a different chain linking to this project. (May be only 1)
+          and(eq(_sucker.projectId, projectId), eq(_sucker.chainId, chainId)) // Match would have been emitted by this project on this chain to link projects on other chains. (May be multiple)
+        ),
         eq(_sucker.version, version)
       ),
       with: { project: true },
@@ -66,65 +56,62 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
       ),
     });
 
-    if (
-      addressMatchingSucker ||
-      projectMatchingSuckers ||
-      matchingGroups.length
-    ) {
+    if (matchingSuckers.length || matchingGroups.length) {
       // We've found matching suckers or groups, that we must consolidate into a new group.
 
-      // Add any affiliated addresses from matching suckers
-      const groupAddresses: string[] = [suckerAddress];
-      projectMatchingSuckers.forEach((s) => {
-        if (!groupAddresses.includes(s.address.toLowerCase())) {
-          groupAddresses.push(s.address.toLowerCase());
-        }
-      });
+      const newGroupAddresses = [suckerAddress];
+      const newGroupProjects = [thisProject.id];
 
-      // Add any affiliated projects from matching suckers
-      const groupProjects = [thisProject.id];
-      if (
-        addressMatchingSucker?.project.id &&
-        !groupProjects.includes(addressMatchingSucker.project.id)
-      ) {
-        groupProjects.push(addressMatchingSucker.project.id);
-      }
-      projectMatchingSuckers.forEach((s) => {
-        if (!groupProjects.includes(s.project.id)) {
-          groupProjects.push(s.project.id);
+      matchingSuckers.forEach((s) => {
+        // Add any affiliated addresses from matching suckers
+        if (!newGroupAddresses.includes(s.address)) {
+          newGroupAddresses.push(s.address);
+        }
+        // Add any affiliated projects from matching suckers
+        if (!newGroupProjects.includes(s.project.id)) {
+          newGroupProjects.push(s.project.id);
         }
       });
 
       // Add any affiliated projects or addresses from matching groups
       matchingGroups.forEach((g) => {
         g.addresses.forEach((a) => {
-          if (!groupAddresses.includes(a.toLowerCase())) {
-            groupAddresses.push(a.toLowerCase());
-          }
+          if (!newGroupAddresses.includes(a)) newGroupAddresses.push(a);
         });
         g.projects.forEach((p) => {
-          if (!groupProjects.includes(p)) groupProjects.push(p);
+          if (!newGroupProjects.includes(p)) newGroupProjects.push(p);
         });
       });
 
       const groupProjectsTokenSupplies = (
-        await context.db.sql
-          .select()
-          .from(project)
-          .where(inArray(project.id, groupProjects))
+        await context.db.sql.query.project.findMany({
+          where: inArray(project.id, newGroupProjects),
+        })
       ).reduce((acc, curr) => acc + curr.tokenSupply, BigInt(0));
 
       // Create a new group from affiliated projects and addresses
       const newSuckerGroup = await context.db.insert(suckerGroup).values({
-        projects: groupProjects,
-        addresses: groupAddresses as `0x${string}`[],
+        projects: newGroupProjects,
+        addresses: newGroupAddresses,
         tokenSupply: groupProjectsTokenSupplies,
         createdAt: Number(event.block.timestamp),
         version,
       });
 
+      if (projectId <= 4) {
+        console.log(
+          "asdf sucker",
+          thisProject.name,
+          thisProject.version,
+          version,
+          _projectId,
+          chainId,
+          newSuckerGroup.id
+        );
+      }
+
       // Link all affiliated projects to the newly created sucker group
-      for (const p of groupProjects) {
+      for (const p of newGroupProjects) {
         const _project = await context.db.sql.query.project.findFirst({
           where: eq(project.id, p),
         });

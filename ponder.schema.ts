@@ -569,8 +569,8 @@ export const participantRelations = relations(participant, ({ one, many }) => ({
   }),
   nfts: many(nft),
   project: one(project, {
-    fields: [participant.projectId, participant.chainId],
-    references: [project.projectId, project.chainId],
+    fields: [participant.projectId, participant.chainId, participant.version],
+    references: [project.projectId, project.chainId, project.version],
   }),
   suckerGroup: one(suckerGroup, {
     fields: [participant.suckerGroupId],
@@ -615,8 +615,8 @@ export const payEvent = onchainTable("pay_event", (t) => ({
 
 export const payEventRelations = relations(payEvent, ({ one }) => ({
   project: one(project, {
-    fields: [payEvent.projectId, payEvent.chainId],
-    references: [project.projectId, project.chainId],
+    fields: [payEvent.projectId, payEvent.chainId, payEvent.version],
+    references: [project.projectId, project.chainId, project.version],
   }),
 }));
 
@@ -751,8 +751,8 @@ export const projectMoment = onchainTable(
 
 export const projectMomentRelations = relations(projectMoment, ({ one }) => ({
   project: one(project, {
-    fields: [projectMoment.projectId, projectMoment.chainId],
-    references: [project.projectId, project.chainId],
+    fields: [projectMoment.projectId, projectMoment.chainId, projectMoment.version],
+    references: [project.projectId, project.chainId, project.version],
   }),
 }));
 
@@ -973,8 +973,8 @@ export const _sucker = onchainTable(
 
 export const suckerRelations = relations(_sucker, ({ one }) => ({
   project: one(project, {
-    fields: [_sucker.projectId, _sucker.chainId],
-    references: [project.projectId, project.chainId],
+    fields: [_sucker.projectId, _sucker.chainId, _sucker.version],
+    references: [project.projectId, project.chainId, project.version],
   }),
 }));
 
