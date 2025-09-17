@@ -107,6 +107,15 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
     fields: [activityEvent.suckerGroupId],
     references: [suckerGroup.id],
   }),
+  project: one(project, {
+    fields: [
+      activityEvent.projectId,
+      activityEvent.chainId,
+      activityEvent.version,
+    ],
+    references: [project.projectId, project.chainId, project.version],
+  }),
+
   addToBalanceEvent: one(addToBalanceEvent, {
     fields: [activityEvent.addToBalanceEvent],
     references: [addToBalanceEvent.id],
