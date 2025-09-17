@@ -761,27 +761,38 @@ export const project = onchainTable(
 );
 
 export const projectRelations = relations(project, ({ many, one }) => ({
-  participants: many(participant),
-  nfts: many(nft),
-  nftHooks: many(nftHook),
-  mintTokensEvents: many(mintTokensEvent),
-  sendPayoutsEvents: many(sendPayoutsEvent),
-  sendPayoutToSplitEvents: many(sendPayoutToSplitEvent),
-  sendReservedTokensToSplitsEvents: many(sendReservedTokensToSplitsEvent),
-  sendReservedTokensToSplitEvents: many(sendReservedTokensToSplitEvent),
-  addToBalanceEvents: many(addToBalanceEvent),
-  cashOutTokensEvents: many(cashOutTokensEvent),
-  useAllowanceEvents: many(useAllowanceEvent),
-  payEvents: many(payEvent),
-  mintNftEvents: many(mintNftEvent),
-  burnEvents: many(burnEvent),
-  deployErc20Events: many(deployErc20Event),
-  permissionHolders: many(permissionHolder),
   suckerGroup: one(suckerGroup, {
     fields: [project.suckerGroupId],
     references: [suckerGroup.id],
   }),
+
+  participants: many(participant),
+  nfts: many(nft),
+  nftHooks: many(nftHook),
   projectMoments: many(projectMoment),
+  permissionHolders: many(permissionHolder),
+
+  // events
+  activityEvents: many(activityEvent),
+  addToBalanceEvents: many(addToBalanceEvent),
+  autoIssueEvents: many(autoIssueEvent),
+  borrowLoanEvents: many(borrowLoanEvent),
+  burnEvents: many(burnEvent),
+  cashOutTokensEvents: many(cashOutTokensEvent),
+  deployErc20Events: many(deployErc20Event),
+  liquidateLoanEvents: many(liquidateLoanEvent),
+  mintNftEvents: many(mintNftEvent),
+  mintTokensEvents: many(mintTokensEvent),
+  payEvents: many(payEvent),
+  projectCreateEvents: many(projectCreateEvent),
+  repayLoanEvents: many(repayLoanEvent),
+  reallocateLoanEvents: many(reallocateLoanEvent),
+  sendPayoutsEvents: many(sendPayoutsEvent),
+  sendPayoutToSplitEvents: many(sendPayoutToSplitEvent),
+  sendReservedTokensToSplitEvents: many(sendReservedTokensToSplitEvent),
+  sendReservedTokensToSplitsEvents: many(sendReservedTokensToSplitsEvent),
+  storeAutoIssuanceAmountEvent: many(storeAutoIssuanceAmountEvent),
+  useAllowanceEvents: many(useAllowanceEvent),
 }));
 
 export const projectMoment = onchainTable(
