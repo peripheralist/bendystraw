@@ -16,7 +16,7 @@ import { getLatestPayEvent } from "./util/getLatestPayEvent";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { handleTrendingPayment } from "./util/trending";
-import { usdPriceForEth } from "./util/usdPrice";
+import { usdPriceForToken } from "./util/usdPrice";
 import { getVersion } from "./util/getVersion";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
@@ -106,23 +106,26 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       suckerGroupId,
       projectId: Number(projectId),
       amount,
-      amountUsd: await usdPriceForEth({
+      amountUsd: await usdPriceForToken({
         context,
+        version,
         projectId: _projectId,
         amount,
         currency,
       }),
       amountPaidOut,
-      amountPaidOutUsd: await usdPriceForEth({
+      amountPaidOutUsd: await usdPriceForToken({
         context,
+        version,
         projectId: _projectId,
         amount: amountPaidOut,
         currency,
       }),
       netLeftoverPayoutAmount,
       fee,
-      feeUsd: await usdPriceForEth({
+      feeUsd: await usdPriceForToken({
         context,
+        version,
         projectId: _projectId,
         amount: fee,
         currency,
@@ -173,8 +176,9 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       suckerGroupId: _project.suckerGroupId,
       projectId: projectId,
       amount,
-      amountUsd: await usdPriceForEth({
+      amountUsd: await usdPriceForToken({
         context,
+        version,
         projectId: _projectId,
         amount,
         currency: _project.currency,
@@ -244,8 +248,9 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const reclaimAmountUsd = await usdPriceForEth({
+    const reclaimAmountUsd = await usdPriceForToken({
       context,
+      version,
       projectId: _projectId,
       amount: reclaimAmount,
       currency: _project.currency,
@@ -387,8 +392,9 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const amountUsd = await usdPriceForEth({
+    const amountUsd = await usdPriceForToken({
       context,
+      version,
       projectId: _projectId,
       amount,
       currency: _project.currency,
