@@ -28,7 +28,7 @@ const rpcUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
 
 const deployErc20FactoryConfig = factory({
-  address: ADDRESS.jbTokens,
+  address: [ADDRESS.jbTokens, ADDRESS.jbTokens5],
   event: getAbiItem({ abi: JBTokensAbi, name: "DeployERC20" }),
   parameter: "token",
 });
