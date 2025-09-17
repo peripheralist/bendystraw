@@ -11,14 +11,27 @@ export async function handleTrendingPayment(
   context: Context
 ) {
   try {
-    // TODO we could use a trendingLastUpdatedTimestamp pattern to avoid updating too often
+    const trendingWindowStart = Number(timestamp) - TRENDING_WINDOW_SECS;
 
-    const oldestValidTimestampSecs = Number(timestamp) - TRENDING_WINDOW_SECS;
+    if (Number(timestamp) < trendingWindowStart) {
+      // don't run calculations during historical indexing. only run once within trending window, ensuring trending will still be calculated if latest payment is barely within window when bendystraw is deployed.
+      console.log("ASDF NOT Running trending");
+      return;
+    }
 
-    // Promise.all() get [trendingProjects, trendingWindowPayments] fails in production "current transaction is aborted...". Reason unclear
-    const trendingProjects = await context.db.sql
-      .select()
-      .from(project)
+    console.log("ASDF Running trending");
+
+
+    /**
+     * We first reset the trending stats for all trending projects
+     */
+    await context.db.sql
+      .update(project)
+      .set({
+        trendingPaymentsCount: 0,
+        trendingScore: BigInt(0),
+        trendingVolume: BigInt(0),
+      })
       .where(
         or(
           gt(project.trendingPaymentsCount, 0),
@@ -27,59 +40,93 @@ export async function handleTrendingPayment(
         )
       );
 
-    const trendingWindowPayments = await context.db.sql
-      .select()
-      .from(payEvent)
-      .where(gte(payEvent.timestamp, oldestValidTimestampSecs));
+    const trendingPayments = await context.db.sql.query.payEvent.findMany({
+      where: gte(payEvent.timestamp, trendingWindowStart),
+      with: { project: { columns: { id: true } } },
+    });
 
     /**
-     * We first reset the trending stats for all trending projects
+     * Store a dictionary of pending project updates, derived from the trending payments list.
+     *
+     * Stats for each project will change with each payment it has received within the trending window. This pattern allows us to coalesce all updates into a single record, and only update the database once per project.
      */
-    await Promise.all(
-      trendingProjects.map((tp) =>
-        context.db.update(project, tp).set({
+    const updates = trendingPayments.reduce(
+      (acc, { project: { id }, projectId, chainId, version }) => ({
+        ...acc,
+        [id]: {
+          projectId,
+          chainId,
+          version,
           trendingPaymentsCount: 0,
-          trendingScore: BigInt(0),
           trendingVolume: BigInt(0),
-          createdWithinTrendingWindow: tp.createdAt >= oldestValidTimestampSecs,
-        })
-      )
+          trendingVolumeUsd: BigInt(0),
+        },
+      }),
+      {} as Record<
+        string,
+        Pick<
+          typeof project.$inferSelect,
+          | "projectId"
+          | "chainId"
+          | "version"
+          | "trendingPaymentsCount"
+          | "trendingVolume"
+          | "trendingVolumeUsd"
+        >
+      >
     );
 
     /**
-     * Next we calculate new trending stats.
+     * Next we update the updates dictionary with payments data.
      *
-     * We iterate over all payments in the trending window. Then for each payment, update the trending stats of the project that received it.
+     * Iterate over all trending payments. Then for each payment, update record of trending stats for the project that received it.
      */
-    // TODO we can probably reduce this to one db update per project. Unclear if/how it may improve performance. We cannot `await Promise.all` because each project update depends on the state of the previous
-    for (const payment of trendingWindowPayments) {
-      const { projectId, chainId, version, amount, amountUsd } = payment;
+    for (const {
+      project: { id },
+      amount,
+      amountUsd,
+    } of trendingPayments) {
+      if (!updates[id]) {
+        throw new Error(`Missing update record, id: ${id}`);
+      }
 
-      await context.db
-        .update(project, { projectId, chainId, version })
-        .set((p) => {
-          const trendingPaymentsCount = p.trendingPaymentsCount + 1;
-          const trendingVolume = p.trendingVolume + amount;
-          const trendingVolumeUsd = p.trendingVolumeUsd + amountUsd;
+      updates[id].trendingPaymentsCount++;
+      updates[id].trendingVolume += amount;
+      updates[id].trendingVolumeUsd += amountUsd;
+    }
 
-          // use USD value to normalize score for non-ETH projects
-          // in case volumeUsd is 0 due to failed conversion, use 1 so trendingPaymentsCount can still factor into non-zero score. score will still be 0 if paymentsCount is 0
-          const trendingScoreVolume =
-            trendingVolumeUsd === BigInt(0) ? BigInt(1) : trendingVolumeUsd;
+    /**
+     * Finally we update the projects table.
+     *
+     * For each project in the updates dictionary, we'll calculate a new trending score and store all trending stats.
+     */
+    for (const {
+      trendingPaymentsCount,
+      trendingVolume,
+      trendingVolumeUsd,
+      ...keys
+    } of Object.values(updates)) {
+      await context.db.update(project, keys).set(({ createdAt }) => {
+        // use USD value to normalize score regardless of project currency
+        // in case volumeUsd is 0 due to failed price conversion, use 1 so that trendingPaymentsCount can still factor into non-zero score
+        const trendingScoreVolume =
+          trendingVolumeUsd === BigInt(0) ? BigInt(1) : trendingVolumeUsd;
 
-          // trendingScoreVolume is proportional to square of trendingPaymentsCount in score formula
-          const trendingScore =
-            trendingScoreVolume * BigInt(trendingPaymentsCount) ** BigInt(2);
+        // calculate trendingScore
+        const trendingScore =
+          trendingScoreVolume * BigInt(trendingPaymentsCount) ** BigInt(2);
 
-          return {
-            trendingPaymentsCount,
-            trendingVolume,
-            trendingVolumeUsd,
-            trendingScore,
-            createdWithinTrendingWindow:
-              p.createdAt >= oldestValidTimestampSecs,
-          };
-        });
+        // finally, set value of createdWithinTrendingWindow
+        const createdWithinTrendingWindow = createdAt >= trendingWindowStart;
+
+        return {
+          trendingPaymentsCount,
+          trendingVolume,
+          trendingVolumeUsd,
+          trendingScore,
+          createdWithinTrendingWindow,
+        };
+      });
     }
   } catch (e) {
     console.warn("Error updating trending projects", e);
