@@ -15,7 +15,7 @@ ponder.on(
       const { id: chainId } = context.chain;
       const projectId = Number(_projectId);
 
-      const version = getVersion(event, "jbPermissions5");
+      const version = getVersion(event, "jbPermissions");
 
       await context.db
         .insert(permissionHolder)

@@ -25,7 +25,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
-    const version = getVersion(event, "revLoans5");
+    const version = getVersion(event, "revLoans");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
@@ -110,7 +110,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
-    const version = getVersion(event, "revLoans5");
+    const version = getVersion(event, "revLoans");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
@@ -170,7 +170,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
-    const version = getVersion(event, "revLoans5");
+    const version = getVersion(event, "revLoans");
 
     const shouldCreateLoan = loanId !== paidOffLoanId;
 
@@ -255,7 +255,7 @@ ponder.on("RevLoans:SetTokenUriResolver", async ({ event, context }) => {
   try {
     const loans = await context.db.sql.query.loan.findMany();
 
-    const version = getVersion(event, "revLoans5");
+    const version = getVersion(event, "revLoans");
 
     // update tokenUri for all loans
     await Promise.all(
@@ -290,7 +290,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
 
     const projectId = Number(revnetId);
 
-    const version = getVersion(event, "revLoans5");
+    const version = getVersion(event, "revLoans");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
@@ -358,7 +358,7 @@ ponder.on("RevLoans:Transfer", async ({ event, context }) => {
   try {
     const { to, tokenId } = event.args;
 
-    const version = getVersion(event, "revLoans5");
+    const version = getVersion(event, "revLoans");
 
     // There are three cases where a Loan NFT is minted: Borrow, ReallocateCollateral, and RepayLoan* (*where a loan is not completely repaid)
     // Mint (Transfer) event will emit before either event. But if we insert a loan here it will have 0 values (unless we do a contract call)

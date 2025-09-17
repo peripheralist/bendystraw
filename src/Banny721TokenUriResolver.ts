@@ -39,7 +39,7 @@ ponder.on(
         args: [tokenId],
       });
 
-      const version = getVersion(event, "banny721TokenUriResolver5");
+      const version = getVersion(event, "banny721TokenUriResolver");
 
       const nftToDecorate = await context.db.find(nft, {
         chainId,
@@ -133,7 +133,7 @@ ponder.on(
         block: event.block.number,
       });
 
-      const version = getVersion(event, "banny721TokenUriResolver5");
+      const version = getVersion(event, "banny721TokenUriResolver");
 
       const _nftTier = await context.db.find(nftTier, {
         chainId,
@@ -211,7 +211,7 @@ ponder.on(
         tierId: event.args.upc,
       });
 
-      const version = getVersion(event, "banny721TokenUriResolver5");
+      const version = getVersion(event, "banny721TokenUriResolver");
 
       await context.db
         .update(nftTier, {
@@ -234,7 +234,7 @@ ponder.on(
   "Banny721TokenUriResolver:SetSvgBaseUri",
   async ({ event, context }) => {
     try {
-      const version = getVersion(event, "banny721TokenUriResolver5");
+      const version = getVersion(event, "banny721TokenUriResolver");
 
       const tiers = await getAllTiers({ context, hook: BANNY_RETAIL_HOOK });
 

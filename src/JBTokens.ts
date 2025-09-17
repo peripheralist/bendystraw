@@ -20,7 +20,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
 
     let burnedCredits = BigInt(0);
 
-    const version = getVersion(event, "jbTokens5");
+    const version = getVersion(event, "jbTokens");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -98,7 +98,7 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { id: chainId } = context.chain;
 
-    const version = getVersion(event, "jbTokens5");
+    const version = getVersion(event, "jbTokens");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -137,7 +137,7 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
     const projectId = Number(_projectId);
     const { id: chainId } = context.chain;
 
-    const version = getVersion(event, "jbTokens5");
+    const version = getVersion(event, "jbTokens");
 
     const _project = await context.db.find(project, {
       projectId,
@@ -194,7 +194,7 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
   try {
     const { symbol, token, name, projectId } = event.args;
 
-    const version = getVersion(event, "jbTokens5");
+    const version = getVersion(event, "jbTokens");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
@@ -239,7 +239,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     const { id: chainId } = context.chain;
     const projectId = Number(_projectId);
 
-    const version = getVersion(event, "jbTokens5");
+    const version = getVersion(event, "jbTokens");
 
     // update project
     const { suckerGroupId, isRevnet } = await context.db

@@ -12,7 +12,7 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
   const { hook } = event.args;
   const { client, db, chain } = context;
 
-  const version = getVersion(event, "jb721TiersHookDeployer5");
+  const version = getVersion(event, "jb721TiersHookDeployer");
 
   try {
     const [nameCall, symbolCall] = await Promise.all([

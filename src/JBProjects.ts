@@ -18,7 +18,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     // generate suckerGroupId manually so we can create project + suckerGroup simultaneously
     const suckerGroupId = generateId();
 
-    const version = getVersion(event, "jbProjects5");
+    const version = getVersion(event, "jbProjects");
 
     // create project
     let _project = await context.db.insert(project).values({
@@ -70,7 +70,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
 
 ponder.on("JBProjects:Transfer", async ({ event, context }) => {
   try {
-    const version = getVersion(event, "jbProjects5");
+    const version = getVersion(event, "jbProjects");
 
     await context.db
       .update(project, {

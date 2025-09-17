@@ -18,7 +18,7 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
     // towLowerCase() all addresses for consistency
     const suckerAddress = _suckerAddress.toLowerCase() as `0x${string}`;
 
-    const version = getVersion(event, "jbSuckersRegistry5");
+    const version = getVersion(event, "jbSuckersRegistry");
 
     const thisProject = await context.db.find(project, {
       chainId,
