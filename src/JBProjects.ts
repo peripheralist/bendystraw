@@ -4,9 +4,9 @@ import { isAddressEqual } from "viem";
 import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { generateId } from "./util/id";
-import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { getVersion } from "./util/getVersion";
+import { idForProject, idForSuckerGroup } from "./util/id";
+import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 
 ponder.on("JBProjects:Create", async ({ event, context }) => {
   try {
@@ -15,13 +15,16 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     const { id: chainId } = context.chain;
     const projectId = Number(_projectId);
 
-    // generate suckerGroupId manually so we can create project + suckerGroup simultaneously
-    const suckerGroupId = generateId();
-
     const version = getVersion(event, "jbProjects");
 
+    // generate ids so we can create project + suckerGroup simultaneously
+    const idOfProject = idForProject(version, projectId, chainId);
+    const idOfSuckerGroup = idForSuckerGroup([idOfProject]);
+
     // create project
-    let _project = await context.db.insert(project).values({
+    await context.db.insert(project).values({
+      id: idForProject(version, projectId, chainId),
+      suckerGroupId: idOfSuckerGroup,
       projectId,
       owner,
       deployer: caller,
@@ -29,15 +32,13 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       creator: transaction.from,
       createdAt: Number(block.timestamp),
       chainId,
-      suckerGroupId,
       version,
     });
 
     // create sucker group. creating a sucker group for all projects ensures we can query all projects by querying sucker groups
     await context.db.insert(suckerGroup).values({
-      projects: [_project.id],
-      tokenSupply: _project.tokenSupply,
-      id: suckerGroupId,
+      projects: [idOfProject],
+      id: idOfSuckerGroup,
       createdAt: Number(block.timestamp),
       version,
     });
@@ -52,7 +53,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     // insert event
     const { id } = await context.db.insert(projectCreateEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId,
+      suckerGroupId: idOfSuckerGroup,
       projectId,
       version,
     });
