@@ -21,7 +21,6 @@ export async function handleTrendingPayment(
 
     console.log("ASDF Running trending");
 
-
     /**
      * We first reset the trending stats for all trending projects
      */
@@ -106,11 +105,12 @@ export async function handleTrendingPayment(
       trendingVolumeUsd,
       ...keys
     } of Object.values(updates)) {
-      await context.db.update(project, keys).set(({ createdAt }) => {
-        // use USD value to normalize score regardless of project currency
-        // in case volumeUsd is 0 due to failed price conversion, use 1 so that trendingPaymentsCount can still factor into non-zero score
+      await context.db.update(project, keys).set(({ createdAt, currency }) => {
+        // TODO we should use USD values to normalize score regardless of project currency, but must coordinate with legacy subgraph for consistent scoring
+        // if currency is not native, ignore ETH-denominated trendingVolume but use 1 so that trendingPaymentsCount can still factor into non-zero score
+        // TODO must convert pricing before we can factor in non-native trendingVolume
         const trendingScoreVolume =
-          trendingVolumeUsd === BigInt(0) ? BigInt(1) : trendingVolumeUsd;
+          currency === BigInt(61166) ? BigInt(1) : trendingVolume;
 
         // calculate trendingScore
         const trendingScore =
