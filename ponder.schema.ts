@@ -5,7 +5,6 @@ import {
   primaryKey,
   relations,
 } from "ponder";
-import { generateId } from "./src/util/id";
 
 // hacky extraction of `PgColumnsBuilders` type that isn't exported by ponder
 type PGCB<
@@ -22,7 +21,7 @@ export const uniqueId = (t: PGCB) => ({
   id: t
     .text()
     .notNull()
-    .$default(() => generateId())
+    .$default(() => crypto.randomUUID())
     .primaryKey(),
 });
 export const chainId = (t: PGCB) => ({ chainId: t.integer().notNull() });
@@ -711,10 +710,7 @@ export const permissionHolderRelations = relations(
 export const project = onchainTable(
   "project",
   (t) => ({
-    id: t
-      .text()
-      .notNull()
-      .$default(() => generateId()), // not a primary key, used for relations
+    id: t.text().notNull(), // not a primary key, used for relations
     ...chainId(t),
     ...projectId(t),
     ...createdAt(t),
@@ -1078,7 +1074,7 @@ export const suckerRelations = relations(_sucker, ({ one }) => ({
 }));
 
 export const suckerGroup = onchainTable("sucker_group", (t) => ({
-  ...uniqueId(t),
+  id: t.text().notNull().primaryKey(),
   ...version(t),
   projects: t.text().array().notNull().default([]),
   addresses: t.hex().array().notNull().default([]),

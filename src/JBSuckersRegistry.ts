@@ -8,6 +8,7 @@ import {
   suckerGroup,
 } from "ponder:schema";
 import { getVersion } from "./util/getVersion";
+import { idForSuckerGroup } from "./util/id";
 
 ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
   try {
@@ -89,14 +90,23 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
         })
       ).reduce((acc, curr) => acc + curr.tokenSupply, BigInt(0));
 
-      // Create a new group from affiliated projects and addresses
-      const newSuckerGroup = await context.db.insert(suckerGroup).values({
-        projects: newGroupProjects,
-        addresses: newGroupAddresses,
-        tokenSupply: groupProjectsTokenSupplies,
-        createdAt: Number(event.block.timestamp),
-        version,
-      });
+      // Create a new group from affiliated projects and addresses. Overwrite if exists
+      const newSuckerGroup = await context.db
+        .insert(suckerGroup)
+        .values({
+          id: idForSuckerGroup(newGroupProjects),
+          projects: newGroupProjects,
+          addresses: newGroupAddresses,
+          tokenSupply: groupProjectsTokenSupplies,
+          createdAt: Number(event.block.timestamp),
+          version,
+        })
+        .onConflictDoUpdate({
+          projects: newGroupProjects,
+          addresses: newGroupAddresses,
+          tokenSupply: groupProjectsTokenSupplies,
+          createdAt: Number(event.block.timestamp),
+        });
 
       // Link all affiliated projects to the newly created sucker group
       for (const p of newGroupProjects) {
