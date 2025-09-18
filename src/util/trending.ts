@@ -110,7 +110,7 @@ export async function handleTrendingPayment(
         // if currency is not native, ignore ETH-denominated trendingVolume but use 1 so that trendingPaymentsCount can still factor into non-zero score
         // TODO must convert pricing before we can factor in non-native trendingVolume
         const trendingScoreVolume =
-          currency === BigInt(61166) ? BigInt(1) : trendingVolume;
+          currency !== BigInt(61166) ? BigInt(1) : trendingVolume;
 
         // calculate trendingScore
         const trendingScore =

@@ -63,7 +63,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
         tokenUri,
         version,
       })
-      // TODO Not sure why there would be a conflict, but duplicate key errors are being thrown
+      // Not sure why there would be a conflict, but duplicate key errors are being thrown without this
       .onConflictDoUpdate({
         owner: caller,
         beneficiary,
