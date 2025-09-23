@@ -81,7 +81,13 @@ export async function usdPriceForToken({
         `${priceIndexUrl}?token=${token}&timestamp=${timestamp}&chainId=${context.chain.id}`
       );
 
-      price = BigInt(Math.round(res.data.priceUsd * 1e10)) / BigInt(1e10);
+      const _price = res.data.priceUsd;
+
+      console.log("asdf got price!", _price, token);
+
+      if (!isNaN(_price)) {
+        price = BigInt(Math.round(_price * 1e10)) / BigInt(1e10);
+      }
     }
 
     return amount * price;
