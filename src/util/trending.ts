@@ -15,11 +15,8 @@ export async function handleTrendingPayment(
 
     if (Number(timestamp) < trendingWindowStart) {
       // don't run calculations during historical indexing. only run once within trending window, ensuring trending will still be calculated if latest payment is barely within window when bendystraw is deployed.
-      console.log("ASDF NOT Running trending");
       return;
     }
-
-    console.log("ASDF Running trending");
 
     /**
      * We first reset the trending stats for all trending projects

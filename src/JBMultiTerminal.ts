@@ -78,12 +78,14 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       rulesetId,
     } = event.args;
 
+    const { timestamp } = event.block;
+
     const projectId = Number(_projectId);
 
     const version = getVersion(event, "jbMultiTerminal");
 
     // update project
-    const { suckerGroupId, currency } = await context.db
+    const { suckerGroupId, currency, token } = await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: projectId,
@@ -112,6 +114,8 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         projectId: _projectId,
         amount,
         currency,
+        token,
+        timestamp,
       }),
       amountPaidOut,
       amountPaidOutUsd: await usdPriceForToken({
@@ -120,6 +124,8 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         projectId: _projectId,
         amount: amountPaidOut,
         currency,
+        token,
+        timestamp,
       }),
       netLeftoverPayoutAmount,
       fee,
@@ -129,6 +135,8 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         projectId: _projectId,
         amount: fee,
         currency,
+        token,
+        timestamp,
       }),
       rulesetId: Number(rulesetId),
       rulesetCycleNumber: Number(rulesetCycleNumber),
@@ -182,6 +190,8 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
         projectId: _projectId,
         amount,
         currency: _project.currency,
+        token: _project.token,
+        timestamp: event.block.timestamp,
       }),
       netAmount,
       rulesetId: Number(rulesetId),
@@ -254,6 +264,8 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       projectId: _projectId,
       amount: reclaimAmount,
       currency: _project.currency,
+      token: _project.token,
+      timestamp: event.block.timestamp,
     });
 
     // update project
@@ -398,6 +410,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       projectId: _projectId,
       amount,
       currency: _project.currency,
+      token: _project.token,
+      timestamp: event.block.timestamp,
     });
 
     const payerParticipant = await context.db.find(participant, {
