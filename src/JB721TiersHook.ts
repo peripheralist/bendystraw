@@ -32,7 +32,12 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
 
     let svg = null;
     if (hook == BANNY_RETAIL_HOOK) {
-      svg = await getBannySvg({ context, tierId, block: event.block.number });
+      svg = await getBannySvg({
+        context,
+        tierId,
+        block: event.block.number,
+        version,
+      });
     }
 
     const projectIdCall = await context.client.readContract({

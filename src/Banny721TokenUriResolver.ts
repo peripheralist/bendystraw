@@ -127,13 +127,14 @@ ponder.on(
       const { id: chainId } = context.chain;
       const tierId = Number(event.args.upc);
 
+      const version = getVersion(event, "banny721TokenUriResolver");
+
       const svg = await getBannySvg({
         context,
         tierId: event.args.upc,
         block: event.block.number,
+        version,
       });
-
-      const version = getVersion(event, "banny721TokenUriResolver");
 
       const _nftTier = await context.db.find(nftTier, {
         chainId,
@@ -255,6 +256,7 @@ ponder.on(
                 context,
                 tierId: BigInt(id),
                 block: event.block.number,
+                version,
               }),
             })
         )

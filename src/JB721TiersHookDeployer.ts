@@ -4,9 +4,8 @@ import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
-import { parseTokenUri } from "./util/tokenUri";
-import { ADDRESS } from "./constants/address";
 import { getVersion } from "./util/getVersion";
+import { parseTokenUri } from "./util/tokenUri";
 
 ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
   const { hook } = event.args;
@@ -51,6 +50,7 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
             context,
             tierId,
             block: event.block.number,
+            version,
           });
         }
 

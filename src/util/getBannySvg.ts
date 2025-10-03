@@ -35,10 +35,12 @@ export function getBannySvg({
   context,
   tierId,
   block,
+  version,
 }: {
   context: Context;
   tierId: bigint;
   block: bigint;
+  version: 4 | 5;
 }) {
   const resolverStartBlock = resolverStartBlocks[context.chain.name].startBlock;
 
