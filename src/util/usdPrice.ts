@@ -3,6 +3,7 @@ import { Context } from "ponder:registry";
 import { Address, zeroAddress } from "viem";
 import { JBPricesAbi } from "../../abis/JBPricesAbi";
 import { ADDRESS } from "../constants/address";
+import { Version } from "./getVersion";
 
 const priceIndexUrl = process.env.PRICES_API_URL;
 
@@ -38,7 +39,7 @@ export async function usdPriceForToken({
   timestamp,
 }: {
   context: Context;
-  version: 4 | 5;
+  version: Version;
   projectId: bigint;
   amount: bigint;
   currency: bigint | null;

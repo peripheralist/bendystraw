@@ -8,6 +8,7 @@ import {
 } from "ponder:schema";
 import { zeroAddress } from "viem";
 import { insertActivityEvent } from "./util/activityEvent";
+import { Version } from "./util/getVersion";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("ERC20:Transfer", async ({ event, context }) => {
@@ -61,7 +62,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
         event,
         context,
         projectId,
-        version: version as 4 | 5, // TODO
+        version: version as Version,
       });
     } else {
       // insert/update `to` participant

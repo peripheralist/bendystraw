@@ -39,7 +39,7 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
     });
 
     // Next we add all NFT Tiers for the collection (if any)
-    const tiers = await getAllTiers({ context, hook });
+    const tiers = await getAllTiers({ context, hook, version });
 
     await Promise.all(
       tiers.map(async (tier) => {

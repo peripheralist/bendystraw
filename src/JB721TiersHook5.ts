@@ -6,6 +6,7 @@ import {
   participant,
   project,
 } from "ponder:schema";
+import { isAddressEqual } from "viem";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { ADDRESS } from "./constants/address";
@@ -16,7 +17,6 @@ import { getEventParams } from "./util/getEventParams";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
-import { isAddressEqual } from "viem";
 
 // we hard-code version and duplicate this logic bc no other way to dynamically determine contract version (i think)
 const version = 5;
@@ -28,7 +28,7 @@ ponder.on("JB721TiersHook5:AddTier", async ({ event, context }) => {
 
   try {
     // `resolvedUri` and `svg` are the only things we can't get from the event args
-    const { resolvedUri } = await tierOf({ context, hook, tierId });
+    const { resolvedUri } = await tierOf({ context, hook, tierId, version });
 
     let svg = null;
     if (isAddressEqual(hook, BANNY_RETAIL_HOOK_5)) {
@@ -81,7 +81,7 @@ ponder.on("JB721TiersHook5:Transfer", async ({ event, context }) => {
   try {
     const tier = await context.client.readContract({
       abi: JB721TiersHookStoreAbi,
-      address: ADDRESS.jb721TiersHookStore,
+      address: ADDRESS.jb721TiersHookStore5,
       functionName: "tierOfTokenId",
       args: [hook, tokenId, true],
     });

@@ -217,6 +217,7 @@ ponder.on(
         context,
         hook,
         tierId: event.args.upc,
+        version,
       });
 
       await context.db
@@ -244,7 +245,7 @@ ponder.on(
 
       const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
-      const tiers = await getAllTiers({ context, hook });
+      const tiers = await getAllTiers({ context, hook, version });
 
       await Promise.all(
         tiers.map(async ({ id, resolvedUri, encodedIPFSUri }) =>

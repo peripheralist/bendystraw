@@ -2,6 +2,7 @@ import { Context } from "ponder:registry";
 import { Banny721TokenUriResolverAbi } from "../../abis/Banny721TokenUriResolverAbi";
 import { ADDRESS } from "../constants/address";
 import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5 } from "../constants/bannyHook";
+import { Version } from "./getVersion";
 
 // copied here from config, loading config in real time here breaks
 const resolverStartBlocks = {
@@ -40,7 +41,7 @@ export function getBannySvg({
   context: Context;
   tierId: bigint;
   block: bigint;
-  version: 4 | 5;
+  version: Version;
 }) {
   const resolverStartBlock = resolverStartBlocks[context.chain.name].startBlock;
 
@@ -51,14 +52,12 @@ export function getBannySvg({
     version === 5
       ? ADDRESS.banny721TokenUriResolver5
       : ADDRESS.banny721TokenUriResolver;
+
   const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
   return context.client.readContract({
     abi: Banny721TokenUriResolverAbi,
-    address:
-      version == 5
-        ? ADDRESS.banny721TokenUriResolver5
-        : ADDRESS.banny721TokenUriResolver,
+    address,
     functionName: "svgOf",
     args: [hook, tierId * BigInt(1000000000), false, false],
   });

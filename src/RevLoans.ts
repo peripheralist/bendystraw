@@ -8,6 +8,7 @@ import { borrowLoanEvent } from "ponder:schema";
 import { liquidateLoanEvent } from "ponder:schema";
 import { project } from "ponder:schema";
 import { getVersion } from "./util/getVersion";
+import { isAddressEqual } from "viem";
 
 ponder.on("RevLoans:Borrow", async ({ event, context }) => {
   try {
@@ -27,6 +28,11 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
 
     const version = getVersion(event, "revLoans");
 
+    let use1_1 = false;
+    if (isAddressEqual(event.log.address, ADDRESS.revLoans1_1)) {
+      use1_1 = true;
+    }
+
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
       chainId: context.chain.id,
@@ -37,9 +43,15 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
+    const revLoansAddress = use1_1
+      ? ADDRESS.revLoans1_1
+      : version === 5
+      ? ADDRESS.revLoans5
+      : ADDRESS.revLoans1_1;
+
     const tokenUri = await context.client.readContract({
       abi: REVLoansAbi,
-      address: ADDRESS.revLoans,
+      address: revLoansAddress,
       functionName: "tokenURI",
       args: [loanId],
     });

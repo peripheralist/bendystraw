@@ -27,7 +27,7 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
 
   try {
     // `resolvedUri` and `svg` are the only things we can't get from the event args
-    const { resolvedUri } = await tierOf({ context, hook, tierId });
+    const { resolvedUri } = await tierOf({ context, hook, tierId, version });
 
     let svg = null;
     if (isAddressEqual(hook, BANNY_RETAIL_HOOK)) {

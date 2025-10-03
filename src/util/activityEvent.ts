@@ -1,5 +1,6 @@
 import { activityEvent, project } from "ponder:schema";
 import { getEventParams } from "./getEventParams";
+import { Version } from "./getVersion";
 
 export const insertActivityEvent = async <
   Args extends { caller: `0x${string}` } | {}
@@ -14,7 +15,7 @@ export const insertActivityEvent = async <
   }: Parameters<typeof getEventParams<Args>>[0] & {
     id: string;
     projectId: bigint | number;
-    version: 4 | 5;
+    version: Version;
   }
 ) => {
   const params = getEventParams<typeof event.args>({

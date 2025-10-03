@@ -1,6 +1,7 @@
 import { eq } from "ponder";
 import { Context } from "ponder:registry";
 import { project, suckerGroup, suckerGroupMoment } from "ponder:schema";
+import { Version } from "./getVersion";
 
 /**
  * Handles everything that should happen after a project's **stats** are updated. Inserts a projectMoment and updates the project's suckerGroup's stats.
@@ -12,7 +13,7 @@ export async function onProjectStatsUpdated({
   event,
 }: {
   projectId: bigint | number;
-  version: 4 | 5;
+  version: Version;
   context: Context;
   event: {
     block: {
