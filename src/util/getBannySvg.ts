@@ -1,7 +1,7 @@
 import { Context } from "ponder:registry";
 import { Banny721TokenUriResolverAbi } from "../../abis/Banny721TokenUriResolverAbi";
 import { ADDRESS } from "../constants/address";
-import { BANNY_RETAIL_HOOK } from "../constants/bannyHook";
+import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5 } from "../constants/bannyHook";
 
 // copied here from config, loading config in real time here breaks
 const resolverStartBlocks = {
@@ -47,10 +47,19 @@ export function getBannySvg({
   // current resolver contract is a redeploy from the original. some events may trigger this query in a block prior to the current resolver contract being deployed. in that case, we will just return empty.
   if (block < resolverStartBlock) return Promise.resolve("");
 
+  const address =
+    version === 5
+      ? ADDRESS.banny721TokenUriResolver5
+      : ADDRESS.banny721TokenUriResolver;
+  const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+
   return context.client.readContract({
     abi: Banny721TokenUriResolverAbi,
-    address: ADDRESS.banny721TokenUriResolver,
+    address:
+      version == 5
+        ? ADDRESS.banny721TokenUriResolver5
+        : ADDRESS.banny721TokenUriResolver,
     functionName: "svgOf",
-    args: [BANNY_RETAIL_HOOK, tierId * BigInt(1000000000), false, false],
+    args: [hook, tierId * BigInt(1000000000), false, false],
   });
 }

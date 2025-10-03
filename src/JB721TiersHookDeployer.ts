@@ -1,11 +1,12 @@
 import { ponder } from "ponder:registry";
 import { nftHook, nftTier } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
-import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
+import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5 } from "./constants/bannyHook";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
 import { getVersion } from "./util/getVersion";
 import { parseTokenUri } from "./util/tokenUri";
+import { isAddressEqual } from "viem";
 
 ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
   const { hook } = event.args;
@@ -45,7 +46,10 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
         const tierId = BigInt(tier.id);
 
         let svg = undefined;
-        if (hook == BANNY_RETAIL_HOOK) {
+        if (
+          isAddressEqual(hook, BANNY_RETAIL_HOOK) ||
+          isAddressEqual(hook, BANNY_RETAIL_HOOK_5)
+        ) {
           svg = await getBannySvg({
             context,
             tierId,

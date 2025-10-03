@@ -4,20 +4,19 @@ import {
   nft,
   nftTier,
   participant,
-  participantSnapshot,
   project,
 } from "ponder:schema";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
+import { ADDRESS } from "./constants/address";
 import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
+import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
-import { ADDRESS } from "./constants/address";
-import { setParticipantSnapshot } from "./util/participantSnapshot";
-import { getVersion } from "./util/getVersion";
+import { isAddressEqual } from "viem";
 
 const version = 4;
 
@@ -31,7 +30,7 @@ ponder.on("JB721TiersHook:AddTier", async ({ event, context }) => {
     const { resolvedUri } = await tierOf({ context, hook, tierId });
 
     let svg = null;
-    if (hook == BANNY_RETAIL_HOOK) {
+    if (isAddressEqual(hook, BANNY_RETAIL_HOOK)) {
       svg = await getBannySvg({
         context,
         tierId,

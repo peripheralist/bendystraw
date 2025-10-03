@@ -9,13 +9,14 @@ import {
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { JB721TiersHookStoreAbi } from "../abis/JB721TiersHookStoreAbi";
 import { ADDRESS } from "./constants/address";
-import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
+import { BANNY_RETAIL_HOOK_5 } from "./constants/bannyHook";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
+import { isAddressEqual } from "viem";
 
 // we hard-code version and duplicate this logic bc no other way to dynamically determine contract version (i think)
 const version = 5;
@@ -30,7 +31,7 @@ ponder.on("JB721TiersHook5:AddTier", async ({ event, context }) => {
     const { resolvedUri } = await tierOf({ context, hook, tierId });
 
     let svg = null;
-    if (hook == BANNY_RETAIL_HOOK) {
+    if (isAddressEqual(hook, BANNY_RETAIL_HOOK_5)) {
       svg = await getBannySvg({
         context,
         tierId,

@@ -3,7 +3,7 @@ import { ponder } from "ponder:registry";
 import { decorateBannyEvent, nft, nftTier } from "ponder:schema";
 import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
-import { BANNY_RETAIL_HOOK } from "./constants/bannyHook";
+import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5 } from "./constants/bannyHook";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
@@ -32,18 +32,20 @@ ponder.on(
       const chainId = context.chain.id;
       const { bannyBodyId: tokenId } = event.args;
 
+      const version = getVersion(event, "banny721TokenUriResolver");
+
+      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+
       const decoratedTokenUri = await context.client.readContract({
         abi: JB721TiersHookAbi,
-        address: BANNY_RETAIL_HOOK,
+        address: hook,
         functionName: "tokenURI",
         args: [tokenId],
       });
 
-      const version = getVersion(event, "banny721TokenUriResolver");
-
       const nftToDecorate = await context.db.find(nft, {
         chainId,
-        hook: BANNY_RETAIL_HOOK,
+        hook,
         tokenId,
         version,
       });
@@ -54,7 +56,7 @@ ponder.on(
 
       const ownerBannys = await context.db.sql.query.nft.findMany({
         where: and(
-          eq(nft.hook, BANNY_RETAIL_HOOK),
+          eq(nft.hook, hook),
           eq(nft.category, 0),
           eq(nft.owner, nftToDecorate?.owner)
         ),
@@ -84,7 +86,7 @@ ponder.on(
           context.client
             .readContract({
               abi: JB721TiersHookAbi,
-              address: BANNY_RETAIL_HOOK,
+              address: hook,
               functionName: "tokenURI",
               args: [_nft.tokenId] as const,
             })
@@ -123,11 +125,12 @@ ponder.on(
   "Banny721TokenUriResolver:SetSvgContent",
   async ({ event, context }) => {
     try {
-      const hook = BANNY_RETAIL_HOOK;
       const { id: chainId } = context.chain;
       const tierId = Number(event.args.upc);
 
       const version = getVersion(event, "banny721TokenUriResolver");
+
+      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
       const svg = await getBannySvg({
         context,
@@ -206,17 +209,19 @@ ponder.on(
   "Banny721TokenUriResolver:SetProductName",
   async ({ event, context }) => {
     try {
+      const version = getVersion(event, "banny721TokenUriResolver");
+
+      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+
       const tier = await tierOf({
         context,
-        hook: BANNY_RETAIL_HOOK,
+        hook,
         tierId: event.args.upc,
       });
 
-      const version = getVersion(event, "banny721TokenUriResolver");
-
       await context.db
         .update(nftTier, {
-          hook: BANNY_RETAIL_HOOK,
+          hook,
           chainId: context.chain.id,
           tierId: Number(event.args.upc),
           version,
@@ -237,13 +242,15 @@ ponder.on(
     try {
       const version = getVersion(event, "banny721TokenUriResolver");
 
-      const tiers = await getAllTiers({ context, hook: BANNY_RETAIL_HOOK });
+      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+
+      const tiers = await getAllTiers({ context, hook });
 
       await Promise.all(
         tiers.map(async ({ id, resolvedUri, encodedIPFSUri }) =>
           context.db
             .update(nftTier, {
-              hook: BANNY_RETAIL_HOOK,
+              hook,
               chainId: context.chain.id,
               tierId: id,
               version,
