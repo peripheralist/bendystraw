@@ -3,15 +3,18 @@ import {
   borrowLoanEvent,
   liquidateLoanEvent,
   loan,
+  participant,
   project,
   reallocateLoanEvent,
   repayLoanEvent,
+  wallet,
 } from "ponder:schema";
 import { REVLoansAbi } from "../abis/REVLoansAbi";
 import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { getVersion } from "./util/getVersion";
+import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("RevLoans:Borrow", async ({ event, context }) => {
   try {
@@ -27,19 +30,45 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       collateralCount,
     } = event.args;
 
+    const chainId = context.chain.id;
+
     const projectId = Number(revnetId);
 
     const version = getVersion(event, "revLoans");
 
     const _project = await context.db.find(project, {
-      projectId: Number(event.args.revnetId),
-      chainId: context.chain.id,
+      projectId,
+      chainId,
       version,
     });
 
     if (!_project) {
       throw new Error("Missing project");
     }
+
+    // create wallet if none exists
+    await context.db
+      .insert(wallet)
+      .values({ address: caller })
+      .onConflictDoNothing();
+
+    // create participant if none exists
+    const _participant = await context.db
+      .insert(participant)
+      .values({
+        address: caller,
+        chainId,
+        projectId,
+        createdAt: Number(event.block.timestamp),
+        suckerGroupId: _project.suckerGroupId,
+        isRevnet: _project.isRevnet,
+        version,
+      })
+      .onConflictDoUpdate({
+        suckerGroupId: _project.suckerGroupId,
+        isRevnet: _project.isRevnet,
+      });
+    await setParticipantSnapshot({ participant: _participant, context, event });
 
     const tokenUri = await context.client.readContract({
       abi: REVLoansAbi,
@@ -53,7 +82,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       .values({
         id: loanId,
         projectId,
-        chainId: context.chain.id,
+        chainId,
         owner: caller,
         beneficiary,
         borrowAmount,
@@ -112,13 +141,15 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
   try {
     const { loanId, revnetId, loan: _loan } = event.args;
 
+    const chainId = context.chain.id;
+
     const projectId = Number(revnetId);
 
     const version = getVersion(event, "revLoans");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
-      chainId: context.chain.id,
+      chainId,
       version,
     });
 
@@ -129,7 +160,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
     await context.db
       .update(loan, {
         id: loanId,
-        chainId: context.chain.id,
+        chainId,
         version,
       })
       .set({
@@ -173,6 +204,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
     } = event.args;
 
     const projectId = Number(revnetId);
+    const chainId = context.chain.id;
 
     const version = getVersion(event, "revLoans");
 
@@ -180,7 +212,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
-      chainId: context.chain.id,
+      chainId,
       version,
     });
 
@@ -195,7 +227,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
         .values({
           id: paidOffLoanId,
           projectId,
-          chainId: context.chain.id,
+          chainId,
           createdAt: paidOffLoan.createdAt,
           borrowAmount: paidOffLoan.amount,
           collateral: paidOffLoan.collateral,
@@ -222,14 +254,12 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
         }));
     } else {
       // loan is completely paid off and burned. (owner updated on Transfer)
-      await context.db
-        .update(loan, { id: loanId, chainId: context.chain.id, version })
-        .set({
-          borrowAmount: BigInt(0),
-          collateral: BigInt(0),
-          sourceFeeAmount, // not sure if necessary
-          beneficiary, // not sure if necessary
-        });
+      await context.db.update(loan, { id: loanId, chainId, version }).set({
+        borrowAmount: BigInt(0),
+        collateral: BigInt(0),
+        sourceFeeAmount, // not sure if necessary
+        beneficiary, // not sure if necessary
+      });
     }
 
     const { id } = await context.db.insert(repayLoanEvent).values({
@@ -292,13 +322,15 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
       caller,
     } = event.args;
 
+    const chainId = context.chain.id;
+
     const projectId = Number(revnetId);
 
     const version = getVersion(event, "revLoans");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.revnetId),
-      chainId: context.chain.id,
+      chainId,
       version,
     });
 
@@ -311,7 +343,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
       .values({
         id: reallocatedLoanId,
         projectId,
-        chainId: context.chain.id,
+        chainId,
         createdAt: reallocatedLoan.createdAt,
         borrowAmount: reallocatedLoan.amount,
         collateral: reallocatedLoan.collateral,
@@ -362,6 +394,8 @@ ponder.on("RevLoans:Transfer", async ({ event, context }) => {
   try {
     const { to, tokenId } = event.args;
 
+    const chainId = context.chain.id;
+
     const version = getVersion(event, "revLoans");
 
     // There are three cases where a Loan NFT is minted: Borrow, ReallocateCollateral, and RepayLoan* (*where a loan is not completely repaid)
@@ -369,14 +403,14 @@ ponder.on("RevLoans:Transfer", async ({ event, context }) => {
     // Instead we will only create loans at Borrow/RepayLoan
     const existingLoan = await context.db.find(loan, {
       id: tokenId,
-      chainId: context.chain.id,
+      chainId,
       version,
     });
 
     if (!existingLoan) return;
 
     await context.db
-      .update(loan, { id: tokenId, chainId: context.chain.id, version })
+      .update(loan, { id: tokenId, chainId, version })
       .set({ owner: to });
   } catch (e) {
     console.error("RevLoans:Transfer", e);
