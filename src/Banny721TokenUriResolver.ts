@@ -54,9 +54,12 @@ ponder.on(
         throw new Error("Missing Banny NFT");
       }
 
+      // only bannys on same chain/version
       const ownerBannys = await context.db.sql.query.nft.findMany({
         where: and(
           eq(nft.hook, hook),
+          eq(nft.version, version),
+          eq(nft.chainId, chainId),
           eq(nft.category, 0),
           eq(nft.owner, nftToDecorate?.owner)
         ),
