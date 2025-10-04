@@ -407,6 +407,14 @@ export const loanRelations = relations(loan, ({ one }) => ({
     fields: [loan.projectId, loan.chainId, loan.version],
     references: [project.projectId, project.chainId, project.version],
   }),
+  participant: one(participant, {
+    fields: [loan.owner, loan.chainId, loan.version],
+    references: [participant.address, participant.chainId, participant.version],
+  }),
+  wallet: one(wallet, {
+    fields: [loan.owner],
+    references: [wallet.address],
+  }),
 }));
 
 export const liquidateLoanEvent = onchainTable("liquidate_loan_event", (t) => ({
@@ -585,7 +593,7 @@ export const nftRelations = relations(nft, ({ one }) => ({
     fields: [nft.hook, nft.chainId, nft.version],
     references: [nftHook.address, nftHook.chainId, nftHook.version],
   }),
-  owner: one(participant, {
+  participant: one(participant, {
     fields: [nft.owner, nft.chainId, nft.version],
     references: [participant.address, participant.chainId, participant.version],
   }),
@@ -693,6 +701,7 @@ export const participantRelations = relations(participant, ({ one, many }) => ({
     references: [wallet.address],
   }),
   nfts: many(nft),
+  loans: many(loan),
   project: one(project, {
     fields: [participant.projectId, participant.chainId, participant.version],
     references: [project.projectId, project.chainId, project.version],

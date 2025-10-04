@@ -17,6 +17,7 @@ import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
 import { isAddressEqual } from "viem";
+import { wallet } from "ponder:schema";
 
 const version = 4;
 
@@ -106,6 +107,12 @@ ponder.on("JB721TiersHook:Transfer", async ({ event, context }) => {
     if (!_project) {
       throw new Error("Missing project");
     }
+
+    // create wallet if none exists
+    await context.db
+      .insert(wallet)
+      .values({ address: to })
+      .onConflictDoNothing();
 
     // create participant if none exists
     const _participant = await context.db
