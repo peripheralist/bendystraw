@@ -170,11 +170,16 @@ A sucker group is a group of linked projects on different chains. These projects
 
 Most tables (`participants`, `activityEvents`, etc) include a `suckerGroupId` column, which can be used to filter rows in a graphQL response.
 
-> `projectIds` of projects within a sucker group are **not guaranteed to be consistent** across chains, so filtering by `projectId` is only recommended when also filtering by `chainId`.
+### Deterministic unique IDs
 
-### Unique IDs
+`project.id` and `suckerGroup.id` are deterministic and will not change. They may be stored or computed to avoid real-time lookups.
+- `project.id` is a string computed from `project.projectId`, `project.version`, and `project.chainId`.
+- `suckerGroup.id` is a hash of the `id`s of the group's contained `project`s.
 
-Always obtain unique IDs (e.g. `suckerGroup.id`) in real time. Unique IDs may change anytime Bendystraw is updated, and should not be relied on to remain consistent.
+See the [Source code](https://github.com/peripheralist/bendystraw/blob/main/src/util/id.ts) for how these `id`s are computed.
+
+All other unique `id`s are not deterministic, and may change anytime Bendystraw is reindexed.
+
 
 ---
 
