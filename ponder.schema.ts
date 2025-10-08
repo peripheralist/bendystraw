@@ -685,6 +685,7 @@ export const permissionHolder = onchainTable(
     account: t.hex().notNull(),
     operator: t.hex().notNull(),
     permissions: t.integer().notNull().array(),
+    isOperator: t.boolean(),
   }),
   (t) => ({
     pk: primaryKey({
