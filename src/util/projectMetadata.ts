@@ -12,6 +12,7 @@ type ProjectMetadata = Pick<
   | "coverImageUri"
   | "description"
   | "twitter"
+  | "farcaster"
   | "telegram"
   | "tokens"
   | "tags"

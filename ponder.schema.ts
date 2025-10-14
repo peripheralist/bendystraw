@@ -759,6 +759,7 @@ export const project = onchainTable(
     telegram: t.text(),
     tokens: t.text().array(),
     twitter: t.text(),
+    farcaster: t.text(),
   }),
   (t) => ({
     projectIdx: index().on(t.projectId),
