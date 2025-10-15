@@ -61,12 +61,8 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
 
     const version = getVersion(event, "jbController");
 
-    const deployerAddress =
-      version === 5 ? ADDRESS.revDeployer5 : ADDRESS.revDeployer;
-
     await context.db.update(project, { chainId, projectId, version }).set({
       deployer: caller,
-      isRevnet: isAddressEqual(caller, deployerAddress),
       metadataUri: projectUri,
       metadata,
       name: metadata?.name,

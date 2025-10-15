@@ -21,7 +21,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     const idOfProject = idForProject(version, projectId, chainId);
     const idOfSuckerGroup = idForSuckerGroup([idOfProject]);
 
-    const deployerAddress =
+    const revDeployerAddress =
       version === 5 ? ADDRESS.revDeployer5 : ADDRESS.revDeployer;
 
     // create project
@@ -31,7 +31,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       projectId,
       owner,
       deployer: caller,
-      isRevnet: isAddressEqual(caller, deployerAddress),
+      isRevnet: isAddressEqual(owner, revDeployerAddress),
       creator: transaction.from,
       createdAt: Number(block.timestamp),
       chainId,
