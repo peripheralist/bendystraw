@@ -76,6 +76,11 @@ ponder.on("JBProjects:Transfer", async ({ event, context }) => {
   try {
     const version = getVersion(event, "jbProjects");
 
+    const revDeployerAddress =
+      version === 5 ? ADDRESS.revDeployer5 : ADDRESS.revDeployer;
+
+    const owner = event.args.to;
+
     await context.db
       .update(project, {
         chainId: context.chain.id,
@@ -83,7 +88,8 @@ ponder.on("JBProjects:Transfer", async ({ event, context }) => {
         version,
       })
       .set({
-        owner: event.args.to,
+        owner,
+        isRevnet: isAddressEqual(owner, revDeployerAddress),
       });
   } catch (e) {
     console.error("JBProjects:Transfer", e);
