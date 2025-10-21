@@ -8,9 +8,8 @@ import {
 } from "ponder:schema";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { setParticipantSnapshot } from "./util/participantSnapshot";
-import { ADDRESS } from "./constants/address";
 import { getVersion } from "./util/getVersion";
+import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("JBTokens:Burn", async ({ event, context }) => {
   try {

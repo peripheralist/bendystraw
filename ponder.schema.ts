@@ -57,6 +57,7 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "decorateBannyEvent",
   "deployErc20Event",
   "liquidateLoanEvent",
+  "manualMintTokensEvent",
   "mintNftEvent",
   "mintTokensEvent",
   "payEvent",
@@ -88,6 +89,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   decorateBannyEvent: t.text(),
   deployErc20Event: t.text(),
   liquidateLoanEvent: t.text(),
+  manualMintTokensEvent: t.text(),
   mintNftEvent: t.text(),
   mintTokensEvent: t.text(),
   payEvent: t.text(),
@@ -146,6 +148,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   liquidateLoanEvent: one(liquidateLoanEvent, {
     fields: [activityEvent.liquidateLoanEvent],
     references: [liquidateLoanEvent.id],
+  }),
+  manualMintTokensEvent: one(manualMintTokensEvent, {
+    fields: [activityEvent.manualMintTokensEvent],
+    references: [manualMintTokensEvent.id],
   }),
   mintNftEvent: one(mintNftEvent, {
     fields: [activityEvent.mintNftEvent],
@@ -413,6 +419,34 @@ export const liquidateLoanEventRelations = relations(
         liquidateLoanEvent.version,
       ],
       references: [project.chainId, project.projectId, project.version],
+    }),
+  })
+);
+
+export const manualMintTokensEvent = onchainTable(
+  "manual_mint_tokens_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    beneficiary: t.hex().notNull(),
+    beneficiaryTokenCount: t.bigint().notNull(),
+    reservedPercent: t.bigint().notNull(),
+    tokenCount: t.bigint().notNull(),
+    memo: t.text(),
+  })
+);
+
+export const manualMintTokensEventRelations = relations(
+  manualMintTokensEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        manualMintTokensEvent.projectId,
+        manualMintTokensEvent.chainId,
+        manualMintTokensEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
     }),
   })
 );
@@ -788,6 +822,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   cashOutTokensEvents: many(cashOutTokensEvent),
   deployErc20Events: many(deployErc20Event),
   liquidateLoanEvents: many(liquidateLoanEvent),
+  manualMintTokensEvents: many(manualMintTokensEvent),
   mintNftEvents: many(mintNftEvent),
   mintTokensEvents: many(mintTokensEvent),
   payEvents: many(payEvent),

@@ -1,16 +1,17 @@
 import { ponder } from "ponder:registry";
 import {
+  manualMintTokensEvent,
   mintTokensEvent,
   project,
   sendReservedTokensToSplitEvent,
   sendReservedTokensToSplitsEvent,
 } from "ponder:schema";
-import { getEventParams } from "./util/getEventParams";
-import { parseProjectMetadata } from "./util/projectMetadata";
 import { insertActivityEvent } from "./util/activityEvent";
+import { getEventParams } from "./util/getEventParams";
+import { getVersion } from "./util/getVersion";
+import { parseProjectMetadata } from "./util/projectMetadata";
 import { isAddressEqual } from "viem";
 import { ADDRESS } from "./constants/address";
-import { getVersion } from "./util/getVersion";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
@@ -26,7 +27,12 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const { id } = await context.db.insert(mintTokensEvent).values({
+    const isPayEvent = isAddressEqual(
+      version === 5 ? ADDRESS.jbMultiTerminal5 : ADDRESS.jbMultiTerminal,
+      event.transaction.from
+    );
+
+    const eventData = {
       ...getEventParams({ event, context }),
       suckerGroupId: _project.suckerGroupId,
       projectId: Number(event.args.projectId),
@@ -36,7 +42,23 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
       reservedPercent: event.args.reservedPercent,
       tokenCount: event.args.tokenCount,
       version,
-    });
+    };
+
+    if (!isPayEvent) {
+      const { id } = await context.db
+        .insert(manualMintTokensEvent)
+        .values(eventData);
+
+      await insertActivityEvent("manualMintTokensEvent", {
+        id,
+        event,
+        context,
+        projectId: event.args.projectId,
+        version,
+      });
+    }
+
+    const { id } = await context.db.insert(mintTokensEvent).values(eventData);
 
     await insertActivityEvent("mintTokensEvent", {
       id,
