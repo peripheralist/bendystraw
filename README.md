@@ -180,6 +180,12 @@ See the [Source code](https://github.com/peripheralist/bendystraw/blob/main/src/
 
 All other unique `id`s are not deterministic, and may change anytime Bendystraw is reindexed.
 
+### Manual events
+
+Two extra `manual` event tables are indexed for convenience, and have the same schema as their non-manual counterparts:
+- `manualBurnEvent`: Tokens are burned by a project operator, NOT as a result of a `cashOut` event. `burnEvent`s include ALL token burns.
+- `manualMintTokensEvent`: Tokens are minted by a project operator, NOT as a result of a `pay` event. `mintTokensEvent`s include ALL token mints.
+
 
 ---
 
