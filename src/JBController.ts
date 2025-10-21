@@ -29,7 +29,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
 
     const isPayEvent = isAddressEqual(
       version === 5 ? ADDRESS.jbMultiTerminal5 : ADDRESS.jbMultiTerminal,
-      event.transaction.from
+      event.args.caller
     );
 
     const eventData = {
