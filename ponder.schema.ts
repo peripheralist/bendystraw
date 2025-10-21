@@ -57,6 +57,7 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "decorateBannyEvent",
   "deployErc20Event",
   "liquidateLoanEvent",
+  "manualBurnEvent",
   "manualMintTokensEvent",
   "mintNftEvent",
   "mintTokensEvent",
@@ -89,6 +90,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   decorateBannyEvent: t.text(),
   deployErc20Event: t.text(),
   liquidateLoanEvent: t.text(),
+  manualBurnEvent: t.text(),
   manualMintTokensEvent: t.text(),
   mintNftEvent: t.text(),
   mintTokensEvent: t.text(),
@@ -148,6 +150,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   liquidateLoanEvent: one(liquidateLoanEvent, {
     fields: [activityEvent.liquidateLoanEvent],
     references: [liquidateLoanEvent.id],
+  }),
+  manualBurnEvent: one(manualBurnEvent, {
+    fields: [activityEvent.manualBurnEvent],
+    references: [manualBurnEvent.id],
   }),
   manualMintTokensEvent: one(manualMintTokensEvent, {
     fields: [activityEvent.manualMintTokensEvent],
@@ -419,6 +425,34 @@ export const liquidateLoanEventRelations = relations(
         liquidateLoanEvent.version,
       ],
       references: [project.chainId, project.projectId, project.version],
+    }),
+  })
+);
+
+export const manualBurnEvent = onchainTable("manual_burn_event", (t) => ({
+  ...uniqueId(t),
+  ...chainId(t),
+  ...from(t),
+  ...timestamp(t),
+  ...txHash(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  ...version(t),
+  amount: t.bigint().notNull(),
+  creditAmount: t.bigint().notNull(),
+  erc20Amount: t.bigint().notNull(),
+}));
+
+export const manualBurnEventRelations = relations(
+  manualBurnEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        manualBurnEvent.projectId,
+        manualBurnEvent.chainId,
+        manualBurnEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
     }),
   })
 );
@@ -822,6 +856,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   cashOutTokensEvents: many(cashOutTokensEvent),
   deployErc20Events: many(deployErc20Event),
   liquidateLoanEvents: many(liquidateLoanEvent),
+  manualBurnEvents: many(manualBurnEvent),
   manualMintTokensEvents: many(manualMintTokensEvent),
   mintNftEvents: many(mintNftEvent),
   mintTokensEvents: many(mintTokensEvent),

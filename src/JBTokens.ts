@@ -2,6 +2,7 @@ import { ponder } from "ponder:registry";
 import {
   burnEvent,
   deployErc20Event,
+  manualBurnEvent,
   participant,
   project,
   suckerGroup,
@@ -10,6 +11,8 @@ import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { getVersion } from "./util/getVersion";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
+import { isAddressEqual } from "viem";
+import { ADDRESS } from "./constants/address";
 
 ponder.on("JBTokens:Burn", async ({ event, context }) => {
   try {
@@ -68,6 +71,31 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       .set(({ tokenSupply }) => ({
         tokenSupply: tokenSupply - count,
       }));
+
+    const isCashOutEvent = isAddressEqual(
+      version === 5 ? ADDRESS.jbTokens5 : ADDRESS.jbTokens,
+      event.args.caller
+    );
+
+    if (!isCashOutEvent) {
+      // insert event
+      const { id } = await context.db.insert(manualBurnEvent).values({
+        ...getEventParams({ event, context }),
+        suckerGroupId: _project.suckerGroupId,
+        projectId,
+        amount: count,
+        creditAmount: burnedCredits,
+        erc20Amount: BigInt(0),
+        version,
+      });
+      await insertActivityEvent("manualBurnEvent", {
+        id,
+        event,
+        context,
+        projectId,
+        version,
+      });
+    }
 
     // insert event
     const { id } = await context.db.insert(burnEvent).values({
