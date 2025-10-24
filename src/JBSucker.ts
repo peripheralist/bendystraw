@@ -64,10 +64,21 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
 
 ponder.on("JBSucker:RootToRemote", async ({ event, context }) => {
   try {
+    const address = event.log.address;
+
+    const directoryAddress = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "DIRECTORY",
+      address,
+    });
+
+    const version = directoryAddress === ADDRESS.jbDirectory5 ? 5 : 4;
+
     await context.db
       .update(suckerTransaction, {
         token: event.args.token,
         index: Number(event.args.index),
+        version,
       })
       .set({ status: "claimable" });
   } catch (e) {
@@ -77,10 +88,21 @@ ponder.on("JBSucker:RootToRemote", async ({ event, context }) => {
 
 ponder.on("JBSucker:Claimed", async ({ event, context }) => {
   try {
+    const address = event.log.address;
+
+    const directoryAddress = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "DIRECTORY",
+      address,
+    });
+
+    const version = directoryAddress === ADDRESS.jbDirectory5 ? 5 : 4;
+
     await context.db
       .update(suckerTransaction, {
         token: event.args.token,
         index: Number(event.args.index),
+        version,
       })
       .set({ status: "claimed" });
   } catch (e) {
