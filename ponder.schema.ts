@@ -1202,6 +1202,11 @@ export const suckerGroupMoment = onchainTable(
   })
 );
 
+export const suckerTransactionStatus = onchainEnum(
+  "sucker_transaction_status",
+  ["pending", "claimable", "claimed"]
+);
+
 export const suckerTransaction = onchainTable(
   "sucker_transaction",
   (t) => ({
@@ -1218,9 +1223,7 @@ export const suckerTransaction = onchainTable(
     projectTokenCount: t.bigint().notNull(),
     terminalTokenAmount: t.bigint().notNull(),
     root: t.hex().notNull(),
-    status: onchainEnum("status", ["pending", "claimable", "claimed"])(
-      "status"
-    ),
+    status: suckerTransactionStatus("status"),
   }),
   (t) => ({
     // we may not need all these keys
