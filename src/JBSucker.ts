@@ -78,8 +78,8 @@ ponder.on("JBSucker:RootToRemote", async ({ event, context }) => {
       .update(suckerTransaction, {
         token: event.args.token,
         index: Number(event.args.index),
-        version,
         chainId: context.chain.id,
+        sucker: address,
       })
       .set({ status: "claimable" });
   } catch (e) {
@@ -103,8 +103,8 @@ ponder.on("JBSucker:Claimed", async ({ event, context }) => {
       .update(suckerTransaction, {
         token: event.args.token,
         index: Number(event.args.index),
-        version,
         chainId: context.chain.id,
+        sucker: address,
       })
       .set({ status: "claimed" });
   } catch (e) {

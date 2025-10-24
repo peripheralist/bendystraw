@@ -1228,7 +1228,7 @@ export const suckerTransaction = onchainTable(
   (t) => ({
     // we may not need all these keys
     pk: primaryKey({
-      columns: [t.index, t.token, t.version, t.chainId],
+      columns: [t.index, t.token, t.chainId, t.sucker],
     }),
   })
 );
