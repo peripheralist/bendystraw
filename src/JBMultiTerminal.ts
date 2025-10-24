@@ -18,6 +18,7 @@ import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { handleTrendingPayment } from "./util/trending";
 import { usdPriceForToken } from "./util/usdPrice";
 import { getVersion } from "./util/getVersion";
+import { erc20Abi, isAddressEqual, zeroAddress } from "viem";
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
@@ -542,6 +543,18 @@ ponder.on(
     try {
       const version = getVersion(event, "jbMultiTerminal");
 
+      const token = event.args.context.token;
+
+      let tokenSymbol: string | null = null;
+
+      if (!isAddressEqual(token, zeroAddress)) {
+        tokenSymbol = await context.client.readContract({
+          abi: erc20Abi,
+          address: token,
+          functionName: "symbol",
+        });
+      }
+
       await context.db
         .update(project, {
           projectId: Number(event.args.projectId),
@@ -551,7 +564,8 @@ ponder.on(
         .set({
           currency: BigInt(event.args.context.currency),
           decimals: event.args.context.decimals,
-          token: event.args.context.token,
+          token,
+          tokenSymbol,
         });
     } catch (e) {
       console.error("JBMultiTerminal:SetAccountingContext", e);

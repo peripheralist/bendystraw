@@ -810,6 +810,7 @@ export const project = onchainTable(
 
     // accountingContext
     token: t.hex(),
+    tokenSymbol: t.text(),
     decimals: t.integer(),
     currency: t.bigint(),
 
