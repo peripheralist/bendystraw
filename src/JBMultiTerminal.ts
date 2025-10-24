@@ -547,12 +547,17 @@ ponder.on(
 
       let tokenSymbol: string | null = null;
 
-      if (!isAddressEqual(token, zeroAddress)) {
-        tokenSymbol = await context.client.readContract({
-          abi: erc20Abi,
-          address: token,
-          functionName: "symbol",
-        });
+      if (
+        !isAddressEqual(token, zeroAddress) &&
+        !isAddressEqual(token, "0x000000000000000000000000000000000000eeee")
+      ) {
+        try {
+          tokenSymbol = await context.client.readContract({
+            abi: erc20Abi,
+            address: token,
+            functionName: "symbol",
+          });
+        } catch (e) {}
       }
 
       await context.db
