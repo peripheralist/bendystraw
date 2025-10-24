@@ -2,8 +2,10 @@ import {
   index,
   onchainEnum,
   onchainTable,
+  PgEnumColumnBuilder,
   primaryKey,
   relations,
+  OnchainEnum,
 } from "ponder";
 
 // hacky extraction of `PgColumnsBuilders` type that isn't exported by ponder
@@ -1171,6 +1173,7 @@ export const suckerGroup = onchainTable("sucker_group", (t) => ({
 
 export const suckerGroupRelations = relations(suckerGroup, ({ many }) => ({
   projects: many(project),
+  suckerTransactions: many(suckerTransaction),
 }));
 
 export const suckerGroupMoment = onchainTable(
@@ -1199,10 +1202,49 @@ export const suckerGroupMoment = onchainTable(
   })
 );
 
+export const suckerTransaction = onchainTable(
+  "sucker_transaction",
+  (t) => ({
+    index: t.integer().notNull(),
+    token: t.hex().notNull(),
+    ...projectId(t),
+    ...chainId(t),
+    ...version(t),
+    ...suckerGroupId(t),
+    sucker: t.hex().notNull(),
+    peer: t.hex().notNull(),
+    peerChainId: t.integer().notNull(),
+    beneficiary: t.hex().notNull(),
+    projectTokenCount: t.bigint().notNull(),
+    terminalTokenAmount: t.bigint().notNull(),
+    root: t.hex().notNull(),
+    status: onchainEnum("status", ["pending", "claimable", "claimed"])(
+      "status"
+    ),
+  }),
+  (t) => ({
+    // we may not need all these keys
+    pk: primaryKey({
+      columns: [t.index, t.token],
+    }),
+  })
+);
+
+export const suckerTransactionRelations = relations(
+  suckerTransaction,
+  ({ one }) => ({
+    suckerGroup: one(suckerGroup, {
+      fields: [suckerTransaction.suckerGroupId],
+      references: [suckerGroup.id],
+    }),
+  })
+);
+
 export const useAllowanceEvent = onchainTable("use_allowance_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
   ...suckerGroupId(t),
+  ...version(t),
   amount: t.bigint().notNull(),
   amountPaidOut: t.bigint().notNull(),
   netAmountPaidOut: t.bigint().notNull(),

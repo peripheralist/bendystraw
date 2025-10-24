@@ -25,4 +25,6 @@ export const ADDRESS = {
   jb721TiersHookStore5: "0x2bc696b0af74042b30b2687ab5817cc824eba8ee",
   jbPrices: "0xe712d14b04f1a1fe464be930e3ea72b9b0a141d7",
   jbPrices5: "0x9b90e507cf6b7eb681a506b111f6f50245e614c4",
+  jbDirectory: "0x0bc9f153dee4d3d474ce0903775b9b2aaae9aa41",
+  jbDirectory5: "0x0061e516886a0540f63157f112c0588ee0651dcf",
 } as const;

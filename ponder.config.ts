@@ -23,6 +23,7 @@ import { JBTokensAbi } from "./abis/JBTokensAbi";
 import { REVDeployerAbi } from "./abis/REVDeployerAbi";
 import { ADDRESS } from "./src/constants/address";
 import { REVLoansAbi } from "./abis/REVLoansAbi";
+import { JBSuckerAbi } from "./abis/JBSuckerAbi";
 
 const rpcUrl = (prefix: string) =>
   http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
@@ -32,7 +33,6 @@ const deployErc20FactoryConfig = factory({
   event: getAbiItem({ abi: JBTokensAbi, name: "DeployERC20" }),
   parameter: "token",
 });
-
 const hookDeployedFactoryConfig = factory({
   address: ADDRESS.jb721TiersHookDeployer,
   event: getAbiItem({ abi: JB721TiersHookDeployerAbi, name: "HookDeployed" }),
@@ -42,6 +42,11 @@ const hookDeployedFactoryConfig5 = factory({
   address: ADDRESS.jb721TiersHookDeployer5,
   event: getAbiItem({ abi: JB721TiersHookDeployerAbi, name: "HookDeployed" }),
   parameter: "hook",
+});
+const suckerDeployedFactoryConfig = factory({
+  address: [ADDRESS.jbSuckersRegistry, ADDRESS.jbSuckersRegistry5],
+  event: getAbiItem({ abi: JBSuckersRegistryAbi, name: "SuckerDeployedFor" }),
+  parameter: "sucker",
 });
 
 const JB721TiersHookDeployer = {
@@ -338,6 +343,24 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    JBSucker: {
+      abi: JBSuckerAbi,
+      address: suckerDeployedFactoryConfig,
+      chain: {
+        ethereum: {
+          startBlock: 21863660,
+        },
+        arbitrum: {
+          startBlock: 306881281,
+        },
+        base: {
+          startBlock: 26487986,
+        },
+        optimism: {
+          startBlock: 132083296,
+        },
+      },
+    },
   },
 });
 
@@ -562,6 +585,24 @@ export const testnetConfig = createConfig({
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
       address: [ADDRESS.jbSuckersRegistry, ADDRESS.jbSuckersRegistry5],
+      chain: {
+        ethereumSepolia: {
+          startBlock: 7724468,
+        },
+        arbitrumSepolia: {
+          startBlock: 124497109,
+        },
+        baseSepolia: {
+          startBlock: 21998497,
+        },
+        optimismSepolia: {
+          startBlock: 23981375,
+        },
+      },
+    },
+    JBSucker: {
+      abi: JBSuckerAbi,
+      address: suckerDeployedFactoryConfig,
       chain: {
         ethereumSepolia: {
           startBlock: 7724468,
