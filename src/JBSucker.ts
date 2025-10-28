@@ -55,6 +55,7 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       terminalTokenAmount: event.args.terminalTokenAmount,
       index: Number(event.args.index),
       root: event.args.root,
+      createdAt: Number(event.block.timestamp),
       status: "pending",
     });
   } catch (e) {

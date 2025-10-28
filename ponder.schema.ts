@@ -1216,6 +1216,7 @@ export const suckerTransaction = onchainTable(
     ...chainId(t),
     ...version(t),
     ...suckerGroupId(t),
+    ...createdAt(t),
     sucker: t.hex().notNull(),
     peer: t.hex().notNull(),
     peerChainId: t.integer().notNull(),

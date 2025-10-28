@@ -545,7 +545,7 @@ ponder.on(
 
       const token = event.args.context.token;
 
-      let tokenSymbol: string | null = null;
+      let tokenSymbol = "ETH";
 
       if (
         !isAddressEqual(token, zeroAddress) &&
