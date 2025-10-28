@@ -2,6 +2,7 @@ import { ponder } from "ponder:registry";
 import { project, suckerTransaction } from "ponder:schema";
 import { JBSuckerAbi } from "../abis/JBSuckerAbi";
 import { ADDRESS } from "./constants/address";
+import { isAddressEqual } from "viem";
 
 ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
   try {
@@ -29,7 +30,9 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       address,
     });
 
-    const version = directoryAddress === ADDRESS.jbDirectory5 ? 5 : 4;
+    const version = isAddressEqual(directoryAddress, ADDRESS.jbDirectory5)
+      ? 5
+      : 4;
 
     const _project = await context.db.find(project, {
       projectId: Number(projectId),
