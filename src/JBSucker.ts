@@ -47,7 +47,7 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
     await context.db.insert(suckerTransaction).values({
       projectId: _project.projectId,
       chainId,
-      version: 5,
+      version,
       suckerGroupId: _project.suckerGroupId,
       sucker: event.log.address,
       peer,
