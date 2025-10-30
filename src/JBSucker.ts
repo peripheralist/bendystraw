@@ -3,6 +3,7 @@ import { project, suckerTransaction } from "ponder:schema";
 import { JBSuckerAbi } from "../abis/JBSuckerAbi";
 import { ADDRESS } from "./constants/address";
 import { isAddressEqual } from "viem";
+import { and, eq } from "ponder";
 
 ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
   try {
@@ -83,14 +84,17 @@ ponder.on("JBSucker:RootToRemote", async ({ event, context }) => {
 
 ponder.on("JBSucker:Claimed", async ({ event, context }) => {
   try {
-    await context.db
-      .update(suckerTransaction, {
-        token: event.args.token,
-        index: Number(event.args.index),
-        chainId: context.chain.id,
-        sucker: event.log.address,
-      })
-      .set({ status: "claimed" });
+    await context.db.sql
+      .update(suckerTransaction)
+      .set({ status: "claimed" })
+      .where(
+        and(
+          eq(suckerTransaction.token, event.args.token),
+          eq(suckerTransaction.index, Number(event.args.index)),
+          eq(suckerTransaction.peerChainId, context.chain.id), // use PEER chain here
+          eq(suckerTransaction.sucker, event.log.address)
+        )
+      );
   } catch (e) {
     console.error("JBSucker:Claimed", e);
   }
