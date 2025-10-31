@@ -25,9 +25,6 @@ import { ADDRESS } from "./src/constants/address";
 import { REVLoansAbi } from "./abis/REVLoansAbi";
 import { JBSuckerAbi } from "./abis/JBSuckerAbi";
 
-const rpcUrl = (prefix: string) =>
-  http(`https://${prefix}.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`);
-
 const deployErc20FactoryConfig = factory({
   address: [ADDRESS.jbTokens, ADDRESS.jbTokens5],
   event: getAbiItem({ abi: JBTokensAbi, name: "DeployERC20" }),
@@ -369,19 +366,19 @@ export const testnetConfig = createConfig({
   chains: {
     ethereumSepolia: {
       id: sepolia.id,
-      rpc: rpcUrl("eth-sepolia"),
+      rpc: process.env.RPC_URL_ETHEREUM_SEPOLIA,
     },
     arbitrumSepolia: {
       id: arbitrumSepolia.id,
-      rpc: rpcUrl("arb-sepolia"),
+      rpc: process.env.RPC_URL_ARBITRUM_SEPOLIA,
     },
     baseSepolia: {
       id: baseSepolia.id,
-      rpc: rpcUrl("base-sepolia"),
+      rpc: process.env.RPC_URL_BASE_SEPOLIA,
     },
     optimismSepolia: {
       id: optimismSepolia.id,
-      rpc: rpcUrl("opt-sepolia"),
+      rpc: process.env.RPC_URL_OPTIMISM_ETHEREUM,
     },
   },
   contracts: {
