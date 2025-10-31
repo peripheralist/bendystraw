@@ -130,10 +130,10 @@ const JBTokens = {
 export const mainnetConfig = createConfig({
   ordering: "omnichain",
   chains: {
-    ethereum: { id: mainnet.id, rpc: rpcUrl("eth-mainnet") },
-    arbitrum: { id: arbitrum.id, rpc: rpcUrl("arb-mainnet") },
-    base: { id: base.id, rpc: rpcUrl("base-mainnet") },
-    optimism: { id: optimism.id, rpc: rpcUrl("opt-mainnet") },
+    ethereum: { id: mainnet.id, rpc: process.env.RPC_URL_ETHEREUM },
+    arbitrum: { id: arbitrum.id, rpc: process.env.RPC_URL_ARBITRUM },
+    base: { id: base.id, rpc: process.env.RPC_URL_BASE },
+    optimism: { id: optimism.id, rpc: process.env.RPC_URL_OPTIMISM },
   },
   contracts: {
     JBProjects: {
