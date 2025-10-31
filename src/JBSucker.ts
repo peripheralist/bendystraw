@@ -1,9 +1,9 @@
+import { and, eq } from "ponder";
 import { ponder } from "ponder:registry";
 import { project, suckerTransaction } from "ponder:schema";
+import { isAddressEqual } from "viem";
 import { JBSuckerAbi } from "../abis/JBSuckerAbi";
 import { ADDRESS } from "./constants/address";
-import { isAddressEqual } from "viem";
-import { and, eq } from "ponder";
 
 ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
   try {
@@ -69,14 +69,16 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
 
 ponder.on("JBSucker:RootToRemote", async ({ event, context }) => {
   try {
-    await context.db
-      .update(suckerTransaction, {
-        token: event.args.token,
-        index: Number(event.args.index),
-        chainId: context.chain.id,
-        sucker: event.log.address,
-      })
-      .set({ status: "claimable" });
+    await context.db.sql
+      .update(suckerTransaction)
+      .set({ status: "claimable" })
+      .where(
+        and(
+          eq(suckerTransaction.token, event.args.token),
+          eq(suckerTransaction.sucker, event.log.address),
+          eq(suckerTransaction.chainId, context.chain.id)
+        )
+      );
   } catch (e) {
     console.error("JBSucker:RootToRemote", e);
   }
