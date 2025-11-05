@@ -76,7 +76,8 @@ ponder.on("JBSucker:RootToRemote", async ({ event, context }) => {
         and(
           eq(suckerTransaction.token, event.args.token),
           eq(suckerTransaction.sucker, event.log.address),
-          eq(suckerTransaction.chainId, context.chain.id)
+          eq(suckerTransaction.chainId, context.chain.id),
+          eq(suckerTransaction.status, "pending")
         )
       );
   } catch (e) {
@@ -94,7 +95,8 @@ ponder.on("JBSucker:Claimed", async ({ event, context }) => {
           eq(suckerTransaction.token, event.args.token),
           eq(suckerTransaction.index, Number(event.args.index)),
           eq(suckerTransaction.peerChainId, context.chain.id), // use PEER chain here
-          eq(suckerTransaction.sucker, event.log.address)
+          eq(suckerTransaction.sucker, event.log.address),
+          eq(suckerTransaction.status, "claimable")
         )
       );
   } catch (e) {
