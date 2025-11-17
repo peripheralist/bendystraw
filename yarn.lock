@@ -556,10 +556,10 @@
     "@repeaterjs/repeater" "^3.0.4"
     tslib "^2.8.1"
 
-"@hono/node-server@1.13.3":
-  version "1.13.3"
-  resolved "https://registry.yarnpkg.com/@hono/node-server/-/node-server-1.13.3.tgz#6df4fe3db244718299621708702f3858e5b6a3e7"
-  integrity sha512-tEo3hcyQ6chvSnJ3tKzfX4z2sd7Q+ZkBwwBdW1Ya8Mz29dukxC2xcWiB/lAMwGJrYMW8QTgknIsLu1AsnMBe7A==
+"@hono/node-server@1.19.5":
+  version "1.19.5"
+  resolved "https://registry.yarnpkg.com/@hono/node-server/-/node-server-1.19.5.tgz#6e9a991e2a5843b33aee8b93a11ff68b5fdc7712"
+  integrity sha512-iBuhh+uaaggeAuf+TftcjZyWh2GEgZcVGXkNtskLVoWaXhnJtC5HLHrU8W1KHDoucqO1MswwglmkWLFyiDn4WQ==
 
 "@hono/node-server@^1.14.0":
   version "1.14.0"
@@ -640,10 +640,10 @@
   resolved "https://registry.yarnpkg.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz#a77ea742fab25775145434eb1d2328cf5013ac33"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
-"@ponder/utils@0.2.12":
-  version "0.2.12"
-  resolved "https://registry.yarnpkg.com/@ponder/utils/-/utils-0.2.12.tgz#bb89c0f9a09d2f7d7af9e367a6c67d1eec82d742"
-  integrity sha512-pIlunpEoXXJlqSucidJl4r4s66DOnPRbqPY3lZ02uhBr6e2GYK7iNRg4IW7v4WnIhVoSugnWIRiEQYWA0yNLiw==
+"@ponder/utils@0.2.16":
+  version "0.2.16"
+  resolved "https://registry.yarnpkg.com/@ponder/utils/-/utils-0.2.16.tgz#bc96c7f3e7a31af18f35fac2e67df5e383cd53a6"
+  integrity sha512-Q2TpJ1BywdZhGDjtWe6mDQXn/jF2YDfMwdblDytwGjQ6zuFyuujP+o/liVbuHfqSYmeUOPHugxk5yKAhHwWfJw==
 
 "@repeaterjs/repeater@^3.0.4":
   version "3.0.6"
@@ -2252,10 +2252,10 @@ pino@^8.16.2:
     sonic-boom "^3.7.0"
     thread-stream "^2.6.0"
 
-ponder@^0.12.21:
-  version "0.12.21"
-  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.12.21.tgz#323b9908390c00763fbf999438b71ee9d9041f7d"
-  integrity sha512-PlaoG0AIP3T6ucjIVTBIBb5BpA7ut65u+MpMQHfoy4CyTNf0FsxbEidRCJZSieW5XWZ5ULIqWI5DUCYiJH5GFQ==
+ponder@^0.15.3:
+  version "0.15.3"
+  resolved "https://registry.yarnpkg.com/ponder/-/ponder-0.15.3.tgz#d5ae4ded48cfc00cb11111c311fb35b6c1dabf57"
+  integrity sha512-RkOG6xzcf0hGaSWocY2zs1c4PBuAff+qKVMO9H7Sz3z0WJ34rt1ofU8/fXeYoF4+FIc9ZPaUCzROJaAqRdqR8Q==
   dependencies:
     "@babel/code-frame" "^7.23.4"
     "@commander-js/extra-typings" "^12.0.1"
@@ -2263,8 +2263,8 @@ ponder@^0.12.21:
     "@escape.tech/graphql-armor-max-aliases" "^2.3.0"
     "@escape.tech/graphql-armor-max-depth" "^2.2.0"
     "@escape.tech/graphql-armor-max-tokens" "^2.3.0"
-    "@hono/node-server" "1.13.3"
-    "@ponder/utils" "0.2.12"
+    "@hono/node-server" "1.19.5"
+    "@ponder/utils" "0.2.16"
     abitype "^0.10.2"
     ansi-escapes "^7.0.0"
     commander "^12.0.0"
