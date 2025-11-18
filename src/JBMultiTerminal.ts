@@ -218,7 +218,9 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       const latestPayEvent = await getLatestPayEvent({ context });
 
       if (latestPayEvent?.projectId !== Number(split.projectId)) {
-        throw new Error("Mismatched latest pay event");
+        throw new Error(
+          `Mismatched latest pay event: tx: ${event.transaction.hash}, chain: ${context.chain.id}, projectId: ${split.projectId}`
+        );
       }
 
       await context.db.update(payEvent, latestPayEvent).set({
