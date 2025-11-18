@@ -1,5 +1,5 @@
 import { createConfig, factory } from "ponder";
-import { erc20Abi, getAbiItem, http } from "viem";
+import { erc20Abi, getAbiItem } from "viem";
 
 import {
   arbitrum,
@@ -127,10 +127,22 @@ const JBTokens = {
 export const mainnetConfig = createConfig({
   ordering: "omnichain",
   chains: {
-    ethereum: { id: mainnet.id, rpc: process.env.RPC_URL_ETHEREUM },
-    arbitrum: { id: arbitrum.id, rpc: process.env.RPC_URL_ARBITRUM },
-    base: { id: base.id, rpc: process.env.RPC_URL_BASE },
-    optimism: { id: optimism.id, rpc: process.env.RPC_URL_OPTIMISM },
+    ethereum: {
+      id: mainnet.id,
+      rpc: process.env.RPC_URL_ETHEREUM,
+    },
+    arbitrum: {
+      id: arbitrum.id,
+      rpc: process.env.RPC_URL_ARBITRUM,
+    },
+    base: {
+      id: base.id,
+      rpc: process.env.RPC_URL_BASE,
+    },
+    optimism: {
+      id: optimism.id,
+      rpc: process.env.RPC_URL_OPTIMISM,
+    },
   },
   contracts: {
     JBProjects: {
@@ -378,7 +390,7 @@ export const testnetConfig = createConfig({
     },
     optimismSepolia: {
       id: optimismSepolia.id,
-      rpc: process.env.RPC_URL_OPTIMISM_ETHEREUM,
+      rpc: process.env.RPC_URL_OPTIMISM_SEPOLIA,
     },
   },
   contracts: {
