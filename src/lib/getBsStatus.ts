@@ -13,20 +13,20 @@ import { IS_DEV } from "../constants/dev";
 import { ChainId, MAINNETS, NETWORKS, TESTNETS } from "../constants/networks";
 import { getBlockHeight } from "./getBlockHeight";
 
-function getStatus(testnet?: boolean) {
+async function getStatus(testnet?: boolean) {
   try {
-    return axios
-      .get<
-        Record<
-          string,
-          { id: ChainId; block: { number: number; timestamp: number } }
-        >
-      >(
-        IS_DEV
-          ? `http://localhost:42069/status`
-          : `https://bendystraw${testnet ? "-testnet" : ""}.up.railway.app/status`
-      )
-      .then((res) => res.data);
+    const res = await axios.get<
+      Record<
+        string,
+        { id: ChainId; block: { number: number; timestamp: number } }
+      >
+    >(
+      IS_DEV
+        ? `http://localhost:42069/status`
+        : `https://bendystraw${testnet ? "-testnet" : ""}.up.railway.app/status`
+    );
+
+    return res.data;
   } catch (e) {
     console.error(
       `Error getting bendystraw status (${testnet ? "testnets" : "mainnets"})`,
