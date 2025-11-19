@@ -1,21 +1,56 @@
 import axios from "axios";
+import {
+  arbitrum,
+  arbitrumSepolia,
+  base,
+  baseSepolia,
+  mainnet,
+  optimism,
+  optimismSepolia,
+  sepolia,
+} from "viem/chains";
 import { IS_DEV } from "../constants/dev";
 import { ChainId, MAINNETS, NETWORKS, TESTNETS } from "../constants/networks";
 import { getBlockHeight } from "./getBlockHeight";
 
 function getStatus(testnet?: boolean) {
-  return axios
-    .get<
-      Record<
-        string,
-        { id: ChainId; block: { number: number; timestamp: number } }
-      >
-    >(
-      IS_DEV
-        ? `http://localhost:42069/status`
-        : `https://${testnet ? "testnet." : ""}bendystraw.xyz/status`
-    )
-    .then((res) => res.data);
+  try {
+    return axios
+      .get<
+        Record<
+          string,
+          { id: ChainId; block: { number: number; timestamp: number } }
+        >
+      >(
+        IS_DEV
+          ? `http://localhost:42069/status`
+          : `https://${testnet ? "testnet." : ""}bendystraw.xyz/status`
+      )
+      .then((res) => res.data);
+  } catch (e) {
+    console.error(
+      `Error getting bendystraw status (${testnet ? "testnets" : "mainnets"})`,
+      e
+    );
+
+    const block = { number: null, timestamp: null };
+
+    if (testnet) {
+      return {
+        ethereum: { id: mainnet.id, block },
+        optimism: { id: optimism.id, block },
+        base: { id: base.id, block },
+        arbitrum: { id: arbitrum.id, block },
+      };
+    } else {
+      return {
+        sepolia: { id: sepolia.id, block },
+        optimismSepolia: { id: optimismSepolia.id, block },
+        baseSepolia: { id: baseSepolia.id, block },
+        arbitrumSepolia: { id: arbitrumSepolia.id, block },
+      };
+    }
+  }
 }
 
 export async function getBsStatus() {
@@ -27,8 +62,8 @@ export async function getBsStatus() {
     ...Object.values(testnetStatus),
   ].map((s) => ({
     chainId: s.id,
-    block: s.block.number,
-    timestamp: s.block.timestamp,
+    block: s.block.number as number | null,
+    timestamp: s.block.timestamp as number | null,
   }));
 
   const mainnetsBlockHeights = await Promise.all(
@@ -50,19 +85,27 @@ export async function getBsStatus() {
   const blockHeights = [...mainnetsBlockHeights, ...testnetsBlockHeights];
 
   return NETWORKS.reduce((acc, curr) => {
-    const blockHeight = blockHeights.find(({ chainId }) => curr.id === chainId)
-      ?.blockHeight!;
+    const blockHeight = blockHeights.find(
+      ({ chainId }) => curr.id === chainId
+    )!.blockHeight;
 
     const bsBlockHeight = chainStatuses.find(
       ({ chainId }) => curr.id === chainId
-    )?.block!;
+    )!.block;
 
-    const blocksBehind = Math.max(blockHeight - bsBlockHeight, 0);
+    const blocksBehind =
+      bsBlockHeight === null
+        ? "error"
+        : Math.max(blockHeight - bsBlockHeight, 0);
 
-    const bsTimestamp = chainStatuses.find(({ chainId }) => curr.id === chainId)
-      ?.timestamp!;
+    const bsTimestamp = chainStatuses.find(
+      ({ chainId }) => curr.id === chainId
+    )!.timestamp;
 
-    const secsBehind = Math.max(Math.floor(Date.now() / 1000) - bsTimestamp, 0);
+    const secsBehind =
+      bsTimestamp == null
+        ? "error"
+        : Math.max(Math.floor(Date.now() / 1000) - bsTimestamp, 0);
 
     return {
       ...acc,
