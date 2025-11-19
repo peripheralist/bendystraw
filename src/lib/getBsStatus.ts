@@ -24,7 +24,7 @@ function getStatus(testnet?: boolean) {
       >(
         IS_DEV
           ? `http://localhost:42069/status`
-          : `https://${testnet ? "testnet." : ""}bendystraw.xyz/status`
+          : `https://bendystraw${testnet ? "-testnet" : ""}.up.railway.app/status`
       )
       .then((res) => res.data);
   } catch (e) {
