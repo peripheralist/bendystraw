@@ -69,7 +69,7 @@ export async function usdPriceForToken({
       // fetch price from on-chain feed
       const usdPriceWei = await context.client.readContract({
         abi: JBPricesAbi,
-        address: ADDRESS.jbPrices,
+        address: version === 4 ? ADDRESS.jbPrices : ADDRESS.jbPrices5,
         functionName: "pricePerUnitOf",
         args: [projectId, pricingCurrency, unitCurrency, BigInt(18)],
       });
@@ -94,7 +94,7 @@ export async function usdPriceForToken({
     console.error(
       `Error: usdPriceForToken failed for projectId: ${projectId}, chainId: ${
         context.chain.id
-      }, version: ${version}, unitCurrency: ${currency.toString()} - ${
+      }, version: ${version}, currency: ${currency.toString()} - ${
         (e as Error).message
       }`
     );

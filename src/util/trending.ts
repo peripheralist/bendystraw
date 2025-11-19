@@ -13,7 +13,7 @@ export async function handleTrendingPayment(
   try {
     const trendingWindowStart = Number(timestamp) - TRENDING_WINDOW_SECS;
 
-    if (Number(timestamp) < trendingWindowStart) {
+    if (Number(timestamp) < Date.now() / 1000 - TRENDING_WINDOW_SECS) {
       // don't run calculations during historical indexing. only run once within trending window, ensuring trending will still be calculated if latest payment is barely within window when bendystraw is deployed.
       return;
     }
