@@ -35,21 +35,19 @@ async function getStatus(testnet?: boolean) {
 
     const block = { number: null, timestamp: null };
 
-    if (testnet) {
-      return {
-        ethereum: { id: mainnet.id, block },
-        optimism: { id: optimism.id, block },
-        base: { id: base.id, block },
-        arbitrum: { id: arbitrum.id, block },
-      };
-    } else {
-      return {
-        sepolia: { id: sepolia.id, block },
-        optimismSepolia: { id: optimismSepolia.id, block },
-        baseSepolia: { id: baseSepolia.id, block },
-        arbitrumSepolia: { id: arbitrumSepolia.id, block },
-      };
-    }
+    return testnet
+      ? {
+          sepolia: { id: sepolia.id, block },
+          optimismSepolia: { id: optimismSepolia.id, block },
+          baseSepolia: { id: baseSepolia.id, block },
+          arbitrumSepolia: { id: arbitrumSepolia.id, block },
+        }
+      : {
+          ethereum: { id: mainnet.id, block },
+          optimism: { id: optimism.id, block },
+          base: { id: base.id, block },
+          arbitrum: { id: arbitrum.id, block },
+        };
   }
 }
 
