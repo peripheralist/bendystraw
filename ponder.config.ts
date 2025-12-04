@@ -145,7 +145,7 @@ const JBRulesets = {
     },
   },
   testnet: {
-    abi: JBTokensAbi,
+    abi: JBRulesetsAbi,
     address: [ADDRESS.jbRulesets, ADDRESS.jbRulesets5],
     chain: {
       ethereumSepolia: {
