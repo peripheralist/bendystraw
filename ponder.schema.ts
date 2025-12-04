@@ -299,6 +299,23 @@ export const burnEventRelations = relations(burnEvent, ({ one }) => ({
   }),
 }));
 
+export const cashOutTaxSnapshot = onchainTable(
+  "cash_out_price_snapshot",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    ...version(t),
+    start: t.bigint().notNull(),
+    duration: t.bigint().notNull(),
+    cashOutTax: t.integer().notNull(),
+    rulesetId: t.bigint().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.version, t.chainId, t.projectId, t.rulesetId] }),
+  })
+);
+
 export const cashOutTokensEvent = onchainTable(
   "cash_out_tokens_event",
   (t) => ({
@@ -730,7 +747,9 @@ export const participantSnapshot = onchainTable(
   }),
   (t) => ({
     addressIdx: index().on(t.address),
-    pk: primaryKey({ columns: [t.version, t.chainId, t.projectId, t.address] }),
+    pk: primaryKey({
+      columns: [t.version, t.chainId, t.projectId, t.address, t.block],
+    }),
   })
 );
 

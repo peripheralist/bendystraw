@@ -28,7 +28,5 @@ export function setParticipantSnapshot({
     })
     .onConflictDoUpdate({
       ...partialParticipant,
-      block: Number(event.block.number),
-      timestamp: Number(event.block.timestamp),
     });
 }

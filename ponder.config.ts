@@ -24,6 +24,7 @@ import { REVDeployerAbi } from "./abis/REVDeployerAbi";
 import { ADDRESS } from "./src/constants/address";
 import { REVLoansAbi } from "./abis/REVLoansAbi";
 import { JBSuckerAbi } from "./abis/JBSuckerAbi";
+import { JBRulesetsAbi } from "./abis/JBRulesetsAbi";
 
 const deployErc20FactoryConfig = factory({
   address: [ADDRESS.jbTokens, ADDRESS.jbTokens5],
@@ -119,6 +120,45 @@ const JBTokens = {
       },
       optimismSepolia: {
         startBlock: 23975934,
+      },
+    },
+  },
+} as const;
+
+const JBRulesets = {
+  mainnet: {
+    abi: JBRulesetsAbi,
+    address: [ADDRESS.jbRulesets, ADDRESS.jbRulesets5],
+    chain: {
+      ethereum: {
+        startBlock: 21863161,
+      },
+      arbitrum: {
+        startBlock: 306857614,
+      },
+      base: {
+        startBlock: 26484977,
+      },
+      optimism: {
+        startBlock: 132080269,
+      },
+    },
+  },
+  testnet: {
+    abi: JBTokensAbi,
+    address: [ADDRESS.jbRulesets, ADDRESS.jbRulesets5],
+    chain: {
+      ethereumSepolia: {
+        startBlock: 7724135,
+      },
+      arbitrumSepolia: {
+        startBlock: 124457558,
+      },
+      baseSepolia: {
+        startBlock: 21993032,
+      },
+      optimismSepolia: {
+        startBlock: 23975908,
       },
     },
   },
@@ -241,6 +281,7 @@ export const mainnetConfig = createConfig({
       },
     },
     JBTokens: JBTokens.mainnet,
+    JBRulesets: JBRulesets.mainnet,
     ERC20: {
       abi: erc20Abi,
       address: deployErc20FactoryConfig,
@@ -498,6 +539,7 @@ export const testnetConfig = createConfig({
       },
     },
     JBTokens: JBTokens.testnet,
+    JBRulesets: JBRulesets.testnet,
     ERC20: {
       abi: erc20Abi,
       address: deployErc20FactoryConfig,

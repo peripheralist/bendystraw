@@ -27,4 +27,6 @@ export const ADDRESS = {
   jbPrices5: "0x9b90e507cf6b7eb681a506b111f6f50245e614c4",
   jbDirectory: "0x0bc9f153dee4d3d474ce0903775b9b2aaae9aa41",
   jbDirectory5: "0x0061e516886a0540f63157f112c0588ee0651dcf",
+  jbRulesets: "0xda86eedb67c6c9fb3e58fe83efa28674d7c89826",
+  jbRulesets5: "0x6292281d69c3593fcf6ea074e5797341476ab428",
 } as const;
