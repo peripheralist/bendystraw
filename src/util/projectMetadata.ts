@@ -56,6 +56,9 @@ export async function parseProjectMetadata(uri: string) {
           console.log("Error formatting metadata response", formattedRes);
           return null;
         }
+      })
+      .catch((e) => {
+        console.warn("Error loading project metadata", uri, e);
       });
   } catch (e) {
     console.warn("Error parsing project metadata", uri, e);
