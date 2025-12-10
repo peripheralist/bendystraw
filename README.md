@@ -125,7 +125,7 @@ Some data is not conveniently accessible via GraphQL, but may be requested via o
 
   <table>
     <tr>
-      <th>GraphQL</th>
+      <th>Request</th>
       <th>Response</th>
     </tr>
     <tr>

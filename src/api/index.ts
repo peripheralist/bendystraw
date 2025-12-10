@@ -28,6 +28,13 @@ app.get(
   })
 );
 
+app.get(
+  "/logo.png",
+  serveStatic({
+    path: "src/assets/logo.png",
+  })
+);
+
 // Serve a markdown file as HTML
 app.get("/", async (c) => {
   let markdown = readFileSync("README.md", "utf-8");
@@ -73,6 +80,8 @@ app.get("/", async (c) => {
       </head>
       <body>
         <div class="container">
+          <img src="logo.png" alt="Logo" width="100" />
+
           ${html}
         </div>
       </body>
