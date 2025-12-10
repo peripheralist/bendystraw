@@ -36,8 +36,8 @@ export async function parseProjectMetadata(uri: string) {
 
     const _uri = `https://ipfs.infura.io:5001/api/v0/get?arg=${cid}`;
 
-    return await axios
-      .post(
+    try {
+      const res = await axios.post(
         _uri,
         {},
         {
@@ -46,20 +46,20 @@ export async function parseProjectMetadata(uri: string) {
           },
           timeout: 5000,
         }
-      )
-      .then((res) => {
-        const formattedRes = `{${res.data.split("{")[1].split("}")[0]}}`;
-        const normalized = normalizeMetadataString(formattedRes);
-        try {
-          return JSON.parse(normalized) as ProjectMetadata;
-        } catch (e) {
-          console.log("Error formatting metadata response", formattedRes);
-          return null;
-        }
-      })
-      .catch((e) => {
-        console.warn("Error loading project metadata", uri, e);
-      });
+      );
+
+      const formattedRes = `{${res.data.split("{")[1].split("}")[0]}}`;
+      const normalized = normalizeMetadataString(formattedRes);
+      try {
+        return JSON.parse(normalized) as ProjectMetadata;
+      } catch (e) {
+        console.log("Error formatting project metadata response", formattedRes);
+        return null;
+      }
+    } catch (e) {
+      console.warn("Error fetching project metadata", uri, e);
+      return null;
+    }
   } catch (e) {
     console.warn("Error parsing project metadata", uri, e);
     return null;
