@@ -57,6 +57,10 @@ export async function parseProjectMetadata(uri: string) {
         return null;
       }
     } catch (e) {
+      if (axios.isAxiosError(e) && e.code === "ECONNABORTED") {
+        // Timeout - silently return null (IPFS can be slow/unavailable)
+        return null;
+      }
       console.warn("Error fetching project metadata", uri, e);
       return null;
     }
