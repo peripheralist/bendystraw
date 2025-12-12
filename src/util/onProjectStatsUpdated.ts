@@ -90,6 +90,7 @@ export async function onProjectStatsUpdated({
         nftsMintedCount: acc.nftsMintedCount + p.nftsMintedCount,
         balance: acc.balance + p.balance,
         tokenSupply: acc.tokenSupply + p.tokenSupply,
+        reservedTokenSupply: acc.reservedTokenSupply + p.reservedTokenSupply,
         trendingScore: acc.trendingScore + p.trendingScore,
         trendingVolume: acc.trendingVolume + p.trendingVolume,
         trendingPaymentsCount:
@@ -106,6 +107,7 @@ export async function onProjectStatsUpdated({
         nftsMintedCount: 0,
         balance: BigInt(0),
         tokenSupply: BigInt(0),
+        reservedTokenSupply: BigInt(0),
         trendingScore: BigInt(0),
         trendingVolume: BigInt(0),
         trendingPaymentsCount: 0,
@@ -122,7 +124,6 @@ export async function onProjectStatsUpdated({
     .values({
       ...updatedSuckerGroup,
       suckerGroupId: updatedSuckerGroup.id,
-      block: Number(event.block.number),
       timestamp: Number(event.block.timestamp),
     })
     .onConflictDoNothing();

@@ -6,19 +6,22 @@ import {
   sendReservedTokensToSplitEvent,
   sendReservedTokensToSplitsEvent,
 } from "ponder:schema";
+import { isAddressEqual } from "viem";
+import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { getVersion } from "./util/getVersion";
+import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { parseProjectMetadata } from "./util/projectMetadata";
-import { isAddressEqual } from "viem";
-import { ADDRESS } from "./constants/address";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
     const version = getVersion(event, "jbController");
 
+    const _projectId = Number(event.args.projectId);
+
     const _project = await context.db.find(project, {
-      projectId: Number(event.args.projectId),
+      projectId: _projectId,
       chainId: context.chain.id,
       version,
     });
@@ -35,7 +38,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
     const eventData = {
       ...getEventParams({ event, context }),
       suckerGroupId: _project.suckerGroupId,
-      projectId: Number(event.args.projectId),
+      projectId: _projectId,
       beneficiary: event.args.beneficiary,
       beneficiaryTokenCount: event.args.beneficiaryTokenCount,
       memo: event.args.memo,
@@ -66,6 +69,27 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
       context,
       projectId: event.args.projectId,
       version,
+    });
+
+    const newReservedTokens =
+      event.args.tokenCount - event.args.beneficiaryTokenCount;
+
+    await context.db
+      .update(project, {
+        projectId: _projectId,
+        chainId: context.chain.id,
+        version,
+      })
+      .set((p) => ({
+        tokenSupply: p.tokenSupply + newReservedTokens,
+        reservedTokenSupply: p.reservedTokenSupply + newReservedTokens,
+      }));
+
+    await onProjectStatsUpdated({
+      projectId: _projectId,
+      version,
+      event,
+      context,
     });
   } catch (e) {
     console.error("JBController:MintTokens", e);
@@ -184,6 +208,23 @@ ponder.on(
         context,
         projectId,
         version,
+      });
+
+      await context.db
+        .update(project, {
+          projectId: Number(event.args.projectId),
+          chainId: context.chain.id,
+          version,
+        })
+        .set((p) => ({
+          reservedTokenSupply: p.reservedTokenSupply - tokenCount,
+        }));
+
+      await onProjectStatsUpdated({
+        projectId,
+        version,
+        event,
+        context,
       });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplits", e);

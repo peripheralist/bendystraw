@@ -326,16 +326,16 @@ export const mainnetConfig = createConfig({
       ],
       chain: {
         ethereum: {
-          startBlock: 22039034,
+          startBlock: 23971096,
         },
         arbitrum: {
-          startBlock: 315299005,
+          startBlock: 408615445,
         },
         base: {
-          startBlock: 27545253,
+          startBlock: 39221996,
         },
         optimism: {
-          startBlock: 133140537,
+          startBlock: 144817281,
         },
       },
     },
@@ -584,16 +584,16 @@ export const testnetConfig = createConfig({
       ],
       chain: {
         ethereumSepolia: {
-          startBlock: 7894609,
+          startBlock: 9823930,
         },
         arbitrumSepolia: {
-          startBlock: 132035055,
+          startBlock: 223948198,
         },
         baseSepolia: {
-          startBlock: 23055756,
+          startBlock: 34884744,
         },
         optimismSepolia: {
-          startBlock: 25038630,
+          startBlock: 36867619,
         },
       },
     },
