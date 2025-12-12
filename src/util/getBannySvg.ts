@@ -7,28 +7,28 @@ import { Version } from "./getVersion";
 // copied here from config, loading config in real time here breaks
 const resolverStartBlocks = {
   ethereum: {
-    startBlock: 22039034,
+    startBlock: 23971096,
   },
   arbitrum: {
-    startBlock: 315299005,
+    startBlock: 408615445,
   },
   base: {
-    startBlock: 27545253,
+    startBlock: 39221996,
   },
   optimism: {
-    startBlock: 133140537,
+    startBlock: 144817281,
   },
   ethereumSepolia: {
-    startBlock: 7894609,
+    startBlock: 9823930,
   },
   arbitrumSepolia: {
-    startBlock: 132035055,
+    startBlock: 223948198,
   },
   baseSepolia: {
-    startBlock: 23055756,
+    startBlock: 34884744,
   },
   optimismSepolia: {
-    startBlock: 25038630,
+    startBlock: 36867619,
   },
 } as const;
 
@@ -46,7 +46,7 @@ export function getBannySvg({
   const resolverStartBlock = resolverStartBlocks[context.chain.name].startBlock;
 
   // current resolver contract is a redeploy from the original. some events may trigger this query in a block prior to the current resolver contract being deployed. in that case, we will just return empty.
-  if (block < resolverStartBlock) return Promise.resolve("");
+  if (block < resolverStartBlock) return Promise.resolve(null);
 
   const address =
     version === 5

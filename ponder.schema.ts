@@ -1209,7 +1209,6 @@ export const suckerGroupMoment = onchainTable(
   (t) => ({
     ...suckerGroupId(t),
     ...version(t),
-    block: t.integer().notNull(),
     timestamp: t.integer().notNull(),
     paymentsCount: t.integer().notNull().default(0),
     redeemCount: t.integer().notNull().default(0),
@@ -1226,7 +1225,7 @@ export const suckerGroupMoment = onchainTable(
     contributorsCount: t.integer().notNull().default(0),
   }),
   (t) => ({
-    pk: primaryKey({ columns: [t.suckerGroupId, t.version, t.block] }),
+    pk: primaryKey({ columns: [t.suckerGroupId, t.version, t.timestamp] }),
   })
 );
 
