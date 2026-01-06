@@ -81,7 +81,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
         version,
       })
       .set((p) => ({
-        tokenSupply: p.tokenSupply + event.args.tokenCount,
+        // increment ONLY new reserved tokens. tokenSupply will be incremented in JBTokens:Mint
         reservedTokenSupply: p.reservedTokenSupply + newReservedTokens,
       }));
 
