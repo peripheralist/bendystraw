@@ -1221,6 +1221,7 @@ export const suckerGroupMoment = onchainTable(
     nftsMintedCount: t.integer().notNull().default(0),
     balance: t.bigint().notNull().default(BigInt(0)),
     tokenSupply: t.bigint().notNull().default(BigInt(0)),
+    reservedTokenSupply: t.bigint().notNull().default(BigInt(0)),
     trendingScore: t.bigint().notNull().default(BigInt(0)),
     trendingVolume: t.bigint().notNull().default(BigInt(0)),
     trendingPaymentsCount: t.integer().notNull().default(0),

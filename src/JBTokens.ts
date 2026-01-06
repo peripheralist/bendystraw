@@ -4,17 +4,15 @@ import {
   deployErc20Event,
   manualBurnEvent,
   participant,
-  project,
-  suckerGroup,
+  project
 } from "ponder:schema";
+import { isAddressEqual } from "viem";
+import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { getVersion } from "./util/getVersion";
-import { setParticipantSnapshot } from "./util/participantSnapshot";
-import { isAddressEqual } from "viem";
-import { ADDRESS } from "./constants/address";
-import { suckerGroupMoment } from "ponder:schema";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
+import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("JBTokens:Burn", async ({ event, context }) => {
   try {

@@ -132,5 +132,21 @@ export async function onProjectStatsUpdated({
       suckerGroupId: updatedSuckerGroup.id,
       timestamp: Number(event.block.timestamp),
     })
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      // Update with latest values when multiple events occur at the same timestamp
+      paymentsCount: updatedSuckerGroup.paymentsCount,
+      redeemCount: updatedSuckerGroup.redeemCount,
+      volume: updatedSuckerGroup.volume,
+      volumeUsd: updatedSuckerGroup.volumeUsd,
+      redeemVolume: updatedSuckerGroup.redeemVolume,
+      redeemVolumeUsd: updatedSuckerGroup.redeemVolumeUsd,
+      nftsMintedCount: updatedSuckerGroup.nftsMintedCount,
+      balance: updatedSuckerGroup.balance,
+      tokenSupply: updatedSuckerGroup.tokenSupply,
+      reservedTokenSupply: updatedSuckerGroup.reservedTokenSupply,
+      trendingScore: updatedSuckerGroup.trendingScore,
+      trendingVolume: updatedSuckerGroup.trendingVolume,
+      trendingPaymentsCount: updatedSuckerGroup.trendingPaymentsCount,
+      contributorsCount: updatedSuckerGroup.contributorsCount,
+    });
 }
