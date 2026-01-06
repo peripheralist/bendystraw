@@ -68,13 +68,19 @@ export async function onProjectStatsUpdated({
   // );
 
   // Promise.all() throws `error: savepoint "flush" does not exist`
+  // Also: context.db.sql.query bypasses Ponder's transaction layer and reads stale data,
+  // so we must use the already-fetched _project for the current project to get updated values.
   const projects: (typeof project.$inferSelect)[] = [];
   for (const id of _suckerGroup.projects) {
-    const _project = await context.db.sql.query.project.findFirst({
-      where: eq(project.id, id),
-    });
-
-    if (_project) projects.push(_project);
+    if (id === _project.id) {
+      // Use the already-fetched project which has the updated balance
+      projects.push(_project);
+    } else {
+      const p = await context.db.sql.query.project.findFirst({
+        where: eq(project.id, id),
+      });
+      if (p) projects.push(p);
+    }
   }
 
   const aggregateStats = projects
