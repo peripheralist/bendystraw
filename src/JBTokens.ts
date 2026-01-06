@@ -13,6 +13,8 @@ import { getVersion } from "./util/getVersion";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { isAddressEqual } from "viem";
 import { ADDRESS } from "./constants/address";
+import { suckerGroupMoment } from "ponder:schema";
+import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 
 ponder.on("JBTokens:Burn", async ({ event, context }) => {
   try {
@@ -55,7 +57,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       });
     await setParticipantSnapshot({ participant: _holder, context, event });
 
-    // update project + suckerGroup tokenSupply
+    // update project tokenSupply
     await context.db
       .update(project, {
         chainId,
@@ -66,11 +68,12 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
         tokenSupply: tokenSupply - count,
       }));
 
-    await context.db
-      .update(suckerGroup, { id: _project.suckerGroupId })
-      .set(({ tokenSupply }) => ({
-        tokenSupply: tokenSupply - count,
-      }));
+    await onProjectStatsUpdated({
+      projectId,
+      version,
+      event,
+      context,
+    });
 
     const isCashOutEvent = isAddressEqual(
       version === 5 ? ADDRESS.jbTokens5 : ADDRESS.jbTokens,
@@ -279,12 +282,12 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         tokenSupply: tokenSupply + count,
       }));
 
-    // update sucker group
-    await context.db
-      .update(suckerGroup, { id: suckerGroupId })
-      .set(({ tokenSupply }) => ({
-        tokenSupply: tokenSupply + count,
-      }));
+    await onProjectStatsUpdated({
+      projectId,
+      version,
+      event,
+      context,
+    });
 
     /**
      * We're only concerned with updating unclaimed token balance.
