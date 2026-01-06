@@ -320,10 +320,7 @@ export const mainnetConfig = createConfig({
     },
     Banny721TokenUriResolver: {
       abi: Banny721TokenUriResolverAbi,
-      address: [
-        ADDRESS.banny721TokenUriResolver,
-        ADDRESS.banny721TokenUriResolver5,
-      ],
+      address: [ADDRESS.banny721TokenUriResolver5],
       chain: {
         ethereum: {
           startBlock: 23971096,
