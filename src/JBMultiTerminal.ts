@@ -451,13 +451,20 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     // will update project trending score
     await handleTrendingPayment(event.block.timestamp, context);
 
+    // Re-fetch project after handleTrendingPayment to get updated trending values
+    const projectAfterTrending = await context.db.find(project, {
+      projectId,
+      chainId,
+      version,
+    });
+
     // ...NOW handle project update
     await onProjectStatsUpdated({
       projectId,
       version,
       event,
       context,
-      _project: updatedProject,
+      _project: projectAfterTrending ?? undefined,
     });
 
     // insert/update payer participant
