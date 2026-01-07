@@ -27,7 +27,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
     const version = getVersion(event, "jbMultiTerminal");
 
     // update project
-    const { suckerGroupId } = await context.db
+    const updatedProject = await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: Number(projectId),
@@ -42,12 +42,13 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       version,
       event,
       context,
+      _project: updatedProject,
     });
 
     // insert event
     const { id } = await context.db.insert(addToBalanceEvent).values({
       ...getEventParams({ event, context }),
-      suckerGroupId,
+      suckerGroupId: updatedProject.suckerGroupId,
       projectId: Number(projectId),
       amount,
       memo,
@@ -60,6 +61,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: updatedProject.suckerGroupId,
       version,
     });
   } catch (e) {
@@ -86,7 +88,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
     const version = getVersion(event, "jbMultiTerminal");
 
     // update project
-    const { suckerGroupId, currency, token } = await context.db
+    const updatedProject = await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: projectId,
@@ -96,12 +98,31 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         balance: p.balance - amountPaidOut,
       }));
 
+    const { suckerGroupId, currency, token } = updatedProject;
+
     await onProjectStatsUpdated({
       projectId,
       version,
       event,
       context,
+      _project: updatedProject,
     });
+
+    // Fetch USD price once and reuse for all conversions
+    const usdPricePerUnit = await usdPriceForToken({
+      context,
+      version,
+      projectId: _projectId,
+      amount: BigInt(1e18), // Get price for 1 unit
+      currency,
+      token,
+      timestamp,
+    });
+
+    // Calculate USD values using the single price fetch
+    const amountUsd = usdPricePerUnit > 0 ? (amount * usdPricePerUnit) / BigInt(1e18) : BigInt(0);
+    const amountPaidOutUsd = usdPricePerUnit > 0 ? (amountPaidOut * usdPricePerUnit) / BigInt(1e18) : BigInt(0);
+    const feeUsd = usdPricePerUnit > 0 ? (fee * usdPricePerUnit) / BigInt(1e18) : BigInt(0);
 
     // insert event
     const { id } = await context.db.insert(sendPayoutsEvent).values({
@@ -109,36 +130,12 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       suckerGroupId,
       projectId: Number(projectId),
       amount,
-      amountUsd: await usdPriceForToken({
-        context,
-        version,
-        projectId: _projectId,
-        amount,
-        currency,
-        token,
-        timestamp,
-      }),
+      amountUsd,
       amountPaidOut,
-      amountPaidOutUsd: await usdPriceForToken({
-        context,
-        version,
-        projectId: _projectId,
-        amount: amountPaidOut,
-        currency,
-        token,
-        timestamp,
-      }),
+      amountPaidOutUsd,
       netLeftoverPayoutAmount,
       fee,
-      feeUsd: await usdPriceForToken({
-        context,
-        version,
-        projectId: _projectId,
-        amount: fee,
-        currency,
-        token,
-        timestamp,
-      }),
+      feeUsd,
       rulesetId: Number(rulesetId),
       rulesetCycleNumber: Number(rulesetCycleNumber),
       version,
@@ -148,6 +145,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId,
       version,
     });
   } catch (e) {
@@ -210,6 +208,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
 
@@ -272,7 +271,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
     });
 
     // update project
-    const { suckerGroupId } = await context.db
+    const updatedProject = await context.db
       .update(project, {
         projectId,
         chainId,
@@ -285,11 +284,14 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
         balance: p.balance - reclaimAmount,
       }));
 
+    const { suckerGroupId } = updatedProject;
+
     await onProjectStatsUpdated({
       version,
       projectId,
       event,
       context,
+      _project: updatedProject,
     });
 
     // insert event
@@ -313,6 +315,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId,
       version,
     });
   } catch (e) {
@@ -337,7 +340,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
     const version = getVersion(event, "jbMultiTerminal");
 
     // update project
-    const { suckerGroupId } = await context.db
+    const updatedProject = await context.db
       .update(project, {
         chainId: context.chain.id,
         projectId: Number(projectId),
@@ -347,11 +350,14 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
         balance: p.balance - event.args.amountPaidOut,
       }));
 
+    const { suckerGroupId } = updatedProject;
+
     await onProjectStatsUpdated({
       projectId,
       version,
       event,
       context,
+      _project: updatedProject,
     });
 
     // insert event
@@ -374,6 +380,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId,
       version,
     });
   } catch (e) {
@@ -425,7 +432,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
     });
 
     // update project
-    const { suckerGroupId, isRevnet } = await context.db
+    const updatedProject = await context.db
       .update(project, {
         projectId,
         chainId,
@@ -439,6 +446,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         contributorsCount: p.contributorsCount + (payerParticipant ? 0 : 1),
       }));
 
+    const { suckerGroupId, isRevnet } = updatedProject;
+
     // will update project trending score
     await handleTrendingPayment(event.block.timestamp, context);
 
@@ -448,6 +457,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       version,
       event,
       context,
+      _project: updatedProject,
     });
 
     // insert/update payer participant
@@ -505,6 +515,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId,
       version,
     });
 

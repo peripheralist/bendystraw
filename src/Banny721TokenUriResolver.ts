@@ -1,6 +1,6 @@
 import { and, eq, or } from "ponder";
 import { ponder } from "ponder:registry";
-import { decorateBannyEvent, nft, nftTier } from "ponder:schema";
+import { decorateBannyEvent, nft, nftTier, project } from "ponder:schema";
 import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
 import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5 } from "./constants/bannyHook";
@@ -36,6 +36,18 @@ ponder.on(
 
       const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
+      const _projectId = projectId(chainId);
+
+      const _project = await context.db.find(project, {
+        projectId: _projectId,
+        chainId,
+        version,
+      });
+
+      if (!_project) {
+        throw new Error("Missing project");
+      }
+
       const decoratedTokenUri = await context.client.readContract({
         abi: JB721TiersHookAbi,
         address: hook,
@@ -68,6 +80,7 @@ ponder.on(
       // store decorate event
       const { id } = await context.db.insert(decorateBannyEvent).values({
         ...getEventParams({ event, context }),
+        suckerGroupId: _project.suckerGroupId,
         bannyBodyId: event.args.bannyBodyId,
         outfitIds: event.args.outfitIds.map((o) => o),
         backgroundId: event.args.backgroundId,
@@ -79,7 +92,8 @@ ponder.on(
         id,
         event,
         context,
-        projectId: projectId(context.chain.id),
+        projectId: _projectId,
+        suckerGroupId: _project.suckerGroupId,
         version,
       });
 

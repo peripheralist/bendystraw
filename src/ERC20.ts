@@ -62,6 +62,7 @@ ponder.on("ERC20:Transfer", async ({ event, context }) => {
         event,
         context,
         projectId,
+        suckerGroupId: _project.suckerGroupId,
         version: version as Version,
       });
     } else {

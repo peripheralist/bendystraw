@@ -130,6 +130,7 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
   } catch (e) {
@@ -181,6 +182,7 @@ ponder.on("RevLoans:Liquidate", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
   } catch (e) {
@@ -278,6 +280,7 @@ ponder.on("RevLoans:RepayLoan", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
   } catch (e) {
@@ -383,6 +386,7 @@ ponder.on("RevLoans:ReallocateCollateral", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
   } catch (e) {

@@ -56,7 +56,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
     await setParticipantSnapshot({ participant: _holder, context, event });
 
     // update project tokenSupply
-    await context.db
+    const updatedProject = await context.db
       .update(project, {
         chainId,
         projectId,
@@ -71,6 +71,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       version,
       event,
       context,
+      _project: updatedProject,
     });
 
     const isCashOutEvent = isAddressEqual(
@@ -94,6 +95,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
         event,
         context,
         projectId,
+        suckerGroupId: _project.suckerGroupId,
         version,
       });
     }
@@ -113,6 +115,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
   } catch (e) {
@@ -249,6 +252,7 @@ ponder.on("JBTokens:DeployERC20", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
   } catch (e) {
@@ -270,7 +274,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     const version = getVersion(event, "jbTokens");
 
     // update project
-    const { suckerGroupId, isRevnet } = await context.db
+    const updatedProject = await context.db
       .update(project, {
         chainId,
         projectId,
@@ -280,11 +284,14 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         tokenSupply: tokenSupply + count,
       }));
 
+    const { suckerGroupId, isRevnet } = updatedProject;
+
     await onProjectStatsUpdated({
       projectId,
       version,
       event,
       context,
+      _project: updatedProject,
     });
 
     /**

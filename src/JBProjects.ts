@@ -65,6 +65,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: idOfSuckerGroup,
       version,
     });
   } catch (e) {

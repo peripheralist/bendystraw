@@ -242,6 +242,7 @@ ponder.on("JB721TiersHook5:Mint", async ({ event, context }) => {
       event,
       context,
       projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
   } catch (e) {

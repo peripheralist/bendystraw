@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { autoIssueEvent, storeAutoIssuanceAmountEvent } from "ponder:schema";
+import { autoIssueEvent, project, storeAutoIssuanceAmountEvent } from "ponder:schema";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { getVersion } from "./util/getVersion";
@@ -10,9 +10,20 @@ ponder.on("RevDeployer:AutoIssue", async ({ event, context }) => {
 
     const version = getVersion(event, "revDeployer");
 
+    const _project = await context.db.find(project, {
+      projectId: Number(revnetId),
+      chainId: context.chain.id,
+      version,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
     const { id } = await context.db.insert(autoIssueEvent).values({
       ...getEventParams({ event, context }),
       projectId: Number(revnetId),
+      suckerGroupId: _project.suckerGroupId,
       beneficiary,
       count,
       stageId,
@@ -24,6 +35,7 @@ ponder.on("RevDeployer:AutoIssue", async ({ event, context }) => {
       event,
       context,
       projectId: revnetId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
   } catch (e) {

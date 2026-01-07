@@ -3,14 +3,19 @@ import { Context } from "ponder:registry";
 import { project, suckerGroup, suckerGroupMoment } from "ponder:schema";
 import { Version } from "./getVersion";
 
+type Project = typeof project.$inferSelect;
+
 /**
  * Handles everything that should happen after a project's **stats** are updated. Inserts a projectMoment and updates the project's suckerGroup's stats.
+ *
+ * @param _project - Optional. Pass the already-fetched project to avoid redundant DB lookup.
  */
 export async function onProjectStatsUpdated({
   projectId,
   version,
   context,
   event,
+  _project: passedProject,
 }: {
   projectId: bigint | number;
   version: Version;
@@ -21,8 +26,9 @@ export async function onProjectStatsUpdated({
       timestamp: bigint;
     };
   };
+  _project?: Project;
 }) {
-  const _project = await context.db.find(project, {
+  const _project = passedProject ?? await context.db.find(project, {
     chainId: context.chain.id,
     projectId: Number(projectId),
     version,

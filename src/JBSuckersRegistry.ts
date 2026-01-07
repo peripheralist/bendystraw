@@ -108,18 +108,11 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
           createdAt: Number(event.block.timestamp),
         });
 
-      // Link all affiliated projects to the newly created sucker group
-      for (const p of newGroupProjects) {
-        const _project = await context.db.sql.query.project.findFirst({
-          where: eq(project.id, p),
-        });
-
-        if (_project) {
-          await context.db
-            .update(project, _project)
-            .set({ suckerGroupId: newSuckerGroup.id });
-        }
-      }
+      // Link all affiliated projects to the newly created sucker group (batch update)
+      await context.db.sql
+        .update(project)
+        .set({ suckerGroupId: newSuckerGroup.id })
+        .where(inArray(project.id, newGroupProjects));
 
       // Assume any other overlapping groups are incomplete/redundant, delete them
       await context.db.sql

@@ -57,6 +57,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
         event,
         context,
         projectId: event.args.projectId,
+        suckerGroupId: _project.suckerGroupId,
         version,
       });
     }
@@ -68,13 +69,14 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
       event,
       context,
       projectId: event.args.projectId,
+      suckerGroupId: _project.suckerGroupId,
       version,
     });
 
     const newReservedTokens =
       event.args.tokenCount - event.args.beneficiaryTokenCount;
 
-    await context.db
+    const updatedProject = await context.db
       .update(project, {
         projectId: _projectId,
         chainId: context.chain.id,
@@ -90,6 +92,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
       version,
       event,
       context,
+      _project: updatedProject,
     });
   } catch (e) {
     console.error("JBController:MintTokens", e);
@@ -207,10 +210,11 @@ ponder.on(
         event,
         context,
         projectId,
+        suckerGroupId: _project.suckerGroupId,
         version,
       });
 
-      await context.db
+      const updatedProject = await context.db
         .update(project, {
           projectId: Number(event.args.projectId),
           chainId: context.chain.id,
@@ -225,6 +229,7 @@ ponder.on(
         version,
         event,
         context,
+        _project: updatedProject,
       });
     } catch (e) {
       console.error("JBController:SendReservedTokensToSplits", e);
@@ -273,6 +278,7 @@ ponder.on(
         event,
         context,
         projectId,
+        suckerGroupId: _project.suckerGroupId,
         version,
       });
     } catch (e) {
