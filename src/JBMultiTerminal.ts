@@ -458,6 +458,16 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       version,
     });
 
+    // HACK: Manually ensure correct values in case context.db.find() returns pre-update values
+    // Testing hypothesis that reads don't see writes from earlier in the same handler
+    if (projectAfterTrending) {
+      projectAfterTrending.balance += amount;
+      projectAfterTrending.volume += amount;
+      projectAfterTrending.volumeUsd += amountUsd;
+      projectAfterTrending.paymentsCount += 1;
+      projectAfterTrending.contributorsCount += payerParticipant ? 0 : 1;
+    }
+
     // ...NOW handle project update
     await onProjectStatsUpdated({
       projectId,
