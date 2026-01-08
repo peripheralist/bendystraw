@@ -4,7 +4,7 @@ import {
   deployErc20Event,
   manualBurnEvent,
   participant,
-  project
+  project,
 } from "ponder:schema";
 import { isAddressEqual } from "viem";
 import { ADDRESS } from "./constants/address";
@@ -274,25 +274,17 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
     const version = getVersion(event, "jbTokens");
 
     // update project
-    const updatedProject = await context.db
-      .update(project, {
-        chainId,
-        projectId,
-        version,
-      })
-      .set(({ tokenSupply }) => ({
-        tokenSupply: tokenSupply + count,
-      }));
-
-    const { suckerGroupId, isRevnet } = updatedProject;
-
-    await onProjectStatsUpdated({
+    const _project = await context.db.find(project, {
+      chainId,
       projectId,
       version,
-      event,
-      context,
-      _project: updatedProject,
     });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
+    const { suckerGroupId, isRevnet } = _project;
 
     /**
      * We're only concerned with updating unclaimed token balance.
