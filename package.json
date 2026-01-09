@@ -19,7 +19,7 @@
     "@hono/node-server": "^1.14.0",
     "@types/markdown-it": "^14.1.2",
     "@unkey/api": "^0.35.0",
-    "@unkey/ratelimit": "^0.5.5",
+    "@unkey/ratelimit": "^2.1.4",
     "axios": "^1.8.4",
     "dotenv": "^17.2.0",
     "hono": "4.5.0",
