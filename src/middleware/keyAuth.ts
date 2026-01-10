@@ -1,17 +1,31 @@
-import { verifyKey } from "@unkey/api";
+import { Unkey } from "@unkey/api";
 import type { Context, Next } from "hono";
 import { createMiddleware } from "hono/factory";
 
-export const keyAuthMiddleware = createMiddleware(async (c: Context, next: Next) => {
-  // handle /graphql endpoint
-  const key = c.req.param("key");
+const rootKey = process.env.UNKEY_ROOT_KEY;
 
-  if (!key) return c.text("Unauthorized", 401);
+const unkey = rootKey ? new Unkey({ rootKey }) : undefined;
 
-  const { error, result } = await verifyKey(key);
+export const keyAuthMiddleware = createMiddleware(
+  async (c: Context, next: Next) => {
+    if (!unkey) {
+      // No root key configured - skip auth in development
+      return await next();
+    }
 
-  if (error) return c.text(error.message, 500);
-  if (!result.valid) return c.text("Unauthorized", 401);
+    const key = c.req.param("key");
 
-  await next();
-});
+    if (!key) return c.text("Unauthorized", 401);
+
+    try {
+      const { data } = await unkey.keys.verifyKey({ key });
+
+      if (!data.valid) return c.text("Unauthorized", 401);
+
+      await next();
+    } catch (e) {
+      console.error("keyAuth error", e);
+      return c.text("Internal Server Error", 500);
+    }
+  }
+);
