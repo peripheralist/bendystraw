@@ -41,6 +41,15 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       version,
     });
 
+    console.info(
+      "ASDF InsertToOutboxTree",
+      projectId.toString(),
+      peer,
+      peerChainId,
+      directoryAddress,
+      !!_project
+    );
+
     if (!_project) {
       throw new Error("Missing project");
     }
