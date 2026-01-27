@@ -73,6 +73,8 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       createdAt: Number(event.block.timestamp),
       status: "pending",
     });
+
+    console.info("ASDF InsertToOutboxTree DONE");
   } catch (e) {
     console.error("JBSucker:InsertToOutboxTree", e);
   }
