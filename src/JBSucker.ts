@@ -7,6 +7,8 @@ import { ADDRESS } from "./constants/address";
 
 ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
   try {
+    console.info("ASDF InsertToOutboxTree START");
+
     const address = event.log.address;
     const chainId = Number(context.chain.id);
 
