@@ -448,33 +448,31 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     const { suckerGroupId, isRevnet } = updatedProject;
 
-    // will update project trending score
+    // will update project trending score (uses raw SQL, updates project in DB)
     await handleTrendingPayment(event.block.timestamp, context);
 
-    // Re-fetch project after handleTrendingPayment to get updated trending values
+    // Re-fetch ONLY to get trending values that handleTrendingPayment updated
     const projectAfterTrending = await context.db.find(project, {
       projectId,
       chainId,
       version,
     });
 
-    // HACK: Manually ensure correct values in case context.db.find() returns pre-update values
-    // Testing hypothesis that reads don't see writes from earlier in the same handler
-    if (projectAfterTrending) {
-      projectAfterTrending.balance += amount;
-      projectAfterTrending.volume += amount;
-      projectAfterTrending.volumeUsd += amountUsd;
-      projectAfterTrending.paymentsCount += 1;
-      projectAfterTrending.contributorsCount += payerParticipant ? 0 : 1;
-    }
+    // Merge: use updatedProject for our changes (balance, volume, etc.)
+    // but copy trending fields from re-fetch
+    const projectForMoment = {
+      ...updatedProject,
+      trendingScore: projectAfterTrending?.trendingScore ?? updatedProject.trendingScore,
+      trendingVolume: projectAfterTrending?.trendingVolume ?? updatedProject.trendingVolume,
+      trendingPaymentsCount: projectAfterTrending?.trendingPaymentsCount ?? updatedProject.trendingPaymentsCount,
+    };
 
-    // ...NOW handle project update
     await onProjectStatsUpdated({
       projectId,
       version,
       event,
       context,
-      _project: projectAfterTrending ?? undefined,
+      _project: projectForMoment,
     });
 
     // insert/update payer participant
