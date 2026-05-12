@@ -1,33 +1,57 @@
+import { isAddress } from "viem";
+
+const envAddress = (key: string): `0x${string}` | undefined => {
+  const value = process.env[key];
+
+  if (!value) return undefined;
+  if (!isAddress(value)) throw new Error(`${key} is not a valid address`);
+
+  return value;
+};
+
 export const ADDRESS = {
   jb721TiersHookDeployer: "0xdefb489d101bf74bbf8f60eec6ff2f078c9d5206",
   jb721TiersHookDeployer5: "0xef60878d00378ac5f93d209f4616450ee8d41ca7",
+  jb721TiersHookDeployer6: envAddress("BENDYSTRAW_V6_JB_721_TIERS_HOOK_DEPLOYER"),
   jbTokens: "0xa59e9f424901fb9dbd8913a9a32a081f9425bf36",
   jbTokens5: "0x4d0edd347fb1fa21589c1e109b3474924be87636",
+  jbTokens6: envAddress("BENDYSTRAW_V6_JB_TOKENS"),
   jbProjects: "0x0b538a02610d7d3cc91ce2870f423e0a34d646ad",
   jbProjects5: "0x885f707efa18d2cb12f05a3a8eba6b4b26c8c1d4",
+  jbProjects6: envAddress("BENDYSTRAW_V6_JB_PROJECTS"),
   jbController: "0xb291844f213047eb9e1621ae555b1eae6700d553",
   jbController4_1: "0xd1c436eb62e1d23e66842701b09e3d65aa8522e8",
   jbController5: "0x27da30646502e2f642be5281322ae8c394f7668a",
+  jbController6: envAddress("BENDYSTRAW_V6_JB_CONTROLLER"),
   jbMultiTerminal: "0xdb9644369c79c3633cde70d2df50d827d7dc7dbc",
   jbMultiTerminal5: "0x2db6d704058e552defe415753465df8df0361846",
+  jbMultiTerminal6: envAddress("BENDYSTRAW_V6_JB_MULTI_TERMINAL"),
   jbPermissions: "0xf5ca295dc286a176e35ebb7833031fd95550eb14",
   jbPermissions5: "0x04fd6913d6c32d8c216e153a43c04b1857a7793d",
+  jbPermissions6: envAddress("BENDYSTRAW_V6_JB_PERMISSIONS"),
   banny721TokenUriResolver: "0xa5f8911d4cfd60a6697479f078409434424fe666",
   banny721TokenUriResolver5_old: "0x47c011146a4498a70e0bf2e4585acf9cade85954",
   banny721TokenUriResolver5: "0x2De178aDde33Cf27d391E9506C7B6f8b2DDc5efF",
   revDeployer: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
   revDeployer5: "0x2ca27bde7e7d33e353b44c27acfcf6c78dde251d",
+  revDeployer6: envAddress("BENDYSTRAW_V6_REV_DEPLOYER"),
   revLoans: "0x03de624feb08c0edeff779ca5702aef4b85d7f06",
   revLoans1_1: "0xDE1E70fAF22024559e7D94aB814abD7e42CA849B",
   revLoans5: "0x1880d832aa283d05b8eab68877717e25fbd550bb",
+  revLoans6: envAddress("BENDYSTRAW_V6_REV_LOANS"),
   jbSuckersRegistry: "0x696c7e9b37d28edbefa3fce06e26041b7197c1a5",
   jbSuckersRegistry5: "0x07c8c5bf08f0361883728a8a5f8824ba5724ece3",
+  jbSuckersRegistry6: envAddress("BENDYSTRAW_V6_JB_SUCKERS_REGISTRY"),
   jb721TiersHookStore: "0xdc162a8a6decc7f27fd4cff58d69b9cc0c7c2ea1",
   jb721TiersHookStore5: "0x2bc696b0af74042b30b2687ab5817cc824eba8ee",
+  jb721TiersHookStore6: envAddress("BENDYSTRAW_V6_JB_721_TIERS_HOOK_STORE"),
   jbPrices: "0xe712d14b04f1a1fe464be930e3ea72b9b0a141d7",
   jbPrices5: "0x9b90e507cf6b7eb681a506b111f6f50245e614c4",
+  jbPrices6: envAddress("BENDYSTRAW_V6_JB_PRICES"),
   jbDirectory: "0x0bc9f153dee4d3d474ce0903775b9b2aaae9aa41",
   jbDirectory5: "0x0061e516886a0540f63157f112c0588ee0651dcf",
+  jbDirectory6: envAddress("BENDYSTRAW_V6_JB_DIRECTORY"),
   jbRulesets: "0xda86eedb67c6c9fb3e58fe83efa28674d7c89826",
   jbRulesets5: "0x6292281d69c3593fcf6ea074e5797341476ab428",
+  jbRulesets6: envAddress("BENDYSTRAW_V6_JB_RULESETS"),
 } as const;

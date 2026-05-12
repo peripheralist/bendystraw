@@ -1,4 +1,5 @@
 import { and, arrayOverlaps, eq, inArray, ne, or } from "drizzle-orm";
+import type { Context } from "ponder:registry";
 import { ponder } from "ponder:registry";
 import {
   _sucker,
@@ -10,7 +11,28 @@ import {
 import { getVersion } from "./util/getVersion";
 import { idForSuckerGroup } from "./util/id";
 
-ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
+type SuckerDeployedForEvent = {
+  args: {
+    projectId: bigint;
+    sucker: `0x${string}`;
+  };
+  block: {
+    timestamp: bigint;
+  };
+  log: {
+    address: `0x${string}`;
+  };
+};
+
+async function handleSuckerDeployedFor({
+  event,
+  context,
+  version,
+}: {
+  event: SuckerDeployedForEvent;
+  context: Context;
+  version: number;
+}) {
   try {
     const { projectId: _projectId, sucker: _suckerAddress } = event.args;
     const projectId = Number(_projectId);
@@ -18,8 +40,6 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
 
     // towLowerCase() all addresses for consistency
     const suckerAddress = _suckerAddress.toLowerCase() as `0x${string}`;
-
-    const version = getVersion(event, "jbSuckersRegistry");
 
     const thisProject = await context.db.find(project, {
       chainId,
@@ -156,4 +176,20 @@ ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
   } catch (e) {
     console.error("JBSuckersRegistry:SuckerDeployedFor", e);
   }
+}
+
+ponder.on("JBSuckersRegistry:SuckerDeployedFor", async ({ event, context }) => {
+  await handleSuckerDeployedFor({
+    event,
+    context,
+    version: getVersion(event, "jbSuckersRegistry"),
+  });
+});
+
+ponder.on("JBSuckersRegistry6:SuckerDeployedFor", async ({ event, context }) => {
+  await handleSuckerDeployedFor({
+    event,
+    context,
+    version: 6,
+  });
 });

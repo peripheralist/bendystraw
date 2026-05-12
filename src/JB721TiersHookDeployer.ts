@@ -8,6 +8,13 @@ import { getVersion } from "./util/getVersion";
 import { parseTokenUri } from "./util/tokenUri";
 import { isAddressEqual } from "viem";
 
+const tierAllowsOwnerMint = (tier: Awaited<ReturnType<typeof getAllTiers>>[number]) =>
+  "flags" in tier ? tier.flags.allowOwnerMint : tier.allowOwnerMint;
+const tierTransfersPausable = (tier: Awaited<ReturnType<typeof getAllTiers>>[number]) =>
+  "flags" in tier ? tier.flags.transfersPausable : tier.transfersPausable;
+const tierCannotBeRemoved = (tier: Awaited<ReturnType<typeof getAllTiers>>[number]) =>
+  "flags" in tier ? tier.flags.cantBeRemoved : tier.cannotBeRemoved;
+
 ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
   const { hook } = event.args;
   const { client, db, chain } = context;
@@ -64,16 +71,16 @@ ponder.on("JB721TiersHookDeployer:HookDeployed", async ({ event, context }) => {
           price: tier.price,
           hook,
           projectId: Number(event.args.projectId),
-          allowOwnerMint: tier.allowOwnerMint,
+          allowOwnerMint: tierAllowsOwnerMint(tier),
           createdAt: Number(event.block.timestamp),
-          cannotBeRemoved: tier.cannotBeRemoved,
+          cannotBeRemoved: tierCannotBeRemoved(tier),
           reserveBeneficiary: tier.reserveBeneficiary,
           reserveFrequency: tier.reserveFrequency,
           category: tier.category,
           encodedIpfsUri: tier.encodedIPFSUri,
           initialSupply: tier.initialSupply,
           remainingSupply: tier.initialSupply,
-          transfersPausable: tier.transfersPausable,
+          transfersPausable: tierTransfersPausable(tier),
           votingUnits: tier.votingUnits,
           resolvedUri: tier.resolvedUri,
           metadata: parseTokenUri(tier.resolvedUri),

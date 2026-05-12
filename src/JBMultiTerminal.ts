@@ -544,6 +544,36 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
   }
 });
 
+ponder.on("JBMultiTerminal:HookAfterRecordPay", async ({ event, context }) => {
+  try {
+    const version = getVersion(event, "jbMultiTerminal");
+    const projectId = Number(event.args.context.projectId);
+    const amount = event.args.specificationAmount;
+
+    if (amount === BigInt(0)) return;
+
+    const updatedProject = await context.db
+      .update(project, {
+        chainId: context.chain.id,
+        projectId,
+        version,
+      })
+      .set((p) => ({
+        balance: p.balance - amount,
+      }));
+
+    await onProjectStatsUpdated({
+      projectId,
+      version,
+      event,
+      context,
+      _project: updatedProject,
+    });
+  } catch (e) {
+    console.error("JBMultiTerminal:HookAfterRecordPay", e);
+  }
+});
+
 ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
   try {
     const latestPayEvent = await getLatestPayEvent({
