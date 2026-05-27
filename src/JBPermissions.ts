@@ -5,7 +5,7 @@ import { getVersion } from "./util/getVersion";
 // https://github.com/rev-net/revnet-core-v5/blob/024d584cbb765d6466787ac6dac0326cbb146db4/src/REVDeployer.sol#L538
 const REVNET_OPERATOR_PERMISSIONS_V5 = [17, 25, 24, 6, 18, 30];
 const REVNET_OPERATOR_PERMISSIONS_V4 = [17, 25, 6, 18, 30];
-const REVNET_OPERATOR_PERMISSIONS_V6 = [19, 29, 28, 7, 34, 30, 31, 22, 23];
+const REVNET_OPERATOR_PERMISSIONS_V6 = [19, 29, 28, 7, 35, 30, 31, 22, 23];
 
 ponder.on(
   "JBPermissions:OperatorPermissionsSet",
