@@ -32,6 +32,21 @@ import { JBSuckersRegistryV6Abi } from "./abis/JBSuckersRegistryV6Abi";
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
 
+const V6_TESTNET_START_BLOCKS = {
+  jb721TiersHookDeployer: {
+    ethereumSepolia: 10983170,
+    arbitrumSepolia: 273525364,
+    baseSepolia: 42372073,
+    optimismSepolia: 44354952,
+  },
+  jbSuckersRegistry: {
+    ethereumSepolia: 10983195,
+    arbitrumSepolia: 273525785,
+    baseSepolia: 42372134,
+    optimismSepolia: 44354974,
+  },
+} as const;
+
 const deployErc20FactoryConfig = factory({
   address: addresses(ADDRESS.jbTokens, ADDRESS.jbTokens5, ADDRESS.jbTokens6),
   event: getAbiItem({ abi: JBTokensAbi, name: "DeployERC20" }),
@@ -232,12 +247,12 @@ export const mainnetConfig = createConfig({
     },
     JBController: {
       abi: JBControllerAbi,
-      address: [
+      address: addresses(
         ADDRESS.jbController,
         ADDRESS.jbController4_1,
         ADDRESS.jbController5,
-        ADDRESS.jbController6,
-      ].filter((item): item is `0x${string}` => !!item),
+        ADDRESS.jbController6
+      ),
       chain: {
         ethereum: {
           startBlock: 21863191,
@@ -550,12 +565,12 @@ export const testnetConfig = createConfig({
     },
     JBController: {
       abi: JBControllerAbi,
-      address: [
+      address: addresses(
         ADDRESS.jbController,
         ADDRESS.jbController4_1,
         ADDRESS.jbController5,
-        ADDRESS.jbController6,
-      ].filter((item): item is `0x${string}` => !!item),
+        ADDRESS.jbController6
+      ),
       chain: {
         ethereumSepolia: {
           startBlock: 7724149,
@@ -643,20 +658,16 @@ export const testnetConfig = createConfig({
       address: hookDeployedFactoryConfig6,
       chain: {
         ethereumSepolia: {
-          startBlock:
-            JB721TiersHookDeployer.testnet.chain.ethereumSepolia.startBlock,
+          startBlock: V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.ethereumSepolia,
         },
         arbitrumSepolia: {
-          startBlock:
-            JB721TiersHookDeployer.testnet.chain.arbitrumSepolia.startBlock,
+          startBlock: V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.arbitrumSepolia,
         },
         baseSepolia: {
-          startBlock:
-            JB721TiersHookDeployer.testnet.chain.baseSepolia.startBlock,
+          startBlock: V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.baseSepolia,
         },
         optimismSepolia: {
-          startBlock:
-            JB721TiersHookDeployer.testnet.chain.optimismSepolia.startBlock,
+          startBlock: V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.optimismSepolia,
         },
       },
     },
@@ -790,16 +801,16 @@ export const testnetConfig = createConfig({
       address: addresses(ADDRESS.jbSuckersRegistry6),
       chain: {
         ethereumSepolia: {
-          startBlock: 7724468,
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia,
         },
         arbitrumSepolia: {
-          startBlock: 124497109,
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.arbitrumSepolia,
         },
         baseSepolia: {
-          startBlock: 21998497,
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.baseSepolia,
         },
         optimismSepolia: {
-          startBlock: 23981375,
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia,
         },
       },
     },
@@ -826,16 +837,16 @@ export const testnetConfig = createConfig({
       address: suckerDeployedFactoryConfig6,
       chain: {
         ethereumSepolia: {
-          startBlock: 7724468,
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia,
         },
         arbitrumSepolia: {
-          startBlock: 124497109,
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.arbitrumSepolia,
         },
         baseSepolia: {
-          startBlock: 21998497,
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.baseSepolia,
         },
         optimismSepolia: {
-          startBlock: 23981375,
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia,
         },
       },
     },
