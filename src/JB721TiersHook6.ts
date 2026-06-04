@@ -33,7 +33,7 @@ if (ADDRESS.jb721TiersHookDeployer6) {
       const projectIdCall = await context.client.readContract({
         abi: JB721TiersHookV6Abi,
         address: hook,
-        functionName: "PROJECT_ID",
+        functionName: "projectId",
       });
 
       await context.db.insert(nftTier).values({
@@ -79,7 +79,7 @@ if (ADDRESS.jb721TiersHookDeployer6) {
       const _projectId = await context.client.readContract({
         abi: JB721TiersHookV6Abi,
         address: hook,
-        functionName: "PROJECT_ID",
+        functionName: "projectId",
       });
 
       if (!_projectId) {
@@ -197,7 +197,7 @@ if (ADDRESS.jb721TiersHookDeployer6) {
       const projectIdCall = await context.client.readContract({
         abi: JB721TiersHookV6Abi,
         address: hook,
-        functionName: "PROJECT_ID",
+        functionName: "projectId",
       });
 
       const projectId = Number(projectIdCall);

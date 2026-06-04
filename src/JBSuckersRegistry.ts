@@ -47,13 +47,6 @@ async function handleSuckerDeployedFor({
       version,
     });
 
-    console.log(
-      "ASDF SuckerDeployedFor",
-      context.chain.id,
-      _projectId,
-      suckerAddress
-    );
-
     if (!thisProject) {
       throw new Error("Missing project");
     }

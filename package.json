@@ -10,7 +10,7 @@
     "status": "tsx scripts/status.ts",
     "serve": "ponder serve --schema=public",
     "codegen": "ponder codegen",
-    "lint": "eslint .",
+    "lint": "eslint . --ext .ts",
     "typecheck": "tsc",
     "prepare": "husky",
     "tsc": "tsc"

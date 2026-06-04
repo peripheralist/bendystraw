@@ -5,7 +5,7 @@ export const JB721TiersHookV6Abi = parseAbi([
   "event Mint(uint256 indexed tokenId, uint256 indexed tierId, address indexed beneficiary, uint256 totalAmountPaid, address caller)",
   "event RemoveTier(uint256 indexed tierId, address caller)",
   "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
-  "function PROJECT_ID() view returns (uint256)",
+  "function projectId() view returns (uint256)",
   "function name() view returns (string)",
   "function symbol() view returns (string)",
   "function tokenURI(uint256 tokenId) view returns (string)",

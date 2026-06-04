@@ -8,8 +8,6 @@ import { ADDRESS } from "./constants/address";
 
 ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
   try {
-    console.info("ASDF InsertToOutboxTree START");
-
     const address = event.log.address;
     const chainId = Number(context.chain.id);
 
@@ -46,15 +44,6 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       version,
     });
 
-    console.info(
-      "ASDF InsertToOutboxTree",
-      projectId.toString(),
-      peer,
-      peerChainId,
-      directoryAddress,
-      !!_project
-    );
-
     if (!_project) {
       throw new Error("Missing project");
     }
@@ -77,7 +66,6 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       status: "pending",
     });
 
-    console.info("ASDF InsertToOutboxTree DONE");
   } catch (e) {
     console.error("JBSucker:InsertToOutboxTree", e);
   }
@@ -122,8 +110,6 @@ ponder.on("JBSucker:Claimed", async ({ event, context }) => {
 
 ponder.on("JBSucker6:InsertToOutboxTree", async ({ event, context }) => {
   try {
-    console.info("ASDF InsertToOutboxTree START");
-
     const address = event.log.address;
     const chainId = Number(context.chain.id);
     const version = 6;
@@ -150,14 +136,6 @@ ponder.on("JBSucker6:InsertToOutboxTree", async ({ event, context }) => {
       version,
     });
 
-    console.info(
-      "ASDF InsertToOutboxTree",
-      projectId.toString(),
-      peer,
-      peerChainId,
-      !!_project
-    );
-
     if (!_project) {
       throw new Error("Missing project");
     }
@@ -180,7 +158,6 @@ ponder.on("JBSucker6:InsertToOutboxTree", async ({ event, context }) => {
       status: "pending",
     });
 
-    console.info("ASDF InsertToOutboxTree DONE");
   } catch (e) {
     console.error("JBSucker6:InsertToOutboxTree", e);
   }
