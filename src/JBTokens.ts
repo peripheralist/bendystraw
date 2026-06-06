@@ -7,10 +7,9 @@ import {
   project,
 } from "ponder:schema";
 import { isAddressEqual } from "viem";
-import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { getVersion } from "./util/getVersion";
+import { addressForVersion, getVersion } from "./util/getVersion";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 
@@ -75,7 +74,7 @@ ponder.on("JBTokens:Burn", async ({ event, context }) => {
     });
 
     const isCashOutEvent = isAddressEqual(
-      version === 5 ? ADDRESS.jbTokens5 : ADDRESS.jbTokens,
+      addressForVersion("jbTokens", version),
       event.args.caller
     );
 

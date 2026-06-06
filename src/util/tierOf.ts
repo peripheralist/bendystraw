@@ -1,7 +1,7 @@
 import { Context } from "ponder:registry";
 import { JB721TiersHookStoreAbi } from "../../abis/JB721TiersHookStoreAbi";
-import { ADDRESS } from "../constants/address";
-import { Version } from "./getVersion";
+import { JB721TiersHookStoreV6Abi } from "../../abis/JB721TiersHookStoreV6Abi";
+import { addressForVersion, Version } from "./getVersion";
 
 export function tierOf({
   context,
@@ -14,12 +14,18 @@ export function tierOf({
   tierId: bigint;
   version: Version;
 }) {
+  if (version === 6) {
+    return context.client.readContract({
+      abi: JB721TiersHookStoreV6Abi,
+      address: addressForVersion("jb721TiersHookStore", version),
+      functionName: "tierOf",
+      args: [hook, tierId, true],
+    });
+  }
+
   return context.client.readContract({
     abi: JB721TiersHookStoreAbi,
-    address:
-      version === 5
-        ? ADDRESS.jb721TiersHookStore5
-        : ADDRESS.jb721TiersHookStore,
+    address: addressForVersion("jb721TiersHookStore", version),
     functionName: "tierOf",
     args: [hook, tierId, true],
   });

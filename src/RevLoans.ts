@@ -10,10 +10,9 @@ import {
   wallet,
 } from "ponder:schema";
 import { REVLoansAbi } from "../abis/REVLoansAbi";
-import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { getVersion } from "./util/getVersion";
+import { addressForVersion, getVersion } from "./util/getVersion";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 
 ponder.on("RevLoans:Borrow", async ({ event, context }) => {
@@ -299,7 +298,7 @@ ponder.on("RevLoans:SetTokenUriResolver", async ({ event, context }) => {
       loans.map(async (l) => {
         const tokenUri = await context.client.readContract({
           abi: REVLoansAbi,
-          address: ADDRESS.revLoans,
+          address: addressForVersion("revLoans", version),
           functionName: "tokenURI",
           args: [l.id],
         });

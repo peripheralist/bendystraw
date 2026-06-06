@@ -1,6 +1,6 @@
 import { ponder } from "ponder:registry";
 import { cashOutTaxSnapshot, project } from "ponder:schema";
-import { getVersion } from "./util/getVersion";
+import { addressForVersion, getVersion } from "./util/getVersion";
 import { ADDRESS } from "./constants/address";
 import { JBControllerAbi } from "../abis/JBControllerAbi";
 
@@ -10,9 +10,11 @@ ponder.on("JBRulesets:RulesetQueued", async ({ event, context }) => {
 
     let cashOutTax: number | undefined = undefined;
 
-    for (const address of version == 5
-      ? [ADDRESS.jbController5]
-      : [ADDRESS.jbController, ADDRESS.jbController4_1]) {
+    for (const address of version == 6
+      ? [addressForVersion("jbController", version)]
+      : version == 5
+        ? [ADDRESS.jbController5]
+        : [ADDRESS.jbController, ADDRESS.jbController4_1]) {
       // if version == 4, we have no way of knowing if we should use jbController or jbController4_1, so we loop
       try {
         const _ruleset = await context.client.readContract({

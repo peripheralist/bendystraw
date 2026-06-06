@@ -1,7 +1,7 @@
 import { Context } from "ponder:registry";
 import { JB721TiersHookStoreAbi } from "../../abis/JB721TiersHookStoreAbi";
-import { ADDRESS } from "../constants/address";
-import { Version } from "./getVersion";
+import { JB721TiersHookStoreV6Abi } from "../../abis/JB721TiersHookStoreV6Abi";
+import { addressForVersion, Version } from "./getVersion";
 import { tierOf } from "./tierOf";
 
 export async function getAllTiers({
@@ -13,15 +13,20 @@ export async function getAllTiers({
   hook: `0x${string}`;
   version: Version;
 }) {
-  const maxTierCall = await context.client.readContract({
-    abi: JB721TiersHookStoreAbi,
-    address:
-      version === 5
-        ? ADDRESS.jb721TiersHookStore5
-        : ADDRESS.jb721TiersHookStore,
-    functionName: "maxTierIdOf",
-    args: [hook],
-  });
+  const maxTierCall =
+    version === 6
+      ? await context.client.readContract({
+          abi: JB721TiersHookStoreV6Abi,
+          address: addressForVersion("jb721TiersHookStore", version),
+          functionName: "maxTierIdOf",
+          args: [hook],
+        })
+      : await context.client.readContract({
+          abi: JB721TiersHookStoreAbi,
+          address: addressForVersion("jb721TiersHookStore", version),
+          functionName: "maxTierIdOf",
+          args: [hook],
+        });
 
   const tierPromises = [];
 

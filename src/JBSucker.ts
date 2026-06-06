@@ -3,12 +3,11 @@ import { ponder } from "ponder:registry";
 import { project, suckerTransaction } from "ponder:schema";
 import { isAddressEqual } from "viem";
 import { JBSuckerAbi } from "../abis/JBSuckerAbi";
+import { JBSuckerV6Abi } from "../abis/JBSuckerV6Abi";
 import { ADDRESS } from "./constants/address";
 
 ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
   try {
-    console.info("ASDF InsertToOutboxTree START");
-
     const address = event.log.address;
     const chainId = Number(context.chain.id);
 
@@ -33,24 +32,17 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       address,
     });
 
-    const version = isAddressEqual(directoryAddress, ADDRESS.jbDirectory5)
-      ? 5
-      : 4;
+    const version = ADDRESS.jbDirectory6 && isAddressEqual(directoryAddress, ADDRESS.jbDirectory6)
+      ? 6
+      : isAddressEqual(directoryAddress, ADDRESS.jbDirectory5)
+        ? 5
+        : 4;
 
     const _project = await context.db.find(project, {
       projectId: Number(projectId),
       chainId,
       version,
     });
-
-    console.info(
-      "ASDF InsertToOutboxTree",
-      projectId.toString(),
-      peer,
-      peerChainId,
-      directoryAddress,
-      !!_project
-    );
 
     if (!_project) {
       throw new Error("Missing project");
@@ -74,7 +66,6 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       status: "pending",
     });
 
-    console.info("ASDF InsertToOutboxTree DONE");
   } catch (e) {
     console.error("JBSucker:InsertToOutboxTree", e);
   }
@@ -114,5 +105,97 @@ ponder.on("JBSucker:Claimed", async ({ event, context }) => {
       );
   } catch (e) {
     console.error("JBSucker:Claimed", e);
+  }
+});
+
+ponder.on("JBSucker6:InsertToOutboxTree", async ({ event, context }) => {
+  try {
+    const address = event.log.address;
+    const chainId = Number(context.chain.id);
+    const version = 6;
+
+    const projectId = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "projectId",
+      address,
+    });
+    const peer = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "peer",
+      address,
+    });
+    const peerChainId = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "peerChainId",
+      address,
+    });
+
+    const _project = await context.db.find(project, {
+      projectId: Number(projectId),
+      chainId,
+      version,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
+    await context.db.insert(suckerTransaction).values({
+      projectId: _project.projectId,
+      chainId,
+      version,
+      suckerGroupId: _project.suckerGroupId,
+      sucker: event.log.address,
+      peer,
+      peerChainId: Number(peerChainId),
+      beneficiary: event.args.beneficiary,
+      token: event.args.token,
+      projectTokenCount: event.args.projectTokenCount,
+      terminalTokenAmount: event.args.terminalTokenAmount,
+      index: Number(event.args.index),
+      root: event.args.root,
+      createdAt: Number(event.block.timestamp),
+      status: "pending",
+    });
+
+  } catch (e) {
+    console.error("JBSucker6:InsertToOutboxTree", e);
+  }
+});
+
+ponder.on("JBSucker6:RootToRemote", async ({ event, context }) => {
+  try {
+    await context.db.sql
+      .update(suckerTransaction)
+      .set({ status: "claimable" })
+      .where(
+        and(
+          eq(suckerTransaction.token, event.args.token),
+          eq(suckerTransaction.sucker, event.log.address),
+          eq(suckerTransaction.chainId, context.chain.id),
+          eq(suckerTransaction.status, "pending")
+        )
+      );
+  } catch (e) {
+    console.error("JBSucker6:RootToRemote", e);
+  }
+});
+
+ponder.on("JBSucker6:Claimed", async ({ event, context }) => {
+  try {
+    await context.db.sql
+      .update(suckerTransaction)
+      .set({ status: "claimed" })
+      .where(
+        and(
+          eq(suckerTransaction.token, event.args.token),
+          eq(suckerTransaction.index, Number(event.args.index)),
+          eq(suckerTransaction.peerChainId, context.chain.id),
+          eq(suckerTransaction.sucker, event.log.address),
+          eq(suckerTransaction.status, "claimable")
+        )
+      );
+  } catch (e) {
+    console.error("JBSucker6:Claimed", e);
   }
 });

@@ -4,7 +4,7 @@ import { isAddressEqual } from "viem";
 import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { getVersion } from "./util/getVersion";
+import { addressForVersion, getVersion } from "./util/getVersion";
 import { idForProject, idForSuckerGroup } from "./util/id";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 
@@ -21,8 +21,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     const idOfProject = idForProject(version, projectId, chainId);
     const idOfSuckerGroup = idForSuckerGroup([idOfProject]);
 
-    const revDeployerAddress =
-      version === 5 ? ADDRESS.revDeployer5 : ADDRESS.revDeployer;
+    const revDeployerAddress = addressForVersion("revDeployer", version);
 
     // create project
     await context.db.insert(project).values({
@@ -77,8 +76,7 @@ ponder.on("JBProjects:Transfer", async ({ event, context }) => {
   try {
     const version = getVersion(event, "jbProjects");
 
-    const revDeployerAddress =
-      version === 5 ? ADDRESS.revDeployer5 : ADDRESS.revDeployer;
+    const revDeployerAddress = addressForVersion("revDeployer", version);
 
     const owner = event.args.to;
 

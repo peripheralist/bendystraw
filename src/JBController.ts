@@ -7,10 +7,9 @@ import {
   sendReservedTokensToSplitsEvent,
 } from "ponder:schema";
 import { isAddressEqual } from "viem";
-import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { getVersion } from "./util/getVersion";
+import { addressForVersion, getVersion } from "./util/getVersion";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { parseProjectMetadata } from "./util/projectMetadata";
 
@@ -31,7 +30,7 @@ ponder.on("JBController:MintTokens", async ({ event, context }) => {
     }
 
     const isPayEvent = isAddressEqual(
-      version === 5 ? ADDRESS.jbMultiTerminal5 : ADDRESS.jbMultiTerminal,
+      addressForVersion("jbMultiTerminal", version),
       event.args.caller
     );
 
