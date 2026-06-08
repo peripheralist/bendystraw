@@ -34,16 +34,16 @@ const addresses = (...items: (`0x${string}` | undefined)[]) =>
 
 const V6_TESTNET_START_BLOCKS = {
   jb721TiersHookDeployer: {
-    ethereumSepolia: 10992635,
-    arbitrumSepolia: 273973028,
-    baseSepolia: 42432709,
-    optimismSepolia: 44415587,
+    ethereumSepolia: 11017538,
+    arbitrumSepolia: 275180617,
+    baseSepolia: 42589987,
+    optimismSepolia: 44572765,
   },
   jbSuckersRegistry: {
-    ethereumSepolia: 10994808,
-    arbitrumSepolia: 273973491,
-    baseSepolia: 42432769,
-    optimismSepolia: 44415610,
+    ethereumSepolia: 11017560,
+    arbitrumSepolia: 275181065,
+    baseSepolia: 42590048,
+    optimismSepolia: 44572786,
   },
 } as const;
 
@@ -718,6 +718,7 @@ export const testnetConfig = createConfig({
       address: [
         ADDRESS.banny721TokenUriResolver,
         ADDRESS.banny721TokenUriResolver5,
+        ADDRESS.banny721TokenUriResolver6,
       ],
       chain: {
         ethereumSepolia: {

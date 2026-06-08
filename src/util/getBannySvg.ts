@@ -1,7 +1,7 @@
 import { Context } from "ponder:registry";
 import { Banny721TokenUriResolverAbi } from "../../abis/Banny721TokenUriResolverAbi";
 import { ADDRESS } from "../constants/address";
-import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5 } from "../constants/bannyHook";
+import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5, BANNY_RETAIL_HOOK_6 } from "../constants/bannyHook";
 import { Version } from "./getVersion";
 
 // copied here from config, loading config in real time here breaks
@@ -49,11 +49,14 @@ export function getBannySvg({
   if (block < resolverStartBlock) return Promise.resolve(null);
 
   const address =
-    version === 5
-      ? ADDRESS.banny721TokenUriResolver5
-      : ADDRESS.banny721TokenUriResolver;
+    version === 6
+      ? ADDRESS.banny721TokenUriResolver6
+      : version === 5
+        ? ADDRESS.banny721TokenUriResolver5
+        : ADDRESS.banny721TokenUriResolver;
 
-  const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+  const hook =
+    version === 6 ? BANNY_RETAIL_HOOK_6 : version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
   return context.client.readContract({
     abi: Banny721TokenUriResolverAbi,

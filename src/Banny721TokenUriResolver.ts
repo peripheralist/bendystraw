@@ -3,7 +3,7 @@ import { ponder } from "ponder:registry";
 import { decorateBannyEvent, nft, nftTier, project } from "ponder:schema";
 import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
-import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5 } from "./constants/bannyHook";
+import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5, BANNY_RETAIL_HOOK_6 } from "./constants/bannyHook";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
@@ -34,7 +34,8 @@ ponder.on(
 
       const version = getVersion(event, "banny721TokenUriResolver");
 
-      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+      const hook =
+        version === 6 ? BANNY_RETAIL_HOOK_6 : version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
       const _projectId = projectId(chainId);
 
@@ -147,7 +148,8 @@ ponder.on(
 
       const version = getVersion(event, "banny721TokenUriResolver");
 
-      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+      const hook =
+        version === 6 ? BANNY_RETAIL_HOOK_6 : version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
       const svg = await getBannySvg({
         context,
@@ -228,7 +230,8 @@ ponder.on(
     try {
       const version = getVersion(event, "banny721TokenUriResolver");
 
-      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+      const hook =
+        version === 6 ? BANNY_RETAIL_HOOK_6 : version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
       const tier = await tierOf({
         context,
