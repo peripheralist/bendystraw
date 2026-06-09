@@ -22,6 +22,7 @@ import { JBProjectsAbi } from "./abis/JBProjectsAbi";
 import { JBSuckersRegistryAbi } from "./abis/JBSuckersRegistryAbi";
 import { JBTokensAbi } from "./abis/JBTokensAbi";
 import { REVDeployerAbi } from "./abis/REVDeployerAbi";
+import { REVOwnerAbi } from "./abis/REVOwnerAbi";
 import { ADDRESS } from "./src/constants/address";
 import { REVLoansAbi } from "./abis/REVLoansAbi";
 import { JBSuckerAbi } from "./abis/JBSuckerAbi";
@@ -423,6 +424,18 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    // V6-only: REVOwner emits AutoIssue (V4/V5 emit it from the REVDeployer). Start blocks mirror the
+    // V6 system deploy (same as JBSuckersRegistry6).
+    REVOwner: {
+      abi: REVOwnerAbi,
+      address: addresses(ADDRESS.revOwner6),
+      chain: {
+        ethereum: { startBlock: 21863660 },
+        arbitrum: { startBlock: 306881281 },
+        base: { startBlock: 26487986 },
+        optimism: { startBlock: 132083296 },
+      },
+    },
     RevLoans: {
       abi: REVLoansAbi,
       address: addresses(
@@ -751,6 +764,18 @@ export const testnetConfig = createConfig({
         optimismSepolia: {
           startBlock: 24014488,
         },
+      },
+    },
+    // V6-only: REVOwner emits AutoIssue (V4/V5 emit it from the REVDeployer). Start blocks mirror the
+    // V6 system deploy (same as JBSuckersRegistry6).
+    REVOwner: {
+      abi: REVOwnerAbi,
+      address: addresses(ADDRESS.revOwner6),
+      chain: {
+        ethereumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia },
+        arbitrumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.arbitrumSepolia },
+        baseSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.baseSepolia },
+        optimismSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia },
       },
     },
     RevLoans: {
