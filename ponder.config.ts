@@ -25,6 +25,7 @@ import { REVDeployerAbi } from "./abis/REVDeployerAbi";
 import { REVOwnerAbi } from "./abis/REVOwnerAbi";
 import { ADDRESS } from "./src/constants/address";
 import { REVLoansAbi } from "./abis/REVLoansAbi";
+import { REVLoansV6Abi } from "./abis/REVLoansV6Abi";
 import { JBSuckerAbi } from "./abis/JBSuckerAbi";
 import { JBSuckerV6Abi } from "./abis/JBSuckerV6Abi";
 import { JBRulesetsAbi } from "./abis/JBRulesetsAbi";
@@ -441,8 +442,7 @@ export const mainnetConfig = createConfig({
       address: addresses(
         ADDRESS.revLoans,
         ADDRESS.revLoans1_1,
-        ADDRESS.revLoans5,
-        ADDRESS.revLoans6
+        ADDRESS.revLoans5
       ),
       chain: {
         ethereum: {
@@ -457,6 +457,18 @@ export const mainnetConfig = createConfig({
         optimism: {
           startBlock: 132116331,
         },
+      },
+    },
+    // V6-only: the REVLoan struct changed (source tuple -> sourceToken address), so V6 loan events have
+    // different topic0s and need their own ABI. Start blocks mirror the V6 system deploy.
+    RevLoans6: {
+      abi: REVLoansV6Abi,
+      address: addresses(ADDRESS.revLoans6),
+      chain: {
+        ethereum: { startBlock: 21863660 },
+        arbitrum: { startBlock: 306881281 },
+        base: { startBlock: 26487986 },
+        optimism: { startBlock: 132083296 },
       },
     },
     JBSuckersRegistry: {
@@ -783,8 +795,7 @@ export const testnetConfig = createConfig({
       address: addresses(
         ADDRESS.revLoans,
         ADDRESS.revLoans1_1,
-        ADDRESS.revLoans5,
-        ADDRESS.revLoans6
+        ADDRESS.revLoans5
       ),
       chain: {
         ethereumSepolia: {
@@ -799,6 +810,17 @@ export const testnetConfig = createConfig({
         optimismSepolia: {
           startBlock: 24014494,
         },
+      },
+    },
+    // V6-only: REVLoan struct changed (source tuple -> sourceToken), different topic0s, own ABI.
+    RevLoans6: {
+      abi: REVLoansV6Abi,
+      address: addresses(ADDRESS.revLoans6),
+      chain: {
+        ethereumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia },
+        arbitrumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.arbitrumSepolia },
+        baseSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.baseSepolia },
+        optimismSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia },
       },
     },
     JBSuckersRegistry: {
