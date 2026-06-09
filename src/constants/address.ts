@@ -47,4 +47,5 @@ export const ADDRESS = {
   jbRulesets: "0xda86eedb67c6c9fb3e58fe83efa28674d7c89826",
   jbRulesets5: "0x6292281d69c3593fcf6ea074e5797341476ab428",
   jbRulesets6: "0x2ef89fe68eaff097d32e91774707f790a1de2c0c",
+  jbBuybackHook6: "0x8a65e10ceaab67d3be50028d8b41d5569624de0e",
 } as const;

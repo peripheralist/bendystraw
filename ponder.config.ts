@@ -30,6 +30,7 @@ import { JBSuckerAbi } from "./abis/JBSuckerAbi";
 import { JBSuckerV6Abi } from "./abis/JBSuckerV6Abi";
 import { JBRulesetsAbi } from "./abis/JBRulesetsAbi";
 import { JBSuckersRegistryV6Abi } from "./abis/JBSuckersRegistryV6Abi";
+import { JBBuybackHookV6Abi } from "./abis/JBBuybackHookV6Abi";
 
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
@@ -546,6 +547,24 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    JBBuybackHook6: {
+      abi: JBBuybackHookV6Abi,
+      address: addresses(ADDRESS.jbBuybackHook6),
+      chain: {
+        ethereum: {
+          startBlock: 21863660,
+        },
+        arbitrum: {
+          startBlock: 306881281,
+        },
+        base: {
+          startBlock: 26487986,
+        },
+        optimism: {
+          startBlock: 132083296,
+        },
+      },
+    },
   },
 });
 
@@ -883,6 +902,24 @@ export const testnetConfig = createConfig({
     JBSucker6: {
       abi: JBSuckerV6Abi,
       address: suckerDeployedFactoryConfig6,
+      chain: {
+        ethereumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia,
+        },
+        arbitrumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.arbitrumSepolia,
+        },
+        baseSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.baseSepolia,
+        },
+        optimismSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia,
+        },
+      },
+    },
+    JBBuybackHook6: {
+      abi: JBBuybackHookV6Abi,
+      address: addresses(ADDRESS.jbBuybackHook6),
       chain: {
         ethereumSepolia: {
           startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia,
