@@ -250,6 +250,51 @@ export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
   }),
 }));
 
+// Buyback hook AMM trades (V6 JBBuybackHook). `direction` is "buy" (Swap),
+// "sell" (CashOutSwap), or "mint" (leftover minted instead of swapped).
+// Amounts are denominated from the project's perspective: terminalTokenAmount
+// is the terminal-token side, projectTokenAmount is the project-token side.
+export const swapEvent = onchainTable("swap_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  direction: t.text().notNull(),
+  poolId: t.hex(),
+  terminalTokenAmount: t.bigint().notNull(),
+  projectTokenAmount: t.bigint().notNull(),
+}));
+
+export const swapEventRelations = relations(swapEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [swapEvent.chainId, swapEvent.projectId, swapEvent.version],
+    references: [project.chainId, project.projectId, project.version],
+  }),
+}));
+
+// Buyback hook pool registrations (V6 JBBuybackHook PoolAdded) — which Uniswap
+// V4 pool backs a project's buyback for a given terminal token.
+export const buybackPoolEvent = onchainTable("buyback_pool_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  terminalToken: t.hex().notNull(),
+  poolId: t.hex().notNull(),
+}));
+
+export const buybackPoolEventRelations = relations(
+  buybackPoolEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        buybackPoolEvent.chainId,
+        buybackPoolEvent.projectId,
+        buybackPoolEvent.version,
+      ],
+      references: [project.chainId, project.projectId, project.version],
+    }),
+  })
+);
+
 export const borrowLoanEvent = onchainTable("borrow_loan_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
