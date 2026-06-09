@@ -25,6 +25,9 @@ export const ADDRESS = {
   revDeployer: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
   revDeployer5: "0x2ca27bde7e7d33e353b44c27acfcf6c78dde251d",
   revDeployer6: "0x45beb0a4d60c13bf8d091ecb35fae8ac5c8376b4",
+  // V6 introduced REVOwner: the REVDeployer mints a revnet's project then transfers ownership to this
+  // contract. A project is therefore a revnet when owned by REVOwner (V6) or the REVDeployer (V4/V5).
+  revOwner6: "0x28d3a149498f2b7e5b5df87bebaee667fcb805cb",
   revLoans: "0x03de624feb08c0edeff779ca5702aef4b85d7f06",
   revLoans1_1: "0xDE1E70fAF22024559e7D94aB814abD7e42CA849B",
   revLoans5: "0x1880d832aa283d05b8eab68877717e25fbd550bb",
