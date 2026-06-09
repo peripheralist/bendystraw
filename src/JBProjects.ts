@@ -1,10 +1,8 @@
 import { ponder } from "ponder:registry";
 import { project, projectCreateEvent, suckerGroup } from "ponder:schema";
-import { isAddressEqual } from "viem";
-import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { addressForVersion, getVersion } from "./util/getVersion";
+import { getVersion, isRevnetOwner } from "./util/getVersion";
 import { idForProject, idForSuckerGroup } from "./util/id";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 
@@ -21,8 +19,6 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
     const idOfProject = idForProject(version, projectId, chainId);
     const idOfSuckerGroup = idForSuckerGroup([idOfProject]);
 
-    const revDeployerAddress = addressForVersion("revDeployer", version);
-
     // create project
     await context.db.insert(project).values({
       id: idForProject(version, projectId, chainId),
@@ -30,7 +26,7 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       projectId,
       owner,
       deployer: caller,
-      isRevnet: isAddressEqual(owner, revDeployerAddress),
+      isRevnet: isRevnetOwner(owner, version),
       creator: transaction.from,
       createdAt: Number(block.timestamp),
       chainId,
@@ -76,8 +72,6 @@ ponder.on("JBProjects:Transfer", async ({ event, context }) => {
   try {
     const version = getVersion(event, "jbProjects");
 
-    const revDeployerAddress = addressForVersion("revDeployer", version);
-
     const owner = event.args.to;
 
     await context.db
@@ -88,7 +82,7 @@ ponder.on("JBProjects:Transfer", async ({ event, context }) => {
       })
       .set({
         owner,
-        isRevnet: isAddressEqual(owner, revDeployerAddress),
+        isRevnet: isRevnetOwner(owner, version),
       });
   } catch (e) {
     console.error("JBProjects:Transfer", e);

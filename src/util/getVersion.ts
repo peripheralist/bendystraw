@@ -22,6 +22,24 @@ export function addressForVersion(
 }
 
 /**
+ * Whether a project owner address means the project is a revnet, for the given version.
+ * V4/V5 revnets are owned by the REVDeployer. V6 revnets are owned by the REVOwner contract (the
+ * REVDeployer mints the project then transfers ownership to it), so accept either. `revOwner` only
+ * exists for V6, so read it directly (without throwing, unlike `addressForVersion`).
+ */
+export function isRevnetOwner(
+  owner: `0x${string}`,
+  version: Version
+): boolean {
+  const revDeployer = addressForVersion("revDeployer", version);
+  if (isAddressEqual(owner, revDeployer)) return true;
+
+  const revOwnerKey = `revOwner${version === 4 ? "" : version}` as keyof typeof ADDRESS;
+  const revOwner = ADDRESS[revOwnerKey] as `0x${string}` | undefined;
+  return !!revOwner && isAddressEqual(owner, revOwner);
+}
+
+/**
  * Gets version of contract
  * @param event Indexer function event object
  * @param contractName Versioned contract name as keyed in /constants/address.ts
