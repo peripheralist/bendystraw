@@ -16,6 +16,9 @@ import { addressForVersion } from "./util/getVersion";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
+import { isAddressEqual } from "viem";
+import { BANNY_RETAIL_HOOK_6 } from "./constants/bannyHook";
+import { getBannySvg } from "./util/getBannySvg";
 
 const version = 6;
 
@@ -36,6 +39,16 @@ if (ADDRESS.jb721TiersHookDeployer6) {
         functionName: "projectId",
       });
 
+      let svg = null;
+      if (isAddressEqual(hook, BANNY_RETAIL_HOOK_6)) {
+        svg = await getBannySvg({
+          context,
+          tierId,
+          block: event.block.number,
+          version,
+        });
+      }
+
       await context.db.insert(nftTier).values({
         tierId: Number(tierId),
         chainId: context.chain.id,
@@ -55,7 +68,7 @@ if (ADDRESS.jb721TiersHookDeployer6) {
         votingUnits: BigInt(tier.votingUnits),
         resolvedUri,
         metadata: parseTokenUri(resolvedUri),
-        svg: null,
+        svg,
         version,
       });
     } catch (e) {
@@ -118,7 +131,11 @@ if (ADDRESS.jb721TiersHookDeployer6) {
           suckerGroupId: _project.suckerGroupId,
           isRevnet: _project.isRevnet,
         });
-      await setParticipantSnapshot({ participant: _participant, context, event });
+      await setParticipantSnapshot({
+        participant: _participant,
+        context,
+        event,
+      });
 
       const existingNft = await context.db.find(nft, {
         chainId,
