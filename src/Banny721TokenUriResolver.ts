@@ -3,7 +3,11 @@ import { ponder } from "ponder:registry";
 import { decorateBannyEvent, nft, nftTier, project } from "ponder:schema";
 import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
-import { BANNY_RETAIL_HOOK, BANNY_RETAIL_HOOK_5, BANNY_RETAIL_HOOK_6 } from "./constants/bannyHook";
+import {
+  BANNY_RETAIL_HOOK,
+  BANNY_RETAIL_HOOK_5,
+  BANNY_RETAIL_HOOK_6,
+} from "./constants/bannyHook";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
@@ -35,7 +39,11 @@ ponder.on(
       const version = getVersion(event, "banny721TokenUriResolver");
 
       const hook =
-        version === 6 ? BANNY_RETAIL_HOOK_6 : version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+        version === 6
+          ? BANNY_RETAIL_HOOK_6
+          : version === 5
+            ? BANNY_RETAIL_HOOK_5
+            : BANNY_RETAIL_HOOK;
 
       const _projectId = projectId(chainId);
 
@@ -74,7 +82,7 @@ ponder.on(
           eq(nft.version, version),
           eq(nft.chainId, chainId),
           eq(nft.category, 0),
-          eq(nft.owner, nftToDecorate?.owner)
+          eq(nft.owner, nftToDecorate?.owner),
         ),
       });
 
@@ -130,13 +138,13 @@ ponder.on(
                     }
                   : {}),
               });
-            })
-        )
+            }),
+        ),
       );
     } catch (e) {
       console.error("Banny721TokenUriResolver:DecorateBanny", e);
     }
-  }
+  },
 );
 
 ponder.on(
@@ -149,7 +157,11 @@ ponder.on(
       const version = getVersion(event, "banny721TokenUriResolver");
 
       const hook =
-        version === 6 ? BANNY_RETAIL_HOOK_6 : version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+        version === 6
+          ? BANNY_RETAIL_HOOK_6
+          : version === 5
+            ? BANNY_RETAIL_HOOK_5
+            : BANNY_RETAIL_HOOK;
 
       const svg = await getBannySvg({
         context,
@@ -187,8 +199,8 @@ ponder.on(
           and(
             eq(nft.chainId, chainId),
             eq(nft.hook, hook),
-            or(eq(nft.category, 1), eq(nft.category, _nftTier.category))
-          )
+            or(eq(nft.category, 1), eq(nft.category, _nftTier.category)),
+          ),
         );
 
       await Promise.all(
@@ -211,17 +223,17 @@ ponder.on(
               tokenUri,
               metadata: parseTokenUri(tokenUri),
             });
-        })
+        }),
       );
     } catch (e) {
       console.error(
         "Banny721TokenUriResolver:SetSvgContent",
         context.chain.id,
         event.args.upc,
-        e
+        e,
       );
     }
-  }
+  },
 );
 
 ponder.on(
@@ -231,7 +243,11 @@ ponder.on(
       const version = getVersion(event, "banny721TokenUriResolver");
 
       const hook =
-        version === 6 ? BANNY_RETAIL_HOOK_6 : version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+        version === 6
+          ? BANNY_RETAIL_HOOK_6
+          : version === 5
+            ? BANNY_RETAIL_HOOK_5
+            : BANNY_RETAIL_HOOK;
 
       const tier = await tierOf({
         context,
@@ -250,11 +266,12 @@ ponder.on(
         .set({
           resolvedUri: tier.resolvedUri,
           encodedIpfsUri: tier.encodedIPFSUri,
+          metadata: parseTokenUri(tier.resolvedUri),
         });
     } catch (e) {
       console.error("Banny721TokenUriResolver:SetProductName", e);
     }
-  }
+  },
 );
 
 ponder.on(
@@ -286,11 +303,11 @@ ponder.on(
                 block: event.block.number,
                 version,
               }),
-            })
-        )
+            }),
+        ),
       );
     } catch (e) {
       console.error("Banny721TokenUriResolver:SetSvgBaseUri", e);
     }
-  }
+  },
 );
