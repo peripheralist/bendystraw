@@ -249,6 +249,7 @@ ponder.on(
         })
         .set({
           resolvedUri: tier.resolvedUri,
+          metadata: parseTokenUri(tier.resolvedUri),
           encodedIpfsUri: tier.encodedIPFSUri,
         });
     } catch (e) {
@@ -263,7 +264,8 @@ ponder.on(
     try {
       const version = getVersion(event, "banny721TokenUriResolver");
 
-      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
+      const hook =
+        version === 6 ? BANNY_RETAIL_HOOK_6 : version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
 
       const tiers = await getAllTiers({ context, hook, version });
 

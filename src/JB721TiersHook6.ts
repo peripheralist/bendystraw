@@ -7,10 +7,13 @@ import {
   project,
   wallet,
 } from "ponder:schema";
+import { isAddressEqual } from "viem";
 import { JB721TiersHookV6Abi } from "../abis/JB721TiersHookV6Abi";
 import { JB721TiersHookStoreV6Abi } from "../abis/JB721TiersHookStoreV6Abi";
 import { ADDRESS } from "./constants/address";
+import { BANNY_RETAIL_HOOK_6 } from "./constants/bannyHook";
 import { insertActivityEvent } from "./util/activityEvent";
+import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
 import { addressForVersion } from "./util/getVersion";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
@@ -29,6 +32,16 @@ if (ADDRESS.jb721TiersHookDeployer6) {
 
     try {
       const { resolvedUri } = await tierOf({ context, hook, tierId, version });
+
+      let svg = null;
+      if (isAddressEqual(hook, BANNY_RETAIL_HOOK_6)) {
+        svg = await getBannySvg({
+          context,
+          tierId,
+          block: event.block.number,
+          version,
+        });
+      }
 
       const projectIdCall = await context.client.readContract({
         abi: JB721TiersHookV6Abi,
@@ -55,7 +68,7 @@ if (ADDRESS.jb721TiersHookDeployer6) {
         votingUnits: BigInt(tier.votingUnits),
         resolvedUri,
         metadata: parseTokenUri(resolvedUri),
-        svg: null,
+        svg,
         version,
       });
     } catch (e) {
