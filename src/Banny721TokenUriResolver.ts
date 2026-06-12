@@ -16,7 +16,7 @@ import { getVersion } from "./util/getVersion";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
 
-const projectId = (chainId: number) => {
+const projectIdOfBanny = (chainId: number) => {
   switch (chainId) {
     case mainnet.id:
     case arbitrum.id:
@@ -26,7 +26,7 @@ const projectId = (chainId: number) => {
   }
 
   // testnets
-  return 6;
+  return 4;
 };
 
 ponder.on(
@@ -45,7 +45,7 @@ ponder.on(
             ? BANNY_RETAIL_HOOK_5
             : BANNY_RETAIL_HOOK;
 
-      const _projectId = projectId(chainId);
+      const _projectId = projectIdOfBanny(chainId);
 
       const _project = await context.db.find(project, {
         projectId: _projectId,
