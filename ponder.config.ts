@@ -37,16 +37,16 @@ const addresses = (...items: (`0x${string}` | undefined)[]) =>
 
 const V6_TESTNET_START_BLOCKS = {
   jb721TiersHookDeployer: {
-    ethereumSepolia: 11017538,
-    arbitrumSepolia: 275180617,
-    baseSepolia: 42589987,
-    optimismSepolia: 44572765,
+    ethereumSepolia: 11051770,
+    arbitrumSepolia: 276820002,
+    baseSepolia: 42795964,
+    optimismSepolia: 44778840,
   },
   jbSuckersRegistry: {
-    ethereumSepolia: 11017560,
-    arbitrumSepolia: 275181065,
-    baseSepolia: 42590048,
-    optimismSepolia: 44572786,
+    ethereumSepolia: 11051792,
+    arbitrumSepolia: 276820467,
+    baseSepolia: 42796024,
+    optimismSepolia: 44778862,
   },
 } as const;
 
