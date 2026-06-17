@@ -17,7 +17,7 @@ import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
 import { isAddressEqual } from "viem";
-import { BANNY_RETAIL_HOOK_6 } from "./constants/bannyHook";
+import { bannyRetailHookForVersion } from "./constants/bannyHook";
 import { getBannySvg } from "./util/getBannySvg";
 
 const version = 6;
@@ -40,7 +40,7 @@ if (ADDRESS.jb721TiersHookDeployer6) {
       });
 
       let svg = null;
-      if (isAddressEqual(hook, BANNY_RETAIL_HOOK_6)) {
+      if (isAddressEqual(hook, bannyRetailHookForVersion(version, context.chain.id))) {
         svg = await getBannySvg({
           context,
           tierId,
