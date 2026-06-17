@@ -1,20 +1,55 @@
 import { and, eq, or } from "ponder";
-import { ponder } from "ponder:registry";
+import { ponder, type Context } from "ponder:registry";
 import { decorateBannyEvent, nft, nftTier, project } from "ponder:schema";
 import { arbitrum, base, mainnet, optimism } from "viem/chains";
 import { JB721TiersHookAbi } from "../abis/JB721TiersHookAbi";
-import {
-  BANNY_RETAIL_HOOK,
-  BANNY_RETAIL_HOOK_5,
-  BANNY_RETAIL_HOOK_6,
-} from "./constants/bannyHook";
+import { bannyRetailHookForVersion } from "./constants/bannyHook";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getAllTiers } from "./util/getAllTiers";
 import { getBannySvg } from "./util/getBannySvg";
 import { getEventParams } from "./util/getEventParams";
-import { getVersion } from "./util/getVersion";
+import { getVersion, type Version } from "./util/getVersion";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
+
+type BaseResolverEvent<A> = {
+  args: A;
+  block: {
+    number: bigint;
+    timestamp: bigint;
+  };
+  log: {
+    address: `0x${string}`;
+    logIndex: number;
+  };
+  transaction: {
+    from: `0x${string}`;
+    hash: `0x${string}`;
+  };
+};
+
+type DecorateBannyResolverEvent = BaseResolverEvent<{
+  bannyBodyId: bigint;
+  backgroundId: bigint;
+  outfitIds: readonly bigint[];
+  caller: `0x${string}`;
+}>;
+
+type SetSvgContentResolverEvent = BaseResolverEvent<{
+  upc: bigint;
+  svgContent: string;
+  caller: `0x${string}`;
+}>;
+
+type SetProductNameResolverEvent = BaseResolverEvent<{
+  upc: bigint;
+  name: string;
+  caller: `0x${string}`;
+}>;
+
+type RefreshMetadataResolverEvent = BaseResolverEvent<{
+  caller: `0x${string}`;
+}>;
 
 const projectIdOfBanny = (chainId: number) => {
   switch (chainId) {
@@ -29,285 +64,365 @@ const projectIdOfBanny = (chainId: number) => {
   return 4;
 };
 
-ponder.on(
-  "Banny721TokenUriResolver:DecorateBanny",
-  async ({ event, context }) => {
-    try {
-      const chainId = context.chain.id;
-      const { bannyBodyId: tokenId } = event.args;
+function versionAndHook(
+  event: { log: { address: `0x${string}` } },
+  chainId: number,
+): { version: Version; hook: `0x${string}` } {
+  const version = getVersion(event, "banny721TokenUriResolver");
+  return {
+    version,
+    hook: bannyRetailHookForVersion(version, chainId),
+  };
+}
 
-      const version = getVersion(event, "banny721TokenUriResolver");
+async function handleDecorateBanny({
+  event,
+  context,
+  logPrefix,
+}: {
+  event: DecorateBannyResolverEvent;
+  context: Context;
+  logPrefix: string;
+}) {
+  try {
+    const chainId = context.chain.id;
+    const { bannyBodyId: tokenId } = event.args;
+    const { version, hook } = versionAndHook(event, chainId);
+    const _projectId = projectIdOfBanny(chainId);
 
-      const hook =
-        version === 6
-          ? BANNY_RETAIL_HOOK_6
-          : version === 5
-            ? BANNY_RETAIL_HOOK_5
-            : BANNY_RETAIL_HOOK;
+    const _project = await context.db.find(project, {
+      projectId: _projectId,
+      chainId,
+      version,
+    });
 
-      const _projectId = projectIdOfBanny(chainId);
-
-      const _project = await context.db.find(project, {
-        projectId: _projectId,
-        chainId,
-        version,
-      });
-
-      if (!_project) {
-        throw new Error("Missing project");
-      }
-
-      const decoratedTokenUri = await context.client.readContract({
-        abi: JB721TiersHookAbi,
-        address: hook,
-        functionName: "tokenURI",
-        args: [tokenId],
-      });
-
-      const nftToDecorate = await context.db.find(nft, {
-        chainId,
-        hook,
-        tokenId,
-        version,
-      });
-
-      if (!nftToDecorate) {
-        throw new Error("Missing Banny NFT");
-      }
-
-      // only bannys on same chain/version
-      const ownerBannys = await context.db.sql.query.nft.findMany({
-        where: and(
-          eq(nft.hook, hook),
-          eq(nft.version, version),
-          eq(nft.chainId, chainId),
-          eq(nft.category, 0),
-          eq(nft.owner, nftToDecorate?.owner),
-        ),
-      });
-
-      // store decorate event
-      const { id } = await context.db.insert(decorateBannyEvent).values({
-        ...getEventParams({ event, context }),
-        suckerGroupId: _project.suckerGroupId,
-        bannyBodyId: event.args.bannyBodyId,
-        outfitIds: event.args.outfitIds.map((o) => o),
-        backgroundId: event.args.backgroundId,
-        tokenUri: decoratedTokenUri,
-        tokenUriMetadata: parseTokenUri(decoratedTokenUri),
-        version,
-      });
-      await insertActivityEvent("decorateBannyEvent", {
-        id,
-        event,
-        context,
-        projectId: _projectId,
-        suckerGroupId: _project.suckerGroupId,
-        version,
-      });
-
-      // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed
-      await Promise.all(
-        ownerBannys.map((_nft) =>
-          context.client
-            .readContract({
-              abi: JB721TiersHookAbi,
-              address: hook,
-              functionName: "tokenURI",
-              args: [_nft.tokenId] as const,
-            })
-            .then((tokenUri) => {
-              const metadata = parseTokenUri<{
-                outfitIds: bigint[];
-                backgroundId?: bigint;
-              }>(tokenUri);
-
-              const customized =
-                !!metadata &&
-                (metadata.outfitIds.length > 0 ||
-                  (!!metadata.backgroundId &&
-                    metadata.backgroundId !== BigInt(0)));
-
-              return context.db.update(nft, _nft).set({
-                tokenUri,
-                metadata,
-                customized,
-                ...(customized && _nft.tokenId === tokenId // only update customizedAt for Banny being dressed
-                  ? {
-                      customizedAt: Number(event.block.timestamp),
-                    }
-                  : {}),
-              });
-            }),
-        ),
-      );
-    } catch (e) {
-      console.error("Banny721TokenUriResolver:DecorateBanny", e);
+    if (!_project) {
+      throw new Error("Missing project");
     }
-  },
-);
 
-ponder.on(
-  "Banny721TokenUriResolver:SetSvgContent",
-  async ({ event, context }) => {
-    try {
-      const { id: chainId } = context.chain;
-      const tierId = Number(event.args.upc);
+    const decoratedTokenUri = await context.client.readContract({
+      abi: JB721TiersHookAbi,
+      address: hook,
+      functionName: "tokenURI",
+      args: [tokenId],
+    });
 
-      const version = getVersion(event, "banny721TokenUriResolver");
+    const nftToDecorate = await context.db.find(nft, {
+      chainId,
+      hook,
+      tokenId,
+      version,
+    });
 
-      const hook =
-        version === 6
-          ? BANNY_RETAIL_HOOK_6
-          : version === 5
-            ? BANNY_RETAIL_HOOK_5
-            : BANNY_RETAIL_HOOK;
+    if (!nftToDecorate) {
+      throw new Error("Missing Banny NFT");
+    }
 
-      const svg = await getBannySvg({
-        context,
-        tierId: event.args.upc,
-        block: event.block.number,
-        version,
-      });
+    // only bannys on same chain/version
+    const ownerBannys = await context.db.sql.query.nft.findMany({
+      where: and(
+        eq(nft.hook, hook),
+        eq(nft.version, version),
+        eq(nft.chainId, chainId),
+        eq(nft.category, 0),
+        eq(nft.owner, nftToDecorate.owner),
+      ),
+    });
 
-      const _nftTier = await context.db.find(nftTier, {
+    // store decorate event
+    const { id } = await context.db.insert(decorateBannyEvent).values({
+      ...getEventParams({ event, context }),
+      suckerGroupId: _project.suckerGroupId,
+      bannyBodyId: event.args.bannyBodyId,
+      outfitIds: event.args.outfitIds.map((o) => o),
+      backgroundId: event.args.backgroundId,
+      tokenUri: decoratedTokenUri,
+      tokenUriMetadata: parseTokenUri(decoratedTokenUri),
+      version,
+    });
+    await insertActivityEvent("decorateBannyEvent", {
+      id,
+      event,
+      context,
+      projectId: _projectId,
+      suckerGroupId: _project.suckerGroupId,
+      version,
+    });
+
+    // update tokenUri of ALL banny NFTs of owner, to make sure we update any Bannys that may have an outfit removed
+    await Promise.all(
+      ownerBannys.map((_nft) =>
+        context.client
+          .readContract({
+            abi: JB721TiersHookAbi,
+            address: hook,
+            functionName: "tokenURI",
+            args: [_nft.tokenId] as const,
+          })
+          .then((tokenUri) => {
+            const metadata = parseTokenUri<{
+              outfitIds: bigint[];
+              backgroundId?: bigint;
+            }>(tokenUri);
+
+            const customized =
+              !!metadata &&
+              (metadata.outfitIds.length > 0 ||
+                (!!metadata.backgroundId &&
+                  metadata.backgroundId !== BigInt(0)));
+
+            return context.db.update(nft, _nft).set({
+              tokenUri,
+              metadata,
+              customized,
+              ...(customized && _nft.tokenId === tokenId // only update customizedAt for Banny being dressed
+                ? {
+                    customizedAt: Number(event.block.timestamp),
+                  }
+                : {}),
+            });
+          }),
+      ),
+    );
+  } catch (e) {
+    console.error(logPrefix, e);
+  }
+}
+
+async function handleSetSvgContent({
+  event,
+  context,
+  logPrefix,
+}: {
+  event: SetSvgContentResolverEvent;
+  context: Context;
+  logPrefix: string;
+}) {
+  try {
+    const { id: chainId } = context.chain;
+    const tierId = Number(event.args.upc);
+    const { version, hook } = versionAndHook(event, chainId);
+
+    const svg = await getBannySvg({
+      context,
+      tierId: event.args.upc,
+      block: event.block.number,
+      version,
+    });
+
+    const _nftTier = await context.db.find(nftTier, {
+      chainId,
+      hook,
+      tierId,
+      version,
+    });
+
+    if (!_nftTier) {
+      throw new Error("Missing NFT tier");
+    }
+
+    await context.db
+      .update(nftTier, {
         chainId,
         hook,
         tierId,
         version,
-      });
+      })
+      .set({ svg });
 
-      if (!_nftTier) {
-        throw new Error("Missing NFT tier");
-      }
+    // Now we need to update NFTs who are wearing the Tier, so that their tokenURI will reflect the new SVG contents.
+    // We don't have a good way to figure out which NFTs may be wearing the tier, so we update all body NFTs, and all NFTs of the same tierId.
+    const tokenIdsToUpdate = await context.db.sql
+      .select({ tokenId: nft.tokenId })
+      .from(nft)
+      .where(
+        and(
+          eq(nft.chainId, chainId),
+          eq(nft.hook, hook),
+          or(eq(nft.category, 1), eq(nft.category, _nftTier.category)),
+        ),
+      );
 
-      await context.db
-        .update(nftTier, {
-          chainId,
-          hook,
-          tierId,
-          version,
-        })
-        .set({ svg });
+    await Promise.all(
+      tokenIdsToUpdate.map(async ({ tokenId }) => {
+        const tokenUri = await context.client.readContract({
+          abi: JB721TiersHookAbi,
+          address: hook,
+          functionName: "tokenURI",
+          args: [tokenId],
+        });
 
-      // Now we need to update NFTs who are wearing the Tier, so that their tokenURI will reflect the new SVG contents.
-      // We don't have a good way to figure out which NFTs may be wearing the tier, so we update all body NFTs, and all NFTs of the same tierId.
-      const tokenIdsToUpdate = await context.db.sql
-        .select({ tokenId: nft.tokenId })
-        .from(nft)
-        .where(
-          and(
-            eq(nft.chainId, chainId),
-            eq(nft.hook, hook),
-            or(eq(nft.category, 1), eq(nft.category, _nftTier.category)),
-          ),
-        );
-
-      await Promise.all(
-        tokenIdsToUpdate.map(async ({ tokenId }) => {
-          const tokenUri = await context.client.readContract({
-            abi: JB721TiersHookAbi,
-            address: hook,
-            functionName: "tokenURI",
-            args: [tokenId],
+        return context.db
+          .update(nft, {
+            chainId,
+            hook: hook,
+            tokenId,
+            version,
+          })
+          .set({
+            tokenUri,
+            metadata: parseTokenUri(tokenUri),
           });
+      }),
+    );
+  } catch (e) {
+    console.error(logPrefix, context.chain.id, event.args.upc, e);
+  }
+}
 
-          return context.db
-            .update(nft, {
-              chainId,
-              hook: hook,
-              tokenId,
+async function handleSetProductName({
+  event,
+  context,
+  logPrefix,
+}: {
+  event: SetProductNameResolverEvent;
+  context: Context;
+  logPrefix: string;
+}) {
+  try {
+    const { version, hook } = versionAndHook(event, context.chain.id);
+
+    const tier = await tierOf({
+      context,
+      hook,
+      tierId: event.args.upc,
+      version,
+    });
+
+    await context.db
+      .update(nftTier, {
+        hook,
+        chainId: context.chain.id,
+        tierId: Number(event.args.upc),
+        version,
+      })
+      .set({
+        resolvedUri: tier.resolvedUri,
+        encodedIpfsUri: tier.encodedIPFSUri,
+        metadata: parseTokenUri(tier.resolvedUri),
+      });
+  } catch (e) {
+    console.error(logPrefix, e);
+  }
+}
+
+async function refreshAllBannyTiers({
+  event,
+  context,
+  logPrefix,
+}: {
+  event: RefreshMetadataResolverEvent;
+  context: Context;
+  logPrefix: string;
+}) {
+  try {
+    const { version, hook } = versionAndHook(event, context.chain.id);
+
+    const tiers = await getAllTiers({ context, hook, version });
+
+    await Promise.all(
+      tiers.map(async ({ id, resolvedUri, encodedIPFSUri }) =>
+        context.db
+          .update(nftTier, {
+            hook,
+            chainId: context.chain.id,
+            tierId: id,
+            version,
+          })
+          .set({
+            resolvedUri: resolvedUri,
+            metadata: parseTokenUri(resolvedUri),
+            encodedIpfsUri: encodedIPFSUri,
+            svg: await getBannySvg({
+              context,
+              tierId: BigInt(id),
+              block: event.block.number,
               version,
-            })
-            .set({
-              tokenUri,
-              metadata: parseTokenUri(tokenUri),
-            });
-        }),
-      );
-    } catch (e) {
-      console.error(
-        "Banny721TokenUriResolver:SetSvgContent",
-        context.chain.id,
-        event.args.upc,
-        e,
-      );
-    }
-  },
+            }),
+          }),
+      ),
+    );
+  } catch (e) {
+    console.error(logPrefix, e);
+  }
+}
+
+ponder.on(
+  "Banny721TokenUriResolver:DecorateBanny",
+  async ({ event, context }) =>
+    handleDecorateBanny({
+      event,
+      context,
+      logPrefix: "Banny721TokenUriResolver:DecorateBanny",
+    }),
+);
+
+ponder.on(
+  "Banny721TokenUriResolver6:DecorateBanny",
+  async ({ event, context }) =>
+    handleDecorateBanny({
+      event,
+      context,
+      logPrefix: "Banny721TokenUriResolver6:DecorateBanny",
+    }),
+);
+
+ponder.on(
+  "Banny721TokenUriResolver:SetSvgContent",
+  async ({ event, context }) =>
+    handleSetSvgContent({
+      event,
+      context,
+      logPrefix: "Banny721TokenUriResolver:SetSvgContent",
+    }),
+);
+
+ponder.on(
+  "Banny721TokenUriResolver6:SetSvgContent",
+  async ({ event, context }) =>
+    handleSetSvgContent({
+      event,
+      context,
+      logPrefix: "Banny721TokenUriResolver6:SetSvgContent",
+    }),
 );
 
 ponder.on(
   "Banny721TokenUriResolver:SetProductName",
-  async ({ event, context }) => {
-    try {
-      const version = getVersion(event, "banny721TokenUriResolver");
+  async ({ event, context }) =>
+    handleSetProductName({
+      event,
+      context,
+      logPrefix: "Banny721TokenUriResolver:SetProductName",
+    }),
+);
 
-      const hook =
-        version === 6
-          ? BANNY_RETAIL_HOOK_6
-          : version === 5
-            ? BANNY_RETAIL_HOOK_5
-            : BANNY_RETAIL_HOOK;
-
-      const tier = await tierOf({
-        context,
-        hook,
-        tierId: event.args.upc,
-        version,
-      });
-
-      await context.db
-        .update(nftTier, {
-          hook,
-          chainId: context.chain.id,
-          tierId: Number(event.args.upc),
-          version,
-        })
-        .set({
-          resolvedUri: tier.resolvedUri,
-          encodedIpfsUri: tier.encodedIPFSUri,
-          metadata: parseTokenUri(tier.resolvedUri),
-        });
-    } catch (e) {
-      console.error("Banny721TokenUriResolver:SetProductName", e);
-    }
-  },
+ponder.on(
+  "Banny721TokenUriResolver6:SetProductName",
+  async ({ event, context }) =>
+    handleSetProductName({
+      event,
+      context,
+      logPrefix: "Banny721TokenUriResolver6:SetProductName",
+    }),
 );
 
 ponder.on(
   "Banny721TokenUriResolver:SetSvgBaseUri",
-  async ({ event, context }) => {
-    try {
-      const version = getVersion(event, "banny721TokenUriResolver");
+  async ({ event, context }) =>
+    refreshAllBannyTiers({
+      event,
+      context,
+      logPrefix: "Banny721TokenUriResolver:SetSvgBaseUri",
+    }),
+);
 
-      const hook = version === 5 ? BANNY_RETAIL_HOOK_5 : BANNY_RETAIL_HOOK;
-
-      const tiers = await getAllTiers({ context, hook, version });
-
-      await Promise.all(
-        tiers.map(async ({ id, resolvedUri, encodedIPFSUri }) =>
-          context.db
-            .update(nftTier, {
-              hook,
-              chainId: context.chain.id,
-              tierId: id,
-              version,
-            })
-            .set({
-              resolvedUri: resolvedUri,
-              metadata: parseTokenUri(resolvedUri),
-              encodedIpfsUri: encodedIPFSUri,
-              svg: await getBannySvg({
-                context,
-                tierId: BigInt(id),
-                block: event.block.number,
-                version,
-              }),
-            }),
-        ),
-      );
-    } catch (e) {
-      console.error("Banny721TokenUriResolver:SetSvgBaseUri", e);
-    }
-  },
+ponder.on(
+  "Banny721TokenUriResolver6:SetMetadata",
+  async ({ event, context }) =>
+    refreshAllBannyTiers({
+      event,
+      context,
+      logPrefix: "Banny721TokenUriResolver6:SetMetadata",
+    }),
 );

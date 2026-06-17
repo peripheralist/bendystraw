@@ -12,6 +12,7 @@ import {
   sepolia,
 } from "viem/chains";
 import { Banny721TokenUriResolverAbi } from "./abis/Banny721TokenUriResolverAbi";
+import { Banny721TokenUriResolverV6Abi } from "./abis/Banny721TokenUriResolverV6Abi";
 import { JB721TiersHookAbi } from "./abis/JB721TiersHookAbi";
 import { JB721TiersHookDeployerAbi } from "./abis/JB721TiersHookDeployerAbi";
 import { JB721TiersHookV6Abi } from "./abis/JB721TiersHookV6Abi";
@@ -35,18 +36,80 @@ import { JBBuybackHookV6Abi } from "./abis/JBBuybackHookV6Abi";
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
 
-const V6_TESTNET_START_BLOCKS = {
+const V6_MAINNET_START_BLOCKS = {
   jb721TiersHookDeployer: {
-    ethereumSepolia: 11051770,
-    arbitrumSepolia: 276820002,
-    baseSepolia: 42795964,
-    optimismSepolia: 44778840,
+    ethereum: 25329907,
+    arbitrum: 473988826,
+    base: 47398871,
+    optimism: 152994145,
   },
   jbSuckersRegistry: {
-    ethereumSepolia: 11051792,
-    arbitrumSepolia: 276820467,
-    baseSepolia: 42796024,
-    optimismSepolia: 44778862,
+    ethereum: 25329930,
+    arbitrum: 474171863,
+    base: 47398931,
+    optimism: 152994203,
+  },
+  jbBuybackHook: {
+    ethereum: 25329918,
+    arbitrum: 473989048,
+    base: 47398898,
+    optimism: 152994172,
+  },
+  revLoans: {
+    ethereum: 25330064,
+    arbitrum: 474173960,
+    base: 47399198,
+    optimism: 152994459,
+  },
+  revOwner: {
+    ethereum: 25330066,
+    arbitrum: 474174004,
+    base: 47399204,
+    optimism: 152994464,
+  },
+  banny721TokenUriResolver: {
+    ethereum: 25330084,
+    arbitrum: 474174392,
+    base: 47399252,
+    optimism: 152994511,
+  },
+} as const;
+
+const V6_TESTNET_START_BLOCKS = {
+  jb721TiersHookDeployer: {
+    ethereumSepolia: 11070569,
+    arbitrumSepolia: 277724815,
+    baseSepolia: 42909261,
+    optimismSepolia: 44892141,
+  },
+  jbSuckersRegistry: {
+    ethereumSepolia: 11070591,
+    arbitrumSepolia: 277725286,
+    baseSepolia: 42909320,
+    optimismSepolia: 44892163,
+  },
+  jbBuybackHook: {
+    ethereumSepolia: 11070579,
+    arbitrumSepolia: 277725027,
+    baseSepolia: 42909288,
+  },
+  revLoans: {
+    ethereumSepolia: 11070713,
+    arbitrumSepolia: 277727361,
+    baseSepolia: 42909580,
+    optimismSepolia: 44892414,
+  },
+  revOwner: {
+    ethereumSepolia: 11070715,
+    arbitrumSepolia: 277727404,
+    baseSepolia: 42909585,
+    optimismSepolia: 44892420,
+  },
+  banny721TokenUriResolver: {
+    ethereumSepolia: 11070733,
+    arbitrumSepolia: 277727786,
+    baseSepolia: 42909633,
+    optimismSepolia: 44892469,
   },
 } as const;
 
@@ -335,16 +398,16 @@ export const mainnetConfig = createConfig({
       address: hookDeployedFactoryConfig6,
       chain: {
         ethereum: {
-          startBlock: JB721TiersHookDeployer.mainnet.chain.ethereum.startBlock,
+          startBlock: V6_MAINNET_START_BLOCKS.jb721TiersHookDeployer.ethereum,
         },
         arbitrum: {
-          startBlock: JB721TiersHookDeployer.mainnet.chain.arbitrum.startBlock,
+          startBlock: V6_MAINNET_START_BLOCKS.jb721TiersHookDeployer.arbitrum,
         },
         base: {
-          startBlock: JB721TiersHookDeployer.mainnet.chain.base.startBlock,
+          startBlock: V6_MAINNET_START_BLOCKS.jb721TiersHookDeployer.base,
         },
         optimism: {
-          startBlock: JB721TiersHookDeployer.mainnet.chain.optimism.startBlock,
+          startBlock: V6_MAINNET_START_BLOCKS.jb721TiersHookDeployer.optimism,
         },
       },
     },
@@ -408,6 +471,24 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    Banny721TokenUriResolver6: {
+      abi: Banny721TokenUriResolverV6Abi,
+      address: [ADDRESS.banny721TokenUriResolver6],
+      chain: {
+        ethereum: {
+          startBlock: V6_MAINNET_START_BLOCKS.banny721TokenUriResolver.ethereum,
+        },
+        arbitrum: {
+          startBlock: V6_MAINNET_START_BLOCKS.banny721TokenUriResolver.arbitrum,
+        },
+        base: {
+          startBlock: V6_MAINNET_START_BLOCKS.banny721TokenUriResolver.base,
+        },
+        optimism: {
+          startBlock: V6_MAINNET_START_BLOCKS.banny721TokenUriResolver.optimism,
+        },
+      },
+    },
     RevDeployer: {
       abi: REVDeployerAbi,
       address: addresses(ADDRESS.revDeployer, ADDRESS.revDeployer5, ADDRESS.revDeployer6),
@@ -426,16 +507,15 @@ export const mainnetConfig = createConfig({
         },
       },
     },
-    // V6-only: REVOwner emits AutoIssue (V4/V5 emit it from the REVDeployer). Start blocks mirror the
-    // V6 system deploy (same as JBSuckersRegistry6).
+    // V6-only: REVOwner emits AutoIssue (V4/V5 emit it from the REVDeployer).
     REVOwner: {
       abi: REVOwnerAbi,
       address: addresses(ADDRESS.revOwner6),
       chain: {
-        ethereum: { startBlock: 21863660 },
-        arbitrum: { startBlock: 306881281 },
-        base: { startBlock: 26487986 },
-        optimism: { startBlock: 132083296 },
+        ethereum: { startBlock: V6_MAINNET_START_BLOCKS.revOwner.ethereum },
+        arbitrum: { startBlock: V6_MAINNET_START_BLOCKS.revOwner.arbitrum },
+        base: { startBlock: V6_MAINNET_START_BLOCKS.revOwner.base },
+        optimism: { startBlock: V6_MAINNET_START_BLOCKS.revOwner.optimism },
       },
     },
     RevLoans: {
@@ -461,15 +541,15 @@ export const mainnetConfig = createConfig({
       },
     },
     // V6-only: the REVLoan struct changed (source tuple -> sourceToken address), so V6 loan events have
-    // different topic0s and need their own ABI. Start blocks mirror the V6 system deploy.
+    // different topic0s and need their own ABI.
     RevLoans6: {
       abi: REVLoansV6Abi,
       address: addresses(ADDRESS.revLoans6),
       chain: {
-        ethereum: { startBlock: 21863660 },
-        arbitrum: { startBlock: 306881281 },
-        base: { startBlock: 26487986 },
-        optimism: { startBlock: 132083296 },
+        ethereum: { startBlock: V6_MAINNET_START_BLOCKS.revLoans.ethereum },
+        arbitrum: { startBlock: V6_MAINNET_START_BLOCKS.revLoans.arbitrum },
+        base: { startBlock: V6_MAINNET_START_BLOCKS.revLoans.base },
+        optimism: { startBlock: V6_MAINNET_START_BLOCKS.revLoans.optimism },
       },
     },
     JBSuckersRegistry: {
@@ -498,16 +578,16 @@ export const mainnetConfig = createConfig({
       address: addresses(ADDRESS.jbSuckersRegistry6),
       chain: {
         ethereum: {
-          startBlock: 21863660,
+          startBlock: V6_MAINNET_START_BLOCKS.jbSuckersRegistry.ethereum,
         },
         arbitrum: {
-          startBlock: 306881281,
+          startBlock: V6_MAINNET_START_BLOCKS.jbSuckersRegistry.arbitrum,
         },
         base: {
-          startBlock: 26487986,
+          startBlock: V6_MAINNET_START_BLOCKS.jbSuckersRegistry.base,
         },
         optimism: {
-          startBlock: 132083296,
+          startBlock: V6_MAINNET_START_BLOCKS.jbSuckersRegistry.optimism,
         },
       },
     },
@@ -534,16 +614,16 @@ export const mainnetConfig = createConfig({
       address: suckerDeployedFactoryConfig6,
       chain: {
         ethereum: {
-          startBlock: 21863660,
+          startBlock: V6_MAINNET_START_BLOCKS.jbSuckersRegistry.ethereum,
         },
         arbitrum: {
-          startBlock: 306881281,
+          startBlock: V6_MAINNET_START_BLOCKS.jbSuckersRegistry.arbitrum,
         },
         base: {
-          startBlock: 26487986,
+          startBlock: V6_MAINNET_START_BLOCKS.jbSuckersRegistry.base,
         },
         optimism: {
-          startBlock: 132083296,
+          startBlock: V6_MAINNET_START_BLOCKS.jbSuckersRegistry.optimism,
         },
       },
     },
@@ -552,16 +632,16 @@ export const mainnetConfig = createConfig({
       address: addresses(ADDRESS.jbBuybackHook6),
       chain: {
         ethereum: {
-          startBlock: 21863660,
+          startBlock: V6_MAINNET_START_BLOCKS.jbBuybackHook.ethereum,
         },
         arbitrum: {
-          startBlock: 306881281,
+          startBlock: V6_MAINNET_START_BLOCKS.jbBuybackHook.arbitrum,
         },
         base: {
-          startBlock: 26487986,
+          startBlock: V6_MAINNET_START_BLOCKS.jbBuybackHook.base,
         },
         optimism: {
-          startBlock: 132083296,
+          startBlock: V6_MAINNET_START_BLOCKS.jbBuybackHook.optimism,
         },
       },
     },
@@ -762,7 +842,6 @@ export const testnetConfig = createConfig({
       address: [
         ADDRESS.banny721TokenUriResolver,
         ADDRESS.banny721TokenUriResolver5,
-        ADDRESS.banny721TokenUriResolver6,
       ],
       chain: {
         ethereumSepolia: {
@@ -776,6 +855,24 @@ export const testnetConfig = createConfig({
         },
         optimismSepolia: {
           startBlock: 36867619,
+        },
+      },
+    },
+    Banny721TokenUriResolver6: {
+      abi: Banny721TokenUriResolverV6Abi,
+      address: [ADDRESS.banny721TokenUriResolver6],
+      chain: {
+        ethereumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.ethereumSepolia,
+        },
+        arbitrumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.arbitrumSepolia,
+        },
+        baseSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.baseSepolia,
+        },
+        optimismSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.optimismSepolia,
         },
       },
     },
@@ -797,16 +894,15 @@ export const testnetConfig = createConfig({
         },
       },
     },
-    // V6-only: REVOwner emits AutoIssue (V4/V5 emit it from the REVDeployer). Start blocks mirror the
-    // V6 system deploy (same as JBSuckersRegistry6).
+    // V6-only: REVOwner emits AutoIssue (V4/V5 emit it from the REVDeployer).
     REVOwner: {
       abi: REVOwnerAbi,
       address: addresses(ADDRESS.revOwner6),
       chain: {
-        ethereumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia },
-        arbitrumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.arbitrumSepolia },
-        baseSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.baseSepolia },
-        optimismSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia },
+        ethereumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revOwner.ethereumSepolia },
+        arbitrumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revOwner.arbitrumSepolia },
+        baseSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revOwner.baseSepolia },
+        optimismSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revOwner.optimismSepolia },
       },
     },
     RevLoans: {
@@ -836,10 +932,10 @@ export const testnetConfig = createConfig({
       abi: REVLoansV6Abi,
       address: addresses(ADDRESS.revLoans6),
       chain: {
-        ethereumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia },
-        arbitrumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.arbitrumSepolia },
-        baseSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.baseSepolia },
-        optimismSepolia: { startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia },
+        ethereumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revLoans.ethereumSepolia },
+        arbitrumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revLoans.arbitrumSepolia },
+        baseSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revLoans.baseSepolia },
+        optimismSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revLoans.optimismSepolia },
       },
     },
     JBSuckersRegistry: {
@@ -922,16 +1018,13 @@ export const testnetConfig = createConfig({
       address: addresses(ADDRESS.jbBuybackHook6),
       chain: {
         ethereumSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.ethereumSepolia,
+          startBlock: V6_TESTNET_START_BLOCKS.jbBuybackHook.ethereumSepolia,
         },
         arbitrumSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.arbitrumSepolia,
+          startBlock: V6_TESTNET_START_BLOCKS.jbBuybackHook.arbitrumSepolia,
         },
         baseSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.baseSepolia,
-        },
-        optimismSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia,
+          startBlock: V6_TESTNET_START_BLOCKS.jbBuybackHook.baseSepolia,
         },
       },
     },
