@@ -5,6 +5,10 @@ import { isAddressEqual } from "viem";
 import { JBSuckerAbi } from "../abis/JBSuckerAbi";
 import { JBSuckerV6Abi } from "../abis/JBSuckerV6Abi";
 import { ADDRESS } from "./constants/address";
+import {
+  recordBridgeToOutbox,
+  recordBridgeToRemote,
+} from "./util/bridgeActivity";
 
 ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
   try {
@@ -66,6 +70,13 @@ ponder.on("JBSucker:InsertToOutboxTree", async ({ event, context }) => {
       status: "pending",
     });
 
+    await recordBridgeToOutbox(event, context, {
+      projectId: _project.projectId,
+      suckerGroupId: _project.suckerGroupId,
+      peer,
+      peerChainId: Number(peerChainId),
+      version,
+    });
   } catch (e) {
     console.error("JBSucker:InsertToOutboxTree", e);
   }
@@ -84,6 +95,50 @@ ponder.on("JBSucker:RootToRemote", async ({ event, context }) => {
           eq(suckerTransaction.status, "pending")
         )
       );
+
+    // Emit the "sent X to {chain}" activity item. RootToRemote carries no projectId, so resolve
+    // the sucker's project the same way InsertToOutboxTree does.
+    const address = event.log.address;
+    const chainId = Number(context.chain.id);
+    const projectId = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "projectId",
+      address,
+    });
+    const peer = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "peer",
+      address,
+    });
+    const peerChainId = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "peerChainId",
+      address,
+    });
+    const directoryAddress = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "DIRECTORY",
+      address,
+    });
+    const version = ADDRESS.jbDirectory6 && isAddressEqual(directoryAddress, ADDRESS.jbDirectory6)
+      ? 6
+      : isAddressEqual(directoryAddress, ADDRESS.jbDirectory5)
+        ? 5
+        : 4;
+    const _project = await context.db.find(project, {
+      projectId: Number(projectId),
+      chainId,
+      version,
+    });
+    if (_project) {
+      await recordBridgeToRemote(event, context, {
+        projectId: _project.projectId,
+        suckerGroupId: _project.suckerGroupId,
+        peer,
+        peerChainId: Number(peerChainId),
+        version,
+      });
+    }
   } catch (e) {
     console.error("JBSucker:RootToRemote", e);
   }
@@ -158,6 +213,13 @@ ponder.on("JBSucker6:InsertToOutboxTree", async ({ event, context }) => {
       status: "pending",
     });
 
+    await recordBridgeToOutbox(event, context, {
+      projectId: _project.projectId,
+      suckerGroupId: _project.suckerGroupId,
+      peer,
+      peerChainId: Number(peerChainId),
+      version,
+    });
   } catch (e) {
     console.error("JBSucker6:InsertToOutboxTree", e);
   }
@@ -176,6 +238,39 @@ ponder.on("JBSucker6:RootToRemote", async ({ event, context }) => {
           eq(suckerTransaction.status, "pending")
         )
       );
+
+    const address = event.log.address;
+    const chainId = Number(context.chain.id);
+    const version = 6;
+    const projectId = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "projectId",
+      address,
+    });
+    const peer = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "peer",
+      address,
+    });
+    const peerChainId = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "peerChainId",
+      address,
+    });
+    const _project = await context.db.find(project, {
+      projectId: Number(projectId),
+      chainId,
+      version,
+    });
+    if (_project) {
+      await recordBridgeToRemote(event, context, {
+        projectId: _project.projectId,
+        suckerGroupId: _project.suckerGroupId,
+        peer,
+        peerChainId: Number(peerChainId),
+        version,
+      });
+    }
   } catch (e) {
     console.error("JBSucker6:RootToRemote", e);
   }
