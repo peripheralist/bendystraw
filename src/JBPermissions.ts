@@ -50,7 +50,15 @@ ponder.on(
           version,
           isRevnetOperator,
         })
-        .onConflictDoUpdate({ permissions: [...permissionIds] });
+        // Recompute isRevnetOperator on every write — a later OperatorPermissionsSet that
+        // revokes an operator (empty permissionIds, e.g. from REVOwner.setOperatorOf rotating
+        // the operator) must clear the flag on the old holder's existing row. Updating only
+        // `permissions` left a stale `isRevnetOperator: true`, so a rotated-away operator kept
+        // showing up in `permissionHolders(where: { isRevnetOperator: true })`.
+        .onConflictDoUpdate({
+          permissions: [...permissionIds],
+          isRevnetOperator,
+        });
     } catch (e) {
       console.error("JBPermissions:OperatorPermissionsSet", e);
     }
