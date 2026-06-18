@@ -83,6 +83,11 @@ async function handleSuckerDeployedFor({
       const newGroupAddresses = [suckerAddress];
       const newGroupProjects = [thisProject.id];
 
+      // Collect every old suckerGroupId being consolidated into the new group, so
+      // we can retroactively re-point all rows (e.g. projectCreateEvent, activityEvent)
+      // that reference any of them — not just those of thisProject.
+      const oldSuckerGroupIds = new Set<string>([thisProject.suckerGroupId]);
+
       matchingSuckers.forEach((s) => {
         // Add any affiliated addresses from matching suckers
         if (!newGroupAddresses.includes(s.address)) {
@@ -92,6 +97,8 @@ async function handleSuckerDeployedFor({
         if (!newGroupProjects.includes(s.project.id)) {
           newGroupProjects.push(s.project.id);
         }
+        // Track the project's old group so its events get re-pointed too
+        oldSuckerGroupIds.add(s.project.suckerGroupId);
       });
 
       // Add any affiliated projects or addresses from matching groups
@@ -102,6 +109,8 @@ async function handleSuckerDeployedFor({
         g.projects.forEach((p) => {
           if (!newGroupProjects.includes(p)) newGroupProjects.push(p);
         });
+        // The matching group itself may be referenced by events directly
+        oldSuckerGroupIds.add(g.id);
       });
 
       const groupProjectsTokenSupplies = (
@@ -148,15 +157,21 @@ async function handleSuckerDeployedFor({
           )
         );
 
-      // Update any existing tables with suckerGroupId pointing to old suckerGroup
-      await context.db.sql
-        .update(projectCreateEvent)
-        .set({ suckerGroupId: newSuckerGroup.id })
-        .where(eq(projectCreateEvent.suckerGroupId, thisProject.suckerGroupId));
-      await context.db.sql
-        .update(activityEvent)
-        .set({ suckerGroupId: newSuckerGroup.id })
-        .where(eq(activityEvent.suckerGroupId, thisProject.suckerGroupId));
+      // Update any existing tables with suckerGroupId pointing to any of the old
+      // suckerGroups being consolidated. Exclude the new group's id (already correct).
+      const staleSuckerGroupIds = [...oldSuckerGroupIds].filter(
+        (id) => id !== newSuckerGroup.id
+      );
+      if (staleSuckerGroupIds.length) {
+        await context.db.sql
+          .update(projectCreateEvent)
+          .set({ suckerGroupId: newSuckerGroup.id })
+          .where(inArray(projectCreateEvent.suckerGroupId, staleSuckerGroupIds));
+        await context.db.sql
+          .update(activityEvent)
+          .set({ suckerGroupId: newSuckerGroup.id })
+          .where(inArray(activityEvent.suckerGroupId, staleSuckerGroupIds));
+      }
     }
 
     // Finally, create the sucker for this event which may be used by this function in later transactions.
