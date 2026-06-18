@@ -4,6 +4,7 @@ import { ponder } from "ponder:registry";
 import {
   _sucker,
   activityEvent,
+  deployErc20Event,
   project,
   projectCreateEvent,
   suckerGroup,
@@ -167,6 +168,10 @@ async function handleSuckerDeployedFor({
           .update(projectCreateEvent)
           .set({ suckerGroupId: newSuckerGroup.id })
           .where(inArray(projectCreateEvent.suckerGroupId, staleSuckerGroupIds));
+        await context.db.sql
+          .update(deployErc20Event)
+          .set({ suckerGroupId: newSuckerGroup.id })
+          .where(inArray(deployErc20Event.suckerGroupId, staleSuckerGroupIds));
         await context.db.sql
           .update(activityEvent)
           .set({ suckerGroupId: newSuckerGroup.id })
