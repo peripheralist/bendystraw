@@ -54,6 +54,8 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "addToBalanceEvent",
   "autoIssueEvent",
   "borrowLoanEvent",
+  "bridgeToOutboxEvent",
+  "bridgeToRemoteEvent",
   "burnEvent",
   "cashOutTokensEvent",
   "decorateBannyEvent",
@@ -88,6 +90,8 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
   borrowLoanEvent: t.text(),
+  bridgeToOutboxEvent: t.text(),
+  bridgeToRemoteEvent: t.text(),
   cashOutTokensEvent: t.text(),
   decorateBannyEvent: t.text(),
   deployErc20Event: t.text(),
@@ -136,6 +140,14 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   borrowLoanEvent: one(borrowLoanEvent, {
     fields: [activityEvent.borrowLoanEvent],
     references: [borrowLoanEvent.id],
+  }),
+  bridgeToOutboxEvent: one(bridgeToOutboxEvent, {
+    fields: [activityEvent.bridgeToOutboxEvent],
+    references: [bridgeToOutboxEvent.id],
+  }),
+  bridgeToRemoteEvent: one(bridgeToRemoteEvent, {
+    fields: [activityEvent.bridgeToRemoteEvent],
+    references: [bridgeToRemoteEvent.id],
   }),
   cashOutTokensEvent: one(cashOutTokensEvent, {
     fields: [activityEvent.cashOutTokensEvent],
@@ -1315,6 +1327,67 @@ export const suckerTransactionRelations = relations(
     suckerGroup: one(suckerGroup, {
       fields: [suckerTransaction.suckerGroupId],
       references: [suckerGroup.id],
+    }),
+  })
+);
+
+// Bridge "sending" step — a move is queued into a sucker's outbox tree (InsertToOutboxTree).
+// peerChainId is the destination chain, so a UI can render "sending X to {chain}".
+export const bridgeToOutboxEvent = onchainTable("bridge_to_outbox_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  sucker: t.hex().notNull(),
+  peer: t.hex().notNull(),
+  peerChainId: t.integer().notNull(),
+  token: t.hex().notNull(),
+  beneficiary: t.hex().notNull(),
+  projectTokenCount: t.bigint().notNull(),
+  terminalTokenAmount: t.bigint().notNull(),
+  index: t.integer().notNull(),
+  root: t.hex().notNull(),
+  hashed: t.hex().notNull(),
+}));
+
+export const bridgeToOutboxEventRelations = relations(
+  bridgeToOutboxEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        bridgeToOutboxEvent.projectId,
+        bridgeToOutboxEvent.chainId,
+        bridgeToOutboxEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
+    }),
+  })
+);
+
+// Bridge "sent" step — the outbox root is shipped to the remote chain (RootToRemote).
+// peerChainId is the destination chain, so a UI can render "sent X to {chain}".
+export const bridgeToRemoteEvent = onchainTable("bridge_to_remote_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  sucker: t.hex().notNull(),
+  peer: t.hex().notNull(),
+  peerChainId: t.integer().notNull(),
+  token: t.hex().notNull(),
+  index: t.integer().notNull(),
+  nonce: t.bigint().notNull(),
+  root: t.hex().notNull(),
+}));
+
+export const bridgeToRemoteEventRelations = relations(
+  bridgeToRemoteEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        bridgeToRemoteEvent.projectId,
+        bridgeToRemoteEvent.chainId,
+        bridgeToRemoteEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
     }),
   })
 );
