@@ -6,6 +6,7 @@ import { JBSuckerAbi } from "../abis/JBSuckerAbi";
 import { JBSuckerV6Abi } from "../abis/JBSuckerV6Abi";
 import { ADDRESS } from "./constants/address";
 import {
+  recordAccountingSync,
   recordBridgeToOutbox,
   recordBridgeToRemote,
 } from "./util/bridgeActivity";
@@ -273,6 +274,40 @@ ponder.on("JBSucker6:RootToRemote", async ({ event, context }) => {
     }
   } catch (e) {
     console.error("JBSucker6:RootToRemote", e);
+  }
+});
+
+ponder.on("JBSucker6:AccountingDataSynced", async ({ event, context }) => {
+  try {
+    const address = event.log.address;
+    const chainId = Number(context.chain.id);
+    const version = 6;
+    const projectId = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "projectId",
+      address,
+    });
+    const peerChainId = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "peerChainId",
+      address,
+    });
+    const _project = await context.db.find(project, {
+      projectId: Number(projectId),
+      chainId,
+      version,
+    });
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+    await recordAccountingSync(event, context, {
+      projectId: _project.projectId,
+      suckerGroupId: _project.suckerGroupId,
+      peerChainId: Number(peerChainId),
+      version,
+    });
+  } catch (e) {
+    console.error("JBSucker6:AccountingDataSynced", e);
   }
 });
 
