@@ -61,6 +61,7 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "cashOutTokensEvent",
   "decorateBannyEvent",
   "deployErc20Event",
+  "inboxRootReceivedEvent",
   "liquidateLoanEvent",
   "manualBurnEvent",
   "manualMintTokensEvent",
@@ -97,6 +98,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   cashOutTokensEvent: t.text(),
   decorateBannyEvent: t.text(),
   deployErc20Event: t.text(),
+  inboxRootReceivedEvent: t.text(),
   liquidateLoanEvent: t.text(),
   manualBurnEvent: t.text(),
   manualMintTokensEvent: t.text(),
@@ -166,6 +168,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   deployErc20Event: one(deployErc20Event, {
     fields: [activityEvent.deployErc20Event],
     references: [deployErc20Event.id],
+  }),
+  inboxRootReceivedEvent: one(inboxRootReceivedEvent, {
+    fields: [activityEvent.inboxRootReceivedEvent],
+    references: [inboxRootReceivedEvent.id],
   }),
   liquidateLoanEvent: one(liquidateLoanEvent, {
     fields: [activityEvent.liquidateLoanEvent],
@@ -1361,6 +1367,38 @@ export const accountingSyncEventRelations = relations(
         accountingSyncEvent.projectId,
         accountingSyncEvent.chainId,
         accountingSyncEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
+    }),
+  })
+);
+
+// Cross-chain accounting "gossip" — the destination sucker accepted a new inbox tree root
+// (NewInboxTreeRoot, V6 only), i.e. a snapshot landed. An app can use the latest one to mark a
+// pending sync as received. chainId is the destination (where it landed); peerChainId is the
+// source chain the snapshot came from.
+export const inboxRootReceivedEvent = onchainTable(
+  "inbox_root_received_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    sucker: t.hex().notNull(),
+    peerChainId: t.integer().notNull(),
+    token: t.hex().notNull(),
+    nonce: t.bigint().notNull(),
+    root: t.hex().notNull(),
+  })
+);
+
+export const inboxRootReceivedEventRelations = relations(
+  inboxRootReceivedEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        inboxRootReceivedEvent.projectId,
+        inboxRootReceivedEvent.chainId,
+        inboxRootReceivedEvent.version,
       ],
       references: [project.projectId, project.chainId, project.version],
     }),
