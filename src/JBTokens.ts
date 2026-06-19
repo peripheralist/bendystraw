@@ -151,8 +151,11 @@ ponder.on("JBTokens:ClaimTokens", async ({ event, context }) => {
         version,
       })
       .set((p) => ({
-        // balance does not change, only exchanging credits for erc20
+        // Claiming converts credits -> ERC20. The paired ERC20 mint (ERC20:Transfer from
+        // zeroAddress) credits BOTH erc20Balance AND balance, so balance must drop the claimed
+        // credits here — otherwise it double-counts. Keeps balance == creditBalance + erc20Balance.
         creditBalance: creditBalance - count,
+        balance: p.balance - count,
         suckerGroupId: _project.suckerGroupId,
       }));
     await setParticipantSnapshot({ participant: _participant, context, event });
