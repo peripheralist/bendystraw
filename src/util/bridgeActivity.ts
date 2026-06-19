@@ -3,6 +3,7 @@ import {
   accountingSyncEvent,
   bridgeToOutboxEvent,
   bridgeToRemoteEvent,
+  inboxRootReceivedEvent,
 } from "ponder:schema";
 import { insertActivityEvent } from "./activityEvent";
 import { getEventParams } from "./getEventParams";
@@ -123,6 +124,40 @@ export async function recordAccountingSync(
     sourceTimestampSeconds: sourceTimestamp >> 128n,
   });
   await insertActivityEvent("accountingSyncEvent", {
+    id,
+    event,
+    context,
+    projectId: info.projectId,
+    suckerGroupId: info.suckerGroupId,
+    version: info.version,
+  });
+}
+
+// ponytail: event typed loosely — see BridgeEvent note above.
+type InboxRootReceivedEvent = Parameters<typeof getEventParams>[0]["event"] & {
+  args: { token: `0x${string}`; nonce: bigint; root: `0x${string}` };
+  log: { address: `0x${string}` };
+};
+
+// "received" step — the destination sucker accepted a new inbox tree root (NewInboxTreeRoot).
+// peerChainId is the source chain the snapshot came from.
+export async function recordInboxRootReceived(
+  event: InboxRootReceivedEvent,
+  context: Context,
+  info: Omit<SuckerInfo, "peer">
+) {
+  const { id } = await context.db.insert(inboxRootReceivedEvent).values({
+    ...getEventParams({ event, context }),
+    projectId: info.projectId,
+    suckerGroupId: info.suckerGroupId,
+    version: info.version,
+    sucker: event.log.address,
+    peerChainId: info.peerChainId,
+    token: event.args.token,
+    nonce: event.args.nonce,
+    root: event.args.root,
+  });
+  await insertActivityEvent("inboxRootReceivedEvent", {
     id,
     event,
     context,
