@@ -1,5 +1,9 @@
 import type { Context } from "ponder:registry";
-import { bridgeToOutboxEvent, bridgeToRemoteEvent } from "ponder:schema";
+import {
+  accountingSyncEvent,
+  bridgeToOutboxEvent,
+  bridgeToRemoteEvent,
+} from "ponder:schema";
 import { insertActivityEvent } from "./activityEvent";
 import { getEventParams } from "./getEventParams";
 import type { Version } from "./getVersion";
@@ -85,6 +89,40 @@ export async function recordBridgeToRemote(
     root: event.args.root,
   });
   await insertActivityEvent("bridgeToRemoteEvent", {
+    id,
+    event,
+    context,
+    projectId: info.projectId,
+    suckerGroupId: info.suckerGroupId,
+    version: info.version,
+  });
+}
+
+// ponytail: event typed loosely — see BridgeEvent note above.
+type AccountingSyncEvent = Parameters<typeof getEventParams>[0]["event"] & {
+  args: { sourceTimestamp: bigint };
+  log: { address: `0x${string}` };
+};
+
+// Cross-chain accounting "gossip" sync (AccountingDataSynced, V6). sourceTimestamp is packed
+// `(block.timestamp << 128) | sequence`; we store it raw and also the unpacked `>> 128` seconds.
+export async function recordAccountingSync(
+  event: AccountingSyncEvent,
+  context: Context,
+  info: Omit<SuckerInfo, "peer">
+) {
+  const sourceTimestamp = event.args.sourceTimestamp;
+  const { id } = await context.db.insert(accountingSyncEvent).values({
+    ...getEventParams({ event, context }),
+    projectId: info.projectId,
+    suckerGroupId: info.suckerGroupId,
+    version: info.version,
+    sucker: event.log.address,
+    peerChainId: info.peerChainId,
+    sourceTimestamp,
+    sourceTimestampSeconds: sourceTimestamp >> 128n,
+  });
+  await insertActivityEvent("accountingSyncEvent", {
     id,
     event,
     context,

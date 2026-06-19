@@ -51,6 +51,7 @@ export const eventParams = (t: PGCB) => ({
 });
 
 export const activityEventType = onchainEnum("activity_event_type", [
+  "accountingSyncEvent",
   "addToBalanceEvent",
   "autoIssueEvent",
   "borrowLoanEvent",
@@ -86,6 +87,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   ...suckerGroupId(t),
   ...version(t),
   type: activityEventType("activity_event_type"),
+  accountingSyncEvent: t.text(),
   addToBalanceEvent: t.text(),
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
@@ -125,6 +127,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
     references: [project.projectId, project.chainId, project.version],
   }),
 
+  accountingSyncEvent: one(accountingSyncEvent, {
+    fields: [activityEvent.accountingSyncEvent],
+    references: [accountingSyncEvent.id],
+  }),
   addToBalanceEvent: one(addToBalanceEvent, {
     fields: [activityEvent.addToBalanceEvent],
     references: [addToBalanceEvent.id],
@@ -1327,6 +1333,36 @@ export const suckerTransactionRelations = relations(
     suckerGroup: one(suckerGroup, {
       fields: [suckerTransaction.suckerGroupId],
       references: [suckerGroup.id],
+    }),
+  })
+);
+
+// Cross-chain accounting "gossip" sync — a chain pushed a fresh accounting snapshot to its peer
+// (AccountingDataSynced, V6 only). The peer accepts it asynchronously (minutes); an app shows
+// "Syncing…" while this sent snapshot is newer than the peer's accepted one (read on-chain via
+// peerChainContextsOf). chainId is the source chain; peerChainId is the destination.
+// NOTE: sourceTimestamp is packed `(block.timestamp << 128) | sequence` — sourceTimestampSeconds is
+// the unpacked `sourceTimestamp >> 128` seconds so clients don't have to unpack.
+export const accountingSyncEvent = onchainTable("accounting_sync_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  sucker: t.hex().notNull(),
+  peerChainId: t.integer().notNull(),
+  sourceTimestamp: t.bigint().notNull(),
+  sourceTimestampSeconds: t.bigint().notNull(),
+}));
+
+export const accountingSyncEventRelations = relations(
+  accountingSyncEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        accountingSyncEvent.projectId,
+        accountingSyncEvent.chainId,
+        accountingSyncEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
     }),
   })
 );
