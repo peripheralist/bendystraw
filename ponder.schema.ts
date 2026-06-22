@@ -58,6 +58,7 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "bridgeToOutboxEvent",
   "bridgeToRemoteEvent",
   "burnEvent",
+  "buybackPoolEvent",
   "cashOutTokensEvent",
   "decorateBannyEvent",
   "deployErc20Event",
@@ -75,6 +76,7 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "sendPayoutsEvent",
   "sendReservedTokensToSplitEvent",
   "sendReservedTokensToSplitsEvent",
+  "swapEvent",
   "useAllowanceEvent",
 ]);
 
@@ -95,6 +97,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   borrowLoanEvent: t.text(),
   bridgeToOutboxEvent: t.text(),
   bridgeToRemoteEvent: t.text(),
+  buybackPoolEvent: t.text(),
   cashOutTokensEvent: t.text(),
   decorateBannyEvent: t.text(),
   deployErc20Event: t.text(),
@@ -112,6 +115,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   sendPayoutToSplitEvent: t.text(),
   sendReservedTokensToSplitEvent: t.text(),
   sendReservedTokensToSplitsEvent: t.text(),
+  swapEvent: t.text(),
   useAllowanceEvent: t.text(),
 }));
 
@@ -156,6 +160,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   bridgeToRemoteEvent: one(bridgeToRemoteEvent, {
     fields: [activityEvent.bridgeToRemoteEvent],
     references: [bridgeToRemoteEvent.id],
+  }),
+  buybackPoolEvent: one(buybackPoolEvent, {
+    fields: [activityEvent.buybackPoolEvent],
+    references: [buybackPoolEvent.id],
   }),
   cashOutTokensEvent: one(cashOutTokensEvent, {
     fields: [activityEvent.cashOutTokensEvent],
@@ -224,6 +232,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   sendReservedTokensToSplitsEvent: one(sendReservedTokensToSplitsEvent, {
     fields: [activityEvent.sendReservedTokensToSplitsEvent],
     references: [sendReservedTokensToSplitsEvent.id],
+  }),
+  swapEvent: one(swapEvent, {
+    fields: [activityEvent.swapEvent],
+    references: [swapEvent.id],
   }),
   useAllowanceEvent: one(useAllowanceEvent, {
     fields: [activityEvent.useAllowanceEvent],
@@ -954,6 +966,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   autoIssueEvents: many(autoIssueEvent),
   borrowLoanEvents: many(borrowLoanEvent),
   burnEvents: many(burnEvent),
+  buybackPoolEvents: many(buybackPoolEvent),
   cashOutTokensEvents: many(cashOutTokensEvent),
   deployErc20Events: many(deployErc20Event),
   liquidateLoanEvents: many(liquidateLoanEvent),
@@ -970,6 +983,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   sendReservedTokensToSplitEvents: many(sendReservedTokensToSplitEvent),
   sendReservedTokensToSplitsEvents: many(sendReservedTokensToSplitsEvent),
   storeAutoIssuanceAmountEvent: many(storeAutoIssuanceAmountEvent),
+  swapEvents: many(swapEvent),
   useAllowanceEvents: many(useAllowanceEvent),
 }));
 

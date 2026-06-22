@@ -1,6 +1,7 @@
 import { Context } from "ponder:registry";
 import { ponder } from "ponder:registry";
 import { buybackPoolEvent, project, swapEvent } from "ponder:schema";
+import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 
 // JBBuybackHook is a V6-only singleton (events carry `projectId`), so version
@@ -30,7 +31,7 @@ ponder.on("JBBuybackHook6:Swap", async ({ event, context }) => {
 
     const _project = await findProject(context, projectId);
 
-    await context.db.insert(swapEvent).values({
+    const { id } = await context.db.insert(swapEvent).values({
       ...getEventParams({ event, context }),
       projectId,
       suckerGroupId: _project.suckerGroupId,
@@ -39,6 +40,15 @@ ponder.on("JBBuybackHook6:Swap", async ({ event, context }) => {
       poolId,
       terminalTokenAmount: amountToSwapWith,
       projectTokenAmount: amountReceived,
+    });
+
+    await insertActivityEvent("swapEvent", {
+      id,
+      event,
+      context,
+      projectId,
+      suckerGroupId: _project.suckerGroupId,
+      version: VERSION,
     });
   } catch (e) {
     console.error("JBBuybackHook6:Swap", e);
@@ -54,7 +64,7 @@ ponder.on("JBBuybackHook6:CashOutSwap", async ({ event, context }) => {
 
     const _project = await findProject(context, projectId);
 
-    await context.db.insert(swapEvent).values({
+    const { id } = await context.db.insert(swapEvent).values({
       ...getEventParams({ event, context }),
       projectId,
       suckerGroupId: _project.suckerGroupId,
@@ -63,6 +73,15 @@ ponder.on("JBBuybackHook6:CashOutSwap", async ({ event, context }) => {
       poolId,
       terminalTokenAmount: amountReceived,
       projectTokenAmount: cashOutCount,
+    });
+
+    await insertActivityEvent("swapEvent", {
+      id,
+      event,
+      context,
+      projectId,
+      suckerGroupId: _project.suckerGroupId,
+      version: VERSION,
     });
   } catch (e) {
     console.error("JBBuybackHook6:CashOutSwap", e);
@@ -77,7 +96,7 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
 
     const _project = await findProject(context, projectId);
 
-    await context.db.insert(swapEvent).values({
+    const { id } = await context.db.insert(swapEvent).values({
       ...getEventParams({ event, context }),
       projectId,
       suckerGroupId: _project.suckerGroupId,
@@ -86,6 +105,15 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
       poolId: null,
       terminalTokenAmount: leftoverAmount,
       projectTokenAmount: tokenCount,
+    });
+
+    await insertActivityEvent("swapEvent", {
+      id,
+      event,
+      context,
+      projectId,
+      suckerGroupId: _project.suckerGroupId,
+      version: VERSION,
     });
   } catch (e) {
     console.error("JBBuybackHook6:Mint", e);
@@ -100,13 +128,22 @@ ponder.on("JBBuybackHook6:PoolAdded", async ({ event, context }) => {
 
     const _project = await findProject(context, projectId);
 
-    await context.db.insert(buybackPoolEvent).values({
+    const { id } = await context.db.insert(buybackPoolEvent).values({
       ...getEventParams({ event, context }),
       projectId,
       suckerGroupId: _project.suckerGroupId,
       version: VERSION,
       terminalToken,
       poolId,
+    });
+
+    await insertActivityEvent("buybackPoolEvent", {
+      id,
+      event,
+      context,
+      projectId,
+      suckerGroupId: _project.suckerGroupId,
+      version: VERSION,
     });
   } catch (e) {
     console.error("JBBuybackHook6:PoolAdded", e);
