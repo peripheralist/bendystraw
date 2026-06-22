@@ -1,6 +1,7 @@
 import type { Context } from "ponder:registry";
 import {
   accountingSyncEvent,
+  bridgeClaimEvent,
   bridgeToOutboxEvent,
   bridgeToRemoteEvent,
   inboxRootReceivedEvent,
@@ -158,6 +159,51 @@ export async function recordInboxRootReceived(
     root: event.args.root,
   });
   await insertActivityEvent("inboxRootReceivedEvent", {
+    id,
+    event,
+    context,
+    projectId: info.projectId,
+    suckerGroupId: info.suckerGroupId,
+    version: info.version,
+  });
+}
+
+type BridgeClaimEvent = Parameters<typeof getEventParams>[0]["event"] & {
+  args: {
+    beneficiary: `0x${string}`;
+    token: `0x${string}`;
+    projectTokenCount: bigint;
+    terminalTokenAmount: bigint;
+    index: bigint;
+    autoAddedToBalance?: boolean;
+    metadata?: `0x${string}`;
+  };
+  log: { address: `0x${string}` };
+};
+
+// "claimed" step — the destination sucker paid/minted the bridged value to the beneficiary.
+export async function recordBridgeClaim(
+  event: BridgeClaimEvent,
+  context: Context,
+  info: Omit<SuckerInfo, "peer">
+) {
+  const { id } = await context.db.insert(bridgeClaimEvent).values({
+    ...getEventParams({ event, context }),
+    projectId: info.projectId,
+    suckerGroupId: info.suckerGroupId,
+    version: info.version,
+    sucker: event.log.address,
+    peerChainId: info.peerChainId,
+    token: event.args.token,
+    beneficiary: event.args.beneficiary,
+    projectTokenCount: event.args.projectTokenCount,
+    terminalTokenAmount: event.args.terminalTokenAmount,
+    index: Number(event.args.index),
+    autoAddedToBalance: event.args.autoAddedToBalance ?? null,
+    metadata: event.args.metadata ?? null,
+  });
+
+  await insertActivityEvent("bridgeClaimEvent", {
     id,
     event,
     context,

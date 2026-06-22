@@ -56,6 +56,7 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "addToBalanceEvent",
   "autoIssueEvent",
   "borrowLoanEvent",
+  "bridgeClaimEvent",
   "bridgeToOutboxEvent",
   "bridgeToRemoteEvent",
   "burnEvent",
@@ -69,15 +70,19 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "manualMintTokensEvent",
   "mintNftEvent",
   "mintTokensEvent",
+  "operatorPermissionsSetEvent",
   "payEvent",
   "projectCreateEvent",
+  "projectTransferEvent",
   "reallocateLoanEvent",
   "repayLoanEvent",
   "removeNftTierEvent",
+  "rulesetQueuedEvent",
   "sendPayoutToSplitEvent",
   "sendPayoutsEvent",
   "sendReservedTokensToSplitEvent",
   "sendReservedTokensToSplitsEvent",
+  "setUriEvent",
   "swapEvent",
   "useAllowanceEvent",
 ]);
@@ -98,6 +103,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
   borrowLoanEvent: t.text(),
+  bridgeClaimEvent: t.text(),
   bridgeToOutboxEvent: t.text(),
   bridgeToRemoteEvent: t.text(),
   buybackPoolEvent: t.text(),
@@ -110,15 +116,19 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   manualMintTokensEvent: t.text(),
   mintNftEvent: t.text(),
   mintTokensEvent: t.text(),
+  operatorPermissionsSetEvent: t.text(),
   payEvent: t.text(),
   projectCreateEvent: t.text(),
+  projectTransferEvent: t.text(),
   repayLoanEvent: t.text(),
   reallocateLoanEvent: t.text(),
   removeNftTierEvent: t.text(),
+  rulesetQueuedEvent: t.text(),
   sendPayoutsEvent: t.text(),
   sendPayoutToSplitEvent: t.text(),
   sendReservedTokensToSplitEvent: t.text(),
   sendReservedTokensToSplitsEvent: t.text(),
+  setUriEvent: t.text(),
   swapEvent: t.text(),
   useAllowanceEvent: t.text(),
 }));
@@ -160,6 +170,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   borrowLoanEvent: one(borrowLoanEvent, {
     fields: [activityEvent.borrowLoanEvent],
     references: [borrowLoanEvent.id],
+  }),
+  bridgeClaimEvent: one(bridgeClaimEvent, {
+    fields: [activityEvent.bridgeClaimEvent],
+    references: [bridgeClaimEvent.id],
   }),
   bridgeToOutboxEvent: one(bridgeToOutboxEvent, {
     fields: [activityEvent.bridgeToOutboxEvent],
@@ -209,6 +223,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
     fields: [activityEvent.mintTokensEvent],
     references: [mintTokensEvent.id],
   }),
+  operatorPermissionsSetEvent: one(operatorPermissionsSetEvent, {
+    fields: [activityEvent.operatorPermissionsSetEvent],
+    references: [operatorPermissionsSetEvent.id],
+  }),
   payEvent: one(payEvent, {
     fields: [activityEvent.payEvent],
     references: [payEvent.id],
@@ -216,6 +234,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   projectCreateEvent: one(projectCreateEvent, {
     fields: [activityEvent.projectCreateEvent],
     references: [projectCreateEvent.id],
+  }),
+  projectTransferEvent: one(projectTransferEvent, {
+    fields: [activityEvent.projectTransferEvent],
+    references: [projectTransferEvent.id],
   }),
   repayLoanEvent: one(repayLoanEvent, {
     fields: [activityEvent.repayLoanEvent],
@@ -228,6 +250,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   removeNftTierEvent: one(removeNftTierEvent, {
     fields: [activityEvent.removeNftTierEvent],
     references: [removeNftTierEvent.id],
+  }),
+  rulesetQueuedEvent: one(rulesetQueuedEvent, {
+    fields: [activityEvent.rulesetQueuedEvent],
+    references: [rulesetQueuedEvent.id],
   }),
   sendPayoutsEvent: one(sendPayoutsEvent, {
     fields: [activityEvent.sendPayoutsEvent],
@@ -244,6 +270,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   sendReservedTokensToSplitsEvent: one(sendReservedTokensToSplitsEvent, {
     fields: [activityEvent.sendReservedTokensToSplitsEvent],
     references: [sendReservedTokensToSplitsEvent.id],
+  }),
+  setUriEvent: one(setUriEvent, {
+    fields: [activityEvent.setUriEvent],
+    references: [setUriEvent.id],
   }),
   swapEvent: one(swapEvent, {
     fields: [activityEvent.swapEvent],
@@ -974,6 +1004,34 @@ export const permissionHolderRelations = relations(
   })
 );
 
+export const operatorPermissionsSetEvent = onchainTable(
+  "operator_permissions_set_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    account: t.hex().notNull(),
+    operator: t.hex().notNull(),
+    permissions: t.integer().notNull().array(),
+    packed: t.bigint().notNull(),
+    isRevnetOperator: t.boolean(),
+  })
+);
+
+export const operatorPermissionsSetEventRelations = relations(
+  operatorPermissionsSetEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        operatorPermissionsSetEvent.projectId,
+        operatorPermissionsSetEvent.chainId,
+        operatorPermissionsSetEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
+    }),
+  })
+);
+
 export const project = onchainTable(
   "project",
   (t) => ({
@@ -1053,6 +1111,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   addToBalanceEvents: many(addToBalanceEvent),
   autoIssueEvents: many(autoIssueEvent),
   borrowLoanEvents: many(borrowLoanEvent),
+  bridgeClaimEvents: many(bridgeClaimEvent),
   burnEvents: many(burnEvent),
   buybackPoolEvents: many(buybackPoolEvent),
   cashOutTokensEvents: many(cashOutTokensEvent),
@@ -1062,15 +1121,19 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   manualMintTokensEvents: many(manualMintTokensEvent),
   mintNftEvents: many(mintNftEvent),
   mintTokensEvents: many(mintTokensEvent),
+  operatorPermissionsSetEvents: many(operatorPermissionsSetEvent),
   payEvents: many(payEvent),
   projectCreateEvents: many(projectCreateEvent),
+  projectTransferEvents: many(projectTransferEvent),
   repayLoanEvents: many(repayLoanEvent),
   reallocateLoanEvents: many(reallocateLoanEvent),
   removeNftTierEvents: many(removeNftTierEvent),
+  rulesetQueuedEvents: many(rulesetQueuedEvent),
   sendPayoutsEvents: many(sendPayoutsEvent),
   sendPayoutToSplitEvents: many(sendPayoutToSplitEvent),
   sendReservedTokensToSplitEvents: many(sendReservedTokensToSplitEvent),
   sendReservedTokensToSplitsEvents: many(sendReservedTokensToSplitsEvent),
+  setUriEvents: many(setUriEvent),
   storeAutoIssuanceAmountEvent: many(storeAutoIssuanceAmountEvent),
   swapEvents: many(swapEvent),
   useAllowanceEvents: many(useAllowanceEvent),
@@ -1126,6 +1189,83 @@ export const projectCreateEventRelations = relations(
     }),
   })
 );
+
+export const projectTransferEvent = onchainTable(
+  "project_transfer_event",
+  (t) => ({
+    ...uniqueId(t),
+    ...chainId(t),
+    ...version(t),
+    ...txHash(t),
+    ...timestamp(t),
+    ...from(t),
+    ...logIndex(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    previousOwner: t.hex().notNull(),
+    owner: t.hex().notNull(),
+  })
+);
+
+export const projectTransferEventRelations = relations(
+  projectTransferEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        projectTransferEvent.projectId,
+        projectTransferEvent.chainId,
+        projectTransferEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
+    }),
+  })
+);
+
+export const rulesetQueuedEvent = onchainTable(
+  "ruleset_queued_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    rulesetId: t.bigint().notNull(),
+    duration: t.bigint().notNull(),
+    weight: t.bigint().notNull(),
+    weightCutPercent: t.bigint().notNull(),
+    approvalHook: t.hex().notNull(),
+    metadata: t.bigint().notNull(),
+    mustStartAtOrAfter: t.bigint().notNull(),
+    cashOutTax: t.integer().notNull(),
+  })
+);
+
+export const rulesetQueuedEventRelations = relations(
+  rulesetQueuedEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        rulesetQueuedEvent.projectId,
+        rulesetQueuedEvent.chainId,
+        rulesetQueuedEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
+    }),
+  })
+);
+
+export const setUriEvent = onchainTable("set_uri_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  uri: t.text().notNull(),
+  metadata: t.json(),
+}));
+
+export const setUriEventRelations = relations(setUriEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [setUriEvent.projectId, setUriEvent.chainId, setUriEvent.version],
+    references: [project.projectId, project.chainId, project.version],
+  }),
+}));
 
 export const repayLoanEvent = onchainTable("repay_loan_event", (t) => ({
   ...eventParams(t),
@@ -1563,6 +1703,35 @@ export const bridgeToRemoteEventRelations = relations(
         bridgeToRemoteEvent.projectId,
         bridgeToRemoteEvent.chainId,
         bridgeToRemoteEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
+    }),
+  })
+);
+
+export const bridgeClaimEvent = onchainTable("bridge_claim_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  sucker: t.hex().notNull(),
+  peerChainId: t.integer().notNull(),
+  token: t.hex().notNull(),
+  beneficiary: t.hex().notNull(),
+  projectTokenCount: t.bigint().notNull(),
+  terminalTokenAmount: t.bigint().notNull(),
+  index: t.integer().notNull(),
+  autoAddedToBalance: t.boolean(),
+  metadata: t.hex(),
+}));
+
+export const bridgeClaimEventRelations = relations(
+  bridgeClaimEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        bridgeClaimEvent.projectId,
+        bridgeClaimEvent.chainId,
+        bridgeClaimEvent.version,
       ],
       references: [project.projectId, project.chainId, project.version],
     }),

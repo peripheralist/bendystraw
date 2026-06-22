@@ -1,6 +1,12 @@
 import { ponder } from "ponder:registry";
-import { permissionHolder, project } from "ponder:schema";
+import {
+  operatorPermissionsSetEvent,
+  permissionHolder,
+  project,
+} from "ponder:schema";
 import { getVersion } from "./util/getVersion";
+import { insertActivityEvent } from "./util/activityEvent";
+import { getEventParams } from "./util/getEventParams";
 
 // https://github.com/rev-net/revnet-core-v5/blob/024d584cbb765d6466787ac6dac0326cbb146db4/src/REVDeployer.sol#L538
 const REVNET_OPERATOR_PERMISSIONS_V5 = [17, 25, 24, 6, 18, 30];
@@ -59,6 +65,29 @@ ponder.on(
           permissions: [...permissionIds],
           isRevnetOperator,
         });
+
+      if (_project) {
+        const { id } = await context.db.insert(operatorPermissionsSetEvent).values({
+          ...getEventParams({ event, context }),
+          projectId,
+          suckerGroupId: _project.suckerGroupId,
+          version,
+          account,
+          operator,
+          permissions: [...permissionIds],
+          packed: event.args.packed,
+          isRevnetOperator,
+        });
+
+        await insertActivityEvent("operatorPermissionsSetEvent", {
+          id,
+          event,
+          context,
+          projectId,
+          suckerGroupId: _project.suckerGroupId,
+          version,
+        });
+      }
     } catch (e) {
       console.error("JBPermissions:OperatorPermissionsSet", e);
     }

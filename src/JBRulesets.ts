@@ -1,8 +1,10 @@
 import { ponder } from "ponder:registry";
-import { cashOutTaxSnapshot, project } from "ponder:schema";
+import { cashOutTaxSnapshot, project, rulesetQueuedEvent } from "ponder:schema";
 import { addressForVersion, getVersion } from "./util/getVersion";
 import { ADDRESS } from "./constants/address";
 import { JBControllerAbi } from "../abis/JBControllerAbi";
+import { insertActivityEvent } from "./util/activityEvent";
+import { getEventParams } from "./util/getEventParams";
 
 ponder.on("JBRulesets:RulesetQueued", async ({ event, context }) => {
   try {
@@ -54,6 +56,30 @@ ponder.on("JBRulesets:RulesetQueued", async ({ event, context }) => {
       cashOutTax,
       start: event.args.mustStartAtOrAfter,
       duration: event.args.duration,
+    });
+
+    const { id } = await context.db.insert(rulesetQueuedEvent).values({
+      ...getEventParams({ event, context }),
+      projectId: Number(event.args.projectId),
+      suckerGroupId: _project.suckerGroupId,
+      version,
+      rulesetId: event.args.rulesetId,
+      duration: event.args.duration,
+      weight: event.args.weight,
+      weightCutPercent: event.args.weightCutPercent,
+      approvalHook: event.args.approvalHook,
+      metadata: event.args.metadata,
+      mustStartAtOrAfter: event.args.mustStartAtOrAfter,
+      cashOutTax,
+    });
+
+    await insertActivityEvent("rulesetQueuedEvent", {
+      id,
+      event,
+      context,
+      projectId: event.args.projectId,
+      suckerGroupId: _project.suckerGroupId,
+      version,
     });
   } catch (e) {
     console.error("JBRulesets:RulesetQueued", e);

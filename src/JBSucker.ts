@@ -7,6 +7,7 @@ import { JBSuckerV6Abi } from "../abis/JBSuckerV6Abi";
 import { ADDRESS } from "./constants/address";
 import {
   recordAccountingSync,
+  recordBridgeClaim,
   recordBridgeToOutbox,
   recordBridgeToRemote,
   recordInboxRootReceived,
@@ -160,6 +161,42 @@ ponder.on("JBSucker:Claimed", async ({ event, context }) => {
           eq(suckerTransaction.status, "claimable")
         )
       );
+
+    const address = event.log.address;
+    const chainId = Number(context.chain.id);
+    const projectId = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "projectId",
+      address,
+    });
+    const peerChainId = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "peerChainId",
+      address,
+    });
+    const directoryAddress = await context.client.readContract({
+      abi: JBSuckerAbi,
+      functionName: "DIRECTORY",
+      address,
+    });
+    const version = ADDRESS.jbDirectory6 && isAddressEqual(directoryAddress, ADDRESS.jbDirectory6)
+      ? 6
+      : isAddressEqual(directoryAddress, ADDRESS.jbDirectory5)
+        ? 5
+        : 4;
+    const _project = await context.db.find(project, {
+      projectId: Number(projectId),
+      chainId,
+      version,
+    });
+    if (_project) {
+      await recordBridgeClaim(event, context, {
+        projectId: _project.projectId,
+        suckerGroupId: _project.suckerGroupId,
+        peerChainId: Number(peerChainId),
+        version,
+      });
+    }
   } catch (e) {
     console.error("JBSucker:Claimed", e);
   }
@@ -360,6 +397,33 @@ ponder.on("JBSucker6:Claimed", async ({ event, context }) => {
           eq(suckerTransaction.status, "claimable")
         )
       );
+
+    const address = event.log.address;
+    const chainId = Number(context.chain.id);
+    const version = 6;
+    const projectId = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "projectId",
+      address,
+    });
+    const peerChainId = await context.client.readContract({
+      abi: JBSuckerV6Abi,
+      functionName: "peerChainId",
+      address,
+    });
+    const _project = await context.db.find(project, {
+      projectId: Number(projectId),
+      chainId,
+      version,
+    });
+    if (_project) {
+      await recordBridgeClaim(event, context, {
+        projectId: _project.projectId,
+        suckerGroupId: _project.suckerGroupId,
+        peerChainId: Number(peerChainId),
+        version,
+      });
+    }
   } catch (e) {
     console.error("JBSucker6:Claimed", e);
   }
