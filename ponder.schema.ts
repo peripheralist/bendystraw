@@ -52,6 +52,7 @@ export const eventParams = (t: PGCB) => ({
 
 export const activityEventType = onchainEnum("activity_event_type", [
   "accountingSyncEvent",
+  "addNftTierEvent",
   "addToBalanceEvent",
   "autoIssueEvent",
   "borrowLoanEvent",
@@ -72,6 +73,7 @@ export const activityEventType = onchainEnum("activity_event_type", [
   "projectCreateEvent",
   "reallocateLoanEvent",
   "repayLoanEvent",
+  "removeNftTierEvent",
   "sendPayoutToSplitEvent",
   "sendPayoutsEvent",
   "sendReservedTokensToSplitEvent",
@@ -91,6 +93,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   ...version(t),
   type: activityEventType("activity_event_type"),
   accountingSyncEvent: t.text(),
+  addNftTierEvent: t.text(),
   addToBalanceEvent: t.text(),
   autoIssueEvent: t.text(),
   burnEvent: t.text(),
@@ -111,6 +114,7 @@ export const activityEvent = onchainTable("activity_event", (t) => ({
   projectCreateEvent: t.text(),
   repayLoanEvent: t.text(),
   reallocateLoanEvent: t.text(),
+  removeNftTierEvent: t.text(),
   sendPayoutsEvent: t.text(),
   sendPayoutToSplitEvent: t.text(),
   sendReservedTokensToSplitEvent: t.text(),
@@ -136,6 +140,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   accountingSyncEvent: one(accountingSyncEvent, {
     fields: [activityEvent.accountingSyncEvent],
     references: [accountingSyncEvent.id],
+  }),
+  addNftTierEvent: one(addNftTierEvent, {
+    fields: [activityEvent.addNftTierEvent],
+    references: [addNftTierEvent.id],
   }),
   addToBalanceEvent: one(addToBalanceEvent, {
     fields: [activityEvent.addToBalanceEvent],
@@ -216,6 +224,10 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
   reallocateLoanEvent: one(reallocateLoanEvent, {
     fields: [activityEvent.reallocateLoanEvent],
     references: [reallocateLoanEvent.id],
+  }),
+  removeNftTierEvent: one(removeNftTierEvent, {
+    fields: [activityEvent.removeNftTierEvent],
+    references: [removeNftTierEvent.id],
   }),
   sendPayoutsEvent: one(sendPayoutsEvent, {
     fields: [activityEvent.sendPayoutsEvent],
@@ -593,6 +605,81 @@ export const manualMintTokensEventRelations = relations(
   })
 );
 
+export const addNftTierEvent = onchainTable("add_nft_tier_event", (t) => ({
+  ...eventParams(t),
+  ...projectId(t),
+  ...suckerGroupId(t),
+  hook: t.hex().notNull(),
+  tierId: t.integer().notNull(),
+  price: t.bigint().notNull(),
+  initialSupply: t.integer().notNull(),
+  remainingSupply: t.integer().notNull(),
+  category: t.integer().notNull(),
+  encodedIpfsUri: t.hex().notNull(),
+  resolvedUri: t.text(),
+  metadata: t.json(),
+}));
+
+export const addNftTierEventRelations = relations(
+  addNftTierEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        addNftTierEvent.projectId,
+        addNftTierEvent.chainId,
+        addNftTierEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
+    }),
+    tier: one(nftTier, {
+      fields: [
+        addNftTierEvent.tierId,
+        addNftTierEvent.chainId,
+        addNftTierEvent.hook,
+        addNftTierEvent.version,
+      ],
+      references: [
+        nftTier.tierId,
+        nftTier.chainId,
+        nftTier.hook,
+        nftTier.version,
+      ],
+    }),
+  })
+);
+
+export const removeNftTierEvent = onchainTable(
+  "remove_nft_tier_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    hook: t.hex().notNull(),
+    tierId: t.integer().notNull(),
+    price: t.bigint(),
+    initialSupply: t.integer(),
+    remainingSupply: t.integer(),
+    category: t.integer(),
+    encodedIpfsUri: t.hex(),
+    resolvedUri: t.text(),
+    metadata: t.json(),
+  })
+);
+
+export const removeNftTierEventRelations = relations(
+  removeNftTierEvent,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        removeNftTierEvent.projectId,
+        removeNftTierEvent.chainId,
+        removeNftTierEvent.version,
+      ],
+      references: [project.projectId, project.chainId, project.version],
+    }),
+  })
+);
+
 export const mintNftEvent = onchainTable("mint_nft_event", (t) => ({
   ...eventParams(t),
   ...projectId(t),
@@ -962,6 +1049,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
 
   // events
   activityEvents: many(activityEvent),
+  addNftTierEvents: many(addNftTierEvent),
   addToBalanceEvents: many(addToBalanceEvent),
   autoIssueEvents: many(autoIssueEvent),
   borrowLoanEvents: many(borrowLoanEvent),
@@ -978,6 +1066,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   projectCreateEvents: many(projectCreateEvent),
   repayLoanEvents: many(repayLoanEvent),
   reallocateLoanEvents: many(reallocateLoanEvent),
+  removeNftTierEvents: many(removeNftTierEvent),
   sendPayoutsEvents: many(sendPayoutsEvent),
   sendPayoutToSplitEvents: many(sendPayoutToSplitEvent),
   sendReservedTokensToSplitEvents: many(sendReservedTokensToSplitEvent),
