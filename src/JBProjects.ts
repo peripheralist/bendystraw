@@ -1,5 +1,11 @@
 import { ponder } from "ponder:registry";
-import { project, projectCreateEvent, suckerGroup } from "ponder:schema";
+import {
+  project,
+  projectCreateEvent,
+  projectTransferEvent,
+  suckerGroup,
+} from "ponder:schema";
+import { zeroAddress } from "viem";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { getVersion, isRevnetOwner } from "./util/getVersion";
@@ -72,18 +78,43 @@ ponder.on("JBProjects:Transfer", async ({ event, context }) => {
   try {
     const version = getVersion(event, "jbProjects");
 
-    const owner = event.args.to;
+    const { from: previousOwner, to: owner, tokenId } = event.args;
+    const projectId = Number(tokenId);
 
-    await context.db
+    const updatedProject = await context.db
       .update(project, {
         chainId: context.chain.id,
-        projectId: Number(event.args.tokenId),
+        projectId,
         version,
       })
       .set({
         owner,
         isRevnet: isRevnetOwner(owner, version),
       });
+
+    if (previousOwner === zeroAddress) return;
+
+    const { id } = await context.db.insert(projectTransferEvent).values({
+      chainId: context.chain.id,
+      version,
+      txHash: event.transaction.hash,
+      timestamp: Number(event.block.timestamp),
+      from: event.transaction.from,
+      logIndex: event.log.logIndex,
+      projectId,
+      suckerGroupId: updatedProject.suckerGroupId,
+      previousOwner,
+      owner,
+    });
+
+    await insertActivityEvent("projectTransferEvent", {
+      id,
+      event,
+      context,
+      projectId,
+      suckerGroupId: updatedProject.suckerGroupId,
+      version,
+    });
   } catch (e) {
     console.error("JBProjects:Transfer", e);
   }

@@ -5,6 +5,7 @@ import {
   project,
   sendReservedTokensToSplitEvent,
   sendReservedTokensToSplitsEvent,
+  setUriEvent,
 } from "ponder:schema";
 import { isAddressEqual } from "viem";
 import { insertActivityEvent } from "./util/activityEvent";
@@ -142,7 +143,7 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
 
     const version = getVersion(event, "jbController");
 
-    await context.db.update(project, { chainId, projectId, version }).set({
+    const updatedProject = await context.db.update(project, { chainId, projectId, version }).set({
       metadataUri: uri,
       metadata,
       name: metadata?.name,
@@ -158,6 +159,24 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
       description: metadata?.description,
       tags: metadata?.tags,
       projectTagline: metadata?.projectTagline,
+    });
+
+    const { id } = await context.db.insert(setUriEvent).values({
+      ...getEventParams({ event, context }),
+      projectId,
+      suckerGroupId: updatedProject.suckerGroupId,
+      version,
+      uri,
+      metadata,
+    });
+
+    await insertActivityEvent("setUriEvent", {
+      id,
+      event,
+      context,
+      projectId,
+      suckerGroupId: updatedProject.suckerGroupId,
+      version,
     });
   } catch (e) {
     console.error("JBController:SetUri", e, event.transaction.hash);

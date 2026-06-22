@@ -13,6 +13,10 @@ import { ADDRESS } from "./constants/address";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { addressForVersion } from "./util/getVersion";
+import {
+  recordAddNftTierActivity,
+  recordRemoveNftTierActivity,
+} from "./util/nftTierActivity";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { tierOf } from "./util/tierOf";
 import { parseTokenUri } from "./util/tokenUri";
@@ -38,6 +42,13 @@ if (ADDRESS.jb721TiersHookDeployer6) {
         address: hook,
         functionName: "projectId",
       });
+      const projectId = Number(projectIdCall);
+
+      const _project = await context.db.find(project, {
+        projectId,
+        chainId: context.chain.id,
+        version,
+      });
 
       let svg = null;
       if (isAddressEqual(hook, bannyRetailHookForVersion(version, context.chain.id))) {
@@ -49,12 +60,14 @@ if (ADDRESS.jb721TiersHookDeployer6) {
         });
       }
 
+      const metadata = parseTokenUri(resolvedUri);
+
       await context.db.insert(nftTier).values({
         tierId: Number(tierId),
         chainId: context.chain.id,
         price: tier.price,
         hook,
-        projectId: Number(projectIdCall),
+        projectId,
         allowOwnerMint: tier.flags.allowOwnerMint,
         createdAt: Number(event.block.timestamp),
         cannotBeRemoved: tier.flags.cantBeRemoved,
@@ -67,10 +80,20 @@ if (ADDRESS.jb721TiersHookDeployer6) {
         transfersPausable: tier.flags.transfersPausable,
         votingUnits: BigInt(tier.votingUnits),
         resolvedUri,
-        metadata: parseTokenUri(resolvedUri),
+        metadata,
         svg,
         version,
       });
+
+      if (_project) {
+        await recordAddNftTierActivity(event, context, {
+          projectId,
+          suckerGroupId: _project.suckerGroupId,
+          version,
+          resolvedUri,
+          metadata,
+        });
+      }
     } catch (e) {
       console.error("JB721TiersHook6:AddTier", e);
     }
@@ -195,10 +218,43 @@ if (ADDRESS.jb721TiersHookDeployer6) {
 
   ponder.on("JB721TiersHook6:RemoveTier", async ({ event, context }) => {
     try {
+      const hook = event.log.address;
+      const tierId = Number(event.args.tierId);
+      const existingTier = await context.db.find(nftTier, {
+        chainId: context.chain.id,
+        hook,
+        tierId,
+        version,
+      });
+      let projectId = existingTier?.projectId;
+
+      if (projectId === undefined) {
+        const projectIdCall = await context.client.readContract({
+          abi: JB721TiersHookV6Abi,
+          address: hook,
+          functionName: "projectId",
+        });
+        projectId = Number(projectIdCall);
+      }
+
+      const _project = await context.db.find(project, {
+        projectId,
+        chainId: context.chain.id,
+        version,
+      });
+
+      if (_project) {
+        await recordRemoveNftTierActivity(event, context, {
+          projectId,
+          suckerGroupId: _project.suckerGroupId,
+          version,
+        });
+      }
+
       await context.db.delete(nftTier, {
         chainId: context.chain.id,
-        hook: event.log.address,
-        tierId: Number(event.args.tierId),
+        hook,
+        tierId,
         version,
       });
     } catch (e) {
