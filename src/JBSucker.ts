@@ -149,12 +149,19 @@ ponder.on("JBSucker:RootToRemote", async ({ event, context }) => {
 
 ponder.on("JBSucker:Claimed", async ({ event, context }) => {
   try {
+    // Match the source-chain row by beneficiary, not token. Claimed fires on the
+    // destination chain, where an ERC-20's address differs from the source chain
+    // (e.g. USDC), so matching on token would never hit a non-native-token row.
+    // beneficiary survives the cross-chain hop unchanged; together with sucker
+    // (CREATE2-identical across chains), peerChainId, and index it uniquely
+    // identifies the bridge transfer. (Worked for native-token bridges only because
+    // token == address(0) is the same on every chain.)
     await context.db.sql
       .update(suckerTransaction)
       .set({ status: "claimed" })
       .where(
         and(
-          eq(suckerTransaction.token, event.args.token),
+          eq(suckerTransaction.beneficiary, event.args.beneficiary),
           eq(suckerTransaction.index, Number(event.args.index)),
           eq(suckerTransaction.peerChainId, context.chain.id), // use PEER chain here
           eq(suckerTransaction.sucker, event.log.address),
@@ -385,12 +392,18 @@ ponder.on("JBSucker6:NewInboxTreeRoot", async ({ event, context }) => {
 
 ponder.on("JBSucker6:Claimed", async ({ event, context }) => {
   try {
+    // Match the source-chain row by beneficiary, not token. Claimed fires on the
+    // destination chain, where the token has a different address than on the source
+    // chain (e.g. USDC differs per chain), so matching on token would never hit an
+    // ERC-20 row. beneficiary survives the cross-chain hop unchanged; together with
+    // sucker (CREATE2-identical across chains), peerChainId, and index it uniquely
+    // identifies the bridge transfer.
     await context.db.sql
       .update(suckerTransaction)
       .set({ status: "claimed" })
       .where(
         and(
-          eq(suckerTransaction.token, event.args.token),
+          eq(suckerTransaction.beneficiary, event.args.beneficiary),
           eq(suckerTransaction.index, Number(event.args.index)),
           eq(suckerTransaction.peerChainId, context.chain.id),
           eq(suckerTransaction.sucker, event.log.address),
