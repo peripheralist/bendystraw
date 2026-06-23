@@ -11,6 +11,8 @@ ponder.on("JBRulesets:RulesetQueued", async ({ event, context }) => {
     const version = getVersion(event, "jbRulesets");
 
     let cashOutTax: number | undefined = undefined;
+    let cycleNumber: number | undefined = undefined;
+    let basedOnId: number | undefined = undefined;
 
     for (const address of version == 6
       ? [addressForVersion("jbController", version)]
@@ -28,6 +30,8 @@ ponder.on("JBRulesets:RulesetQueued", async ({ event, context }) => {
 
         if (_ruleset[0].cycleNumber) {
           cashOutTax = _ruleset[1].cashOutTaxRate;
+          cycleNumber = _ruleset[0].cycleNumber;
+          basedOnId = _ruleset[0].basedOnId;
           break;
         }
       } catch (e) {
@@ -35,7 +39,8 @@ ponder.on("JBRulesets:RulesetQueued", async ({ event, context }) => {
       }
     }
 
-    if (cashOutTax === undefined) throw new Error("Missing cashOutTax");
+    if (cashOutTax === undefined || cycleNumber === undefined || basedOnId === undefined)
+      throw new Error("Missing cashOutTax");
 
     const _project = await context.db.find(project, {
       projectId: Number(event.args.projectId),
@@ -71,6 +76,8 @@ ponder.on("JBRulesets:RulesetQueued", async ({ event, context }) => {
       metadata: event.args.metadata,
       mustStartAtOrAfter: event.args.mustStartAtOrAfter,
       cashOutTax,
+      cycleNumber,
+      basedOnId,
     });
 
     await insertActivityEvent("rulesetQueuedEvent", {

@@ -1235,6 +1235,8 @@ export const rulesetQueuedEvent = onchainTable(
     metadata: t.bigint().notNull(),
     mustStartAtOrAfter: t.bigint().notNull(),
     cashOutTax: t.integer().notNull(),
+    cycleNumber: t.integer().notNull(),
+    basedOnId: t.integer().notNull(),
   })
 );
 
