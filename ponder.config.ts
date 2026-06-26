@@ -1015,7 +1015,10 @@ export const testnetConfig = createConfig({
     },
     JBBuybackHook6: {
       abi: JBBuybackHookV6Abi,
-      address: addresses(ADDRESS.jbBuybackHook6),
+      address: addresses(
+        ADDRESS.jbBuybackHook6,
+        ADDRESS.jbBuybackHookTwapOracleUpgrade6
+      ),
       chain: {
         ethereumSepolia: {
           startBlock: V6_TESTNET_START_BLOCKS.jbBuybackHook.ethereumSepolia,
