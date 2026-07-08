@@ -32,6 +32,7 @@ import { JBSuckerV6Abi } from "./abis/JBSuckerV6Abi";
 import { JBRulesetsAbi } from "./abis/JBRulesetsAbi";
 import { JBSuckersRegistryV6Abi } from "./abis/JBSuckersRegistryV6Abi";
 import { JBBuybackHookV6Abi } from "./abis/JBBuybackHookV6Abi";
+import { JBProjectPayerDeployerAbi } from "./abis/JBProjectPayerDeployerAbi";
 
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
@@ -73,6 +74,12 @@ const V6_MAINNET_START_BLOCKS = {
     base: 47399252,
     optimism: 152994511,
   },
+  jbProjectPayerDeployer: {
+    ethereum: 25330122,
+    arbitrum: 474175118,
+    base: 47399351,
+    optimism: 152994600,
+  },
 } as const;
 
 const V6_TESTNET_START_BLOCKS = {
@@ -110,6 +117,12 @@ const V6_TESTNET_START_BLOCKS = {
     arbitrumSepolia: 277727786,
     baseSepolia: 42909633,
     optimismSepolia: 44892469,
+  },
+  jbProjectPayerDeployer: {
+    ethereumSepolia: 11070767,
+    arbitrumSepolia: 277728511,
+    baseSepolia: 42909729,
+    optimismSepolia: 44892556,
   },
 } as const;
 
@@ -645,6 +658,24 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    JBProjectPayerDeployer: {
+      abi: JBProjectPayerDeployerAbi,
+      address: addresses(ADDRESS.jbProjectPayerDeployer6),
+      chain: {
+        ethereum: {
+          startBlock: V6_MAINNET_START_BLOCKS.jbProjectPayerDeployer.ethereum,
+        },
+        arbitrum: {
+          startBlock: V6_MAINNET_START_BLOCKS.jbProjectPayerDeployer.arbitrum,
+        },
+        base: {
+          startBlock: V6_MAINNET_START_BLOCKS.jbProjectPayerDeployer.base,
+        },
+        optimism: {
+          startBlock: V6_MAINNET_START_BLOCKS.jbProjectPayerDeployer.optimism,
+        },
+      },
+    },
   },
 });
 
@@ -1025,6 +1056,24 @@ export const testnetConfig = createConfig({
         },
         baseSepolia: {
           startBlock: V6_TESTNET_START_BLOCKS.jbBuybackHook.baseSepolia,
+        },
+      },
+    },
+    JBProjectPayerDeployer: {
+      abi: JBProjectPayerDeployerAbi,
+      address: addresses(ADDRESS.jbProjectPayerDeployer6),
+      chain: {
+        ethereumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.ethereumSepolia,
+        },
+        arbitrumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.arbitrumSepolia,
+        },
+        baseSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.baseSepolia,
+        },
+        optimismSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.optimismSepolia,
         },
       },
     },

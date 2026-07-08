@@ -5,6 +5,7 @@ import {
   participant,
   payEvent,
   project,
+  projectPayer,
   sendPayoutsEvent,
   sendPayoutToSplitEvent,
   useAllowanceEvent,
@@ -17,8 +18,75 @@ import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { handleTrendingPayment } from "./util/trending";
 import { usdPriceForToken } from "./util/usdPrice";
-import { getVersion } from "./util/getVersion";
+import { getVersion, type Version } from "./util/getVersion";
 import { erc20Abi, isAddressEqual, zeroAddress } from "viem";
+import type { Context } from "ponder:registry";
+
+async function updateProjectPayerStats({
+  context,
+  version,
+  projectId,
+  address,
+  amount,
+  amountUsd,
+  timestamp,
+  mode,
+}: {
+  context: Context;
+  version: Version;
+  projectId: number;
+  address: `0x${string}`;
+  amount: bigint;
+  amountUsd: bigint;
+  timestamp: number;
+  mode: "pay" | "addToBalance";
+}) {
+  await context.db
+    .update(projectPayer, {
+      chainId: context.chain.id,
+      projectId,
+      version,
+      address,
+    })
+    .set((p) => ({
+      ...(mode === "pay"
+        ? {
+            volume: p.volume + amount,
+            volumeUsd: p.volumeUsd + amountUsd,
+            paymentsCount: p.paymentsCount + 1,
+          }
+        : {
+            balanceAdded: p.balanceAdded + amount,
+            balanceAddedUsd: p.balanceAddedUsd + amountUsd,
+            addToBalanceCount: p.addToBalanceCount + 1,
+          }),
+      totalFacilitated: p.totalFacilitated + amount,
+      totalFacilitatedUsd: p.totalFacilitatedUsd + amountUsd,
+      lastUsedAt: timestamp,
+    }));
+}
+
+async function findProjectPayerAddress({
+  context,
+  version,
+  projectId,
+  caller,
+}: {
+  context: Context;
+  version: Version;
+  projectId: number;
+  caller: `0x${string}`;
+}) {
+  const address = caller.toLowerCase() as `0x${string}`;
+  const existingProjectPayer = await context.db.find(projectPayer, {
+    chainId: context.chain.id,
+    projectId,
+    version,
+    address,
+  });
+
+  return existingProjectPayer ? address : null;
+}
 
 ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
   try {
@@ -36,6 +104,36 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       .set((p) => ({
         balance: p.balance + amount,
       }));
+
+    const projectPayerAddress = await findProjectPayerAddress({
+      context,
+      version,
+      projectId: Number(projectId),
+      caller: event.args.caller,
+    });
+
+    if (projectPayerAddress) {
+      const amountUsd = await usdPriceForToken({
+        context,
+        version,
+        projectId,
+        amount,
+        currency: updatedProject.currency,
+        token: updatedProject.token,
+        timestamp: event.block.timestamp,
+      });
+
+      await updateProjectPayerStats({
+        context,
+        version,
+        projectId: Number(projectId),
+        address: projectPayerAddress,
+        amount,
+        amountUsd,
+        timestamp: Number(event.block.timestamp),
+        mode: "addToBalance",
+      });
+    }
 
     await onProjectStatsUpdated({
       projectId,
@@ -423,6 +521,26 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       token: _project.token,
       timestamp: event.block.timestamp,
     });
+
+    const projectPayerAddress = await findProjectPayerAddress({
+      context,
+      version,
+      projectId,
+      caller: event.args.caller,
+    });
+
+    if (projectPayerAddress) {
+      await updateProjectPayerStats({
+        context,
+        version,
+        projectId,
+        address: projectPayerAddress,
+        amount,
+        amountUsd,
+        timestamp: Number(event.block.timestamp),
+        mode: "pay",
+      });
+    }
 
     const payerParticipant = await context.db.find(participant, {
       address: payer,

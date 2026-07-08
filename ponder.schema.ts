@@ -972,6 +972,52 @@ export const payEventRelations = relations(payEvent, ({ one }) => ({
   }),
 }));
 
+export const projectPayer = onchainTable(
+  "project_payer",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    ...version(t),
+    ...createdAt(t),
+    address: t.hex().notNull(),
+    owner: t.hex().notNull(),
+    deployer: t.hex().notNull(),
+    defaultBeneficiary: t.hex().notNull(),
+    defaultMemo: t.text().notNull(),
+    defaultMetadata: t.hex().notNull(),
+    defaultAddToBalance: t.boolean().notNull(),
+    paymentsCount: t.integer().notNull().default(0),
+    addToBalanceCount: t.integer().notNull().default(0),
+    volume: t.bigint().notNull().default(BigInt(0)),
+    volumeUsd: t.bigint().notNull().default(BigInt(0)),
+    balanceAdded: t.bigint().notNull().default(BigInt(0)),
+    balanceAddedUsd: t.bigint().notNull().default(BigInt(0)),
+    totalFacilitated: t.bigint().notNull().default(BigInt(0)),
+    totalFacilitatedUsd: t.bigint().notNull().default(BigInt(0)),
+    lastUsedAt: t.integer(),
+  }),
+  (t) => ({
+    addressIdx: index().on(t.address),
+    projectIdx: index().on(t.projectId),
+    totalFacilitatedUsdIdx: index().on(t.totalFacilitatedUsd),
+    pk: primaryKey({
+      columns: [t.version, t.chainId, t.projectId, t.address],
+    }),
+  })
+);
+
+export const projectPayerRelations = relations(projectPayer, ({ one }) => ({
+  project: one(project, {
+    fields: [
+      projectPayer.projectId,
+      projectPayer.chainId,
+      projectPayer.version,
+    ],
+    references: [project.projectId, project.chainId, project.version],
+  }),
+}));
+
 export const permissionHolder = onchainTable(
   "permission_holder",
   (t) => ({
@@ -1103,6 +1149,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   nfts: many(nft),
   nftHooks: many(nftHook),
   projectMoments: many(projectMoment),
+  projectPayers: many(projectPayer),
   permissionHolders: many(permissionHolder),
 
   // events
