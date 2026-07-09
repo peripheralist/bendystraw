@@ -51,10 +51,10 @@ const V6_MAINNET_START_BLOCKS = {
     optimism: 152994203,
   },
   jbBuybackHook: {
-    ethereum: 25329918,
-    arbitrum: 473989048,
-    base: 47398898,
-    optimism: 152994172,
+    ethereum: 25453848,
+    arbitrum: 480050991,
+    base: 48157376,
+    optimism: 153752660,
   },
   revLoans: {
     ethereum: 25330064,
@@ -96,9 +96,9 @@ const V6_TESTNET_START_BLOCKS = {
     optimismSepolia: 44892163,
   },
   jbBuybackHook: {
-    ethereumSepolia: 11070579,
-    arbitrumSepolia: 277725027,
-    baseSepolia: 42909288,
+    ethereumSepolia: 11144310,
+    arbitrumSepolia: 281300469,
+    baseSepolia: 43356714,
   },
   revLoans: {
     ethereumSepolia: 11070713,
