@@ -133,6 +133,39 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
   }
 });
 
+ponder.on("JBController:LaunchRulesets", async ({ event, context }) => {
+  // V6 emits LaunchRulesets instead of LaunchProject, with the same metadata fields.
+  const { projectId: _projectId, caller, projectUri } = event.args;
+  const projectId = Number(_projectId);
+  const chainId = context.chain.id;
+  try {
+    const metadata = await parseProjectMetadata(projectUri);
+
+    const version = getVersion(event, "jbController");
+
+    await context.db.update(project, { chainId, projectId, version }).set({
+      deployer: caller,
+      metadataUri: projectUri,
+      metadata,
+      name: metadata?.name,
+      infoUri: metadata?.infoUri,
+      logoUri: metadata?.logoUri,
+      coverImageUri: metadata?.coverImageUri,
+      twitter: metadata?.twitter,
+      farcaster: metadata?.farcaster,
+      discord: metadata?.discord,
+      telegram: metadata?.telegram,
+      tokens: metadata?.tokens,
+      domain: metadata?.domain,
+      description: metadata?.description,
+      tags: metadata?.tags,
+      projectTagline: metadata?.projectTagline,
+    });
+  } catch (e) {
+    console.error("JBController:LaunchRulesets", e, event.transaction.hash);
+  }
+});
+
 ponder.on("JBController:SetUri", async ({ event, context }) => {
   try {
     const { projectId: _projectId, uri } = event.args;

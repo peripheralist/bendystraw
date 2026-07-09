@@ -2487,6 +2487,12 @@ export const JBControllerAbi = [
       {
         indexed: false,
         internalType: "string",
+        name: "projectUri",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "string",
         name: "memo",
         type: "string",
       },
