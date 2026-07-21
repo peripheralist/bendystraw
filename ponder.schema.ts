@@ -328,8 +328,8 @@ export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
   }),
 }));
 
-// Buyback hook AMM trades (V6 JBBuybackHook). `direction` is "buy" (Swap),
-// "sell" (CashOutSwap), or "mint" (leftover minted instead of swapped).
+// V6 buyback activity. `direction` is "buy" or "sell" for an actual Uniswap
+// V4 settlement, or "mint" when a payment's leftover is minted instead.
 // Amounts are denominated from the project's perspective: terminalTokenAmount
 // is the terminal-token side, projectTokenAmount is the project-token side.
 export const swapEvent = onchainTable("swap_event", (t) => ({
@@ -340,11 +340,45 @@ export const swapEvent = onchainTable("swap_event", (t) => ({
   poolId: t.hex(),
   terminalTokenAmount: t.bigint().notNull(),
   projectTokenAmount: t.bigint().notNull(),
+  // The exact post-swap V4 spot price. Null for `mint`, which does not touch
+  // the pool. Token ordering is recorded so clients can convert it without
+  // reconstructing the PoolKey.
+  sqrtPriceX96: t.bigint(),
+  projectTokenIsCurrency0: t.boolean(),
 }));
 
 export const swapEventRelations = relations(swapEvent, ({ one }) => ({
   project: one(project, {
     fields: [swapEvent.chainId, swapEvent.projectId, swapEvent.version],
+    references: [project.chainId, project.projectId, project.version],
+  }),
+}));
+
+// Current lookup state for registered V6 buyback pools. Unlike the event table
+// below, this has a deterministic (chainId, poolId) key so indexing handlers
+// can use Ponder's transaction-aware `db.find` during historical batches.
+export const buybackPool = onchainTable(
+  "buyback_pool",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...version(t),
+    ...createdAt(t),
+    poolId: t.hex().notNull(),
+    terminalToken: t.hex().notNull(),
+    currency0: t.hex().notNull(),
+    currency1: t.hex().notNull(),
+    projectTokenIsCurrency0: t.boolean().notNull(),
+    initialSqrtPriceX96: t.bigint(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.poolId] }),
+  })
+);
+
+export const buybackPoolRelations = relations(buybackPool, ({ one }) => ({
+  project: one(project, {
+    fields: [buybackPool.chainId, buybackPool.projectId, buybackPool.version],
     references: [project.chainId, project.projectId, project.version],
   }),
 }));
@@ -357,6 +391,12 @@ export const buybackPoolEvent = onchainTable("buyback_pool_event", (t) => ({
   ...suckerGroupId(t),
   terminalToken: t.hex().notNull(),
   poolId: t.hex().notNull(),
+  currency0: t.hex(),
+  currency1: t.hex(),
+  projectTokenIsCurrency0: t.boolean(),
+  // Price when the pool was registered (the Initialize price for a new pool,
+  // or slot0 at PoolAdded for an already initialized pool).
+  initialSqrtPriceX96: t.bigint(),
 }));
 
 export const buybackPoolEventRelations = relations(
@@ -1161,6 +1201,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   bridgeClaimEvents: many(bridgeClaimEvent),
   burnEvents: many(burnEvent),
   buybackPoolEvents: many(buybackPoolEvent),
+  buybackPools: many(buybackPool),
   cashOutTokensEvents: many(cashOutTokensEvent),
   deployErc20Events: many(deployErc20Event),
   liquidateLoanEvents: many(liquidateLoanEvent),

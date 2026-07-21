@@ -33,6 +33,8 @@ import { JBRulesetsAbi } from "./abis/JBRulesetsAbi";
 import { JBSuckersRegistryV6Abi } from "./abis/JBSuckersRegistryV6Abi";
 import { JBBuybackHookV6Abi } from "./abis/JBBuybackHookV6Abi";
 import { JBProjectPayerDeployerAbi } from "./abis/JBProjectPayerDeployerAbi";
+import { JBUniswapV4HookV6Abi } from "./abis/JBUniswapV4HookV6Abi";
+import { JB_UNISWAP_V4_HOOK } from "./src/constants/uniswapV4";
 
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
@@ -658,6 +660,15 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    JBUniswapV4Hook6: {
+      abi: JBUniswapV4HookV6Abi,
+      chain: {
+        ethereum: JB_UNISWAP_V4_HOOK.ethereum,
+        arbitrum: JB_UNISWAP_V4_HOOK.arbitrum,
+        base: JB_UNISWAP_V4_HOOK.base,
+        optimism: JB_UNISWAP_V4_HOOK.optimism,
+      },
+    },
     JBProjectPayerDeployer: {
       abi: JBProjectPayerDeployerAbi,
       address: addresses(ADDRESS.jbProjectPayerDeployer6),
@@ -1057,6 +1068,14 @@ export const testnetConfig = createConfig({
         baseSepolia: {
           startBlock: V6_TESTNET_START_BLOCKS.jbBuybackHook.baseSepolia,
         },
+      },
+    },
+    JBUniswapV4Hook6: {
+      abi: JBUniswapV4HookV6Abi,
+      chain: {
+        ethereumSepolia: JB_UNISWAP_V4_HOOK.ethereumSepolia,
+        arbitrumSepolia: JB_UNISWAP_V4_HOOK.arbitrumSepolia,
+        baseSepolia: JB_UNISWAP_V4_HOOK.baseSepolia,
       },
     },
     JBProjectPayerDeployer: {
