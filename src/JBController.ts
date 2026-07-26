@@ -12,7 +12,10 @@ import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
 import { addressForVersion, getVersion } from "./util/getVersion";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
-import { parseProjectMetadata } from "./util/projectMetadata";
+import {
+  parseProjectMetadata,
+  projectMetadataUpdate,
+} from "./util/projectMetadata";
 
 ponder.on("JBController:MintTokens", async ({ event, context }) => {
   try {
@@ -112,21 +115,7 @@ ponder.on("JBController:LaunchProject", async ({ event, context }) => {
 
     await context.db.update(project, { chainId, projectId, version }).set({
       deployer: caller,
-      metadataUri: projectUri,
-      metadata,
-      name: metadata?.name,
-      infoUri: metadata?.infoUri,
-      logoUri: metadata?.logoUri,
-      coverImageUri: metadata?.coverImageUri,
-      twitter: metadata?.twitter,
-      farcaster: metadata?.farcaster,
-      discord: metadata?.discord,
-      telegram: metadata?.telegram,
-      tokens: metadata?.tokens,
-      domain: metadata?.domain,
-      description: metadata?.description,
-      tags: metadata?.tags,
-      projectTagline: metadata?.projectTagline,
+      ...projectMetadataUpdate(projectUri, metadata),
     });
   } catch (e) {
     console.error("JBController:LaunchProject", e, event.transaction.hash);
@@ -145,21 +134,7 @@ ponder.on("JBController:LaunchRulesets", async ({ event, context }) => {
 
     await context.db.update(project, { chainId, projectId, version }).set({
       deployer: caller,
-      metadataUri: projectUri,
-      metadata,
-      name: metadata?.name,
-      infoUri: metadata?.infoUri,
-      logoUri: metadata?.logoUri,
-      coverImageUri: metadata?.coverImageUri,
-      twitter: metadata?.twitter,
-      farcaster: metadata?.farcaster,
-      discord: metadata?.discord,
-      telegram: metadata?.telegram,
-      tokens: metadata?.tokens,
-      domain: metadata?.domain,
-      description: metadata?.description,
-      tags: metadata?.tags,
-      projectTagline: metadata?.projectTagline,
+      ...projectMetadataUpdate(projectUri, metadata),
     });
   } catch (e) {
     console.error("JBController:LaunchRulesets", e, event.transaction.hash);
@@ -176,23 +151,9 @@ ponder.on("JBController:SetUri", async ({ event, context }) => {
 
     const version = getVersion(event, "jbController");
 
-    const updatedProject = await context.db.update(project, { chainId, projectId, version }).set({
-      metadataUri: uri,
-      metadata,
-      name: metadata?.name,
-      infoUri: metadata?.infoUri,
-      logoUri: metadata?.logoUri,
-      coverImageUri: metadata?.coverImageUri,
-      twitter: metadata?.twitter,
-      farcaster: metadata?.farcaster,
-      discord: metadata?.discord,
-      telegram: metadata?.telegram,
-      tokens: metadata?.tokens,
-      domain: metadata?.domain,
-      description: metadata?.description,
-      tags: metadata?.tags,
-      projectTagline: metadata?.projectTagline,
-    });
+    const updatedProject = await context.db
+      .update(project, { chainId, projectId, version })
+      .set(projectMetadataUpdate(uri, metadata));
 
     const { id } = await context.db.insert(setUriEvent).values({
       ...getEventParams({ event, context }),
