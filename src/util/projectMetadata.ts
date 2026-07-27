@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toCidV1 } from "./cid";
 
 export type ProjectMetadata = {
   name?: string;
@@ -18,9 +19,8 @@ export type ProjectMetadata = {
 };
 
 type MetadataRequest = {
-  method: "get" | "post";
+  method: "get";
   url: string;
-  headers?: { Authorization: string };
 };
 
 export async function parseProjectMetadata(uri: string) {
@@ -53,29 +53,23 @@ export async function parseProjectMetadata(uri: string) {
   }
 }
 
-export function projectMetadataRequests(
-  uri: string,
-  infuraApiKey = process.env.INFURA_API_KEY,
-  infuraApiKeySecret = process.env.INFURA_API_KEY_SECRET
-): MetadataRequest[] {
+export function projectMetadataRequests(uri: string): MetadataRequest[] {
   const path = projectMetadataPath(uri);
   if (!path) return [];
 
-  const encodedPath = path
-    .split("/")
-    .map((segment) => encodeURIComponent(segment))
-    .join("/");
+  const [cid, ...rest] = path.split("/");
+  const encodedRest = rest.map((segment) => encodeURIComponent(segment));
+  const encodedPath = [encodeURIComponent(cid!), ...encodedRest].join("/");
   const requests: MetadataRequest[] = [];
 
-  if (infuraApiKey && infuraApiKeySecret) {
+  // eth.sucks is a subdomain-only gateway, so it needs the CIDv1 form and
+  // can't take the /ipfs/<cid> path the fallbacks below use.
+  const cidV1 = toCidV1(cid!);
+  if (cidV1) {
+    const suffix = encodedRest.length ? `/${encodedRest.join("/")}` : "";
     requests.push({
-      method: "post",
-      url: `https://ipfs.infura.io:5001/api/v0/cat?arg=${encodeURIComponent(path)}`,
-      headers: {
-        Authorization: `Basic ${Buffer.from(
-          `${infuraApiKey}:${infuraApiKeySecret}`
-        ).toString("base64")}`,
-      },
+      method: "get",
+      url: `https://${cidV1}.eth.sucks${suffix}`,
     });
   }
 
