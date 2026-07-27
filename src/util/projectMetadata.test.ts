@@ -1,0 +1,80 @@
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
+import {
+  parseProjectMetadataPayload,
+  projectMetadataPath,
+  projectMetadataRequests,
+  projectMetadataUpdate,
+} from "./projectMetadata";
+
+const CID = "QmYwAPJzv5CZsnAzt8auVZRnGiRAzYvsnKqTn6X8qYwP4S";
+
+void describe("project metadata", () => {
+  void it("extracts IPFS paths without allowing arbitrary HTTP requests", () => {
+    assert.equal(projectMetadataPath(`ipfs://${CID}`), CID);
+    assert.equal(
+      projectMetadataPath(`https://gateway.example/ipfs/${CID}/metadata.json`),
+      `${CID}/metadata.json`
+    );
+    assert.equal(projectMetadataPath("https://example.com/metadata.json"), null);
+  });
+
+  void it("uses the IPFS cat endpoint and public gateway fallbacks", () => {
+    const requests = projectMetadataRequests(
+      `ipfs://${CID}/metadata.json`,
+      "key",
+      "secret"
+    );
+
+    assert.equal(requests.length, 3);
+    assert.match(requests[0]!.url, /api\/v0\/cat\?arg=/);
+    assert.equal(requests[0]!.method, "post");
+    assert.equal(
+      requests[1]!.url,
+      `https://dweb.link/ipfs/${CID}/metadata.json`
+    );
+  });
+
+  void it("parses complete nested JSON instead of truncating at the first brace", () => {
+    const metadata = parseProjectMetadataPayload(
+      JSON.stringify({
+        name: "Updated project",
+        configuration: { nested: { enabled: true } },
+        logoUri: "ipfs://logo",
+      })
+    );
+
+    assert.equal(metadata?.name, "Updated project");
+    assert.equal(metadata?.logoUri, "ipfs://logo");
+  });
+
+  void it("normalizes the known malformed modal field", () => {
+    const metadata = parseProjectMetadataPayload(
+      `{"name":"Project","nftPaymentSuccessModal":}`
+    );
+
+    assert.equal(metadata?.name, "Project");
+  });
+
+  void it("clears stale searchable fields when refreshed metadata is unavailable", () => {
+    const update = projectMetadataUpdate(`ipfs://${CID}`, null);
+
+    assert.equal(update.metadataUri, `ipfs://${CID}`);
+    assert.equal(update.metadata, null);
+    assert.equal(update.name, null);
+    assert.equal(update.logoUri, null);
+    assert.equal(update.payDisclosure, null);
+  });
+
+  void it("indexes all searchable metadata fields", () => {
+    const update = projectMetadataUpdate(`ipfs://${CID}`, {
+      name: "Project",
+      logoUri: "ipfs://logo",
+      payDisclosure: "Terms apply",
+    });
+
+    assert.equal(update.name, "Project");
+    assert.equal(update.logoUri, "ipfs://logo");
+    assert.equal(update.payDisclosure, "Terms apply");
+  });
+});

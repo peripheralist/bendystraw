@@ -1,5 +1,5 @@
 import { createConfig, factory } from "ponder";
-import { erc20Abi, getAbiItem } from "viem";
+import { erc20Abi, fallback, getAbiItem, http } from "viem";
 
 import {
   arbitrum,
@@ -38,6 +38,44 @@ import { JB_UNISWAP_V4_HOOK } from "./src/constants/uniswapV4";
 
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
+
+const rpc = (
+  dwellirNetwork: string,
+  infuraNetwork: string,
+  legacyRpc: string | undefined
+) => {
+  const dwellirApiKey = process.env.DWELLIR_API_KEY?.trim();
+
+  if (!dwellirApiKey) {
+    throw new Error("DWELLIR_API_KEY is required");
+  }
+
+  const transports = [
+    http(
+      `https://api-${dwellirNetwork}.n.dwellir.com/${encodeURIComponent(
+        dwellirApiKey
+      )}`
+    ),
+  ];
+  const infuraApiKey = process.env.INFURA_API_KEY?.trim();
+
+  if (infuraApiKey) {
+    transports.push(
+      http(
+        `https://${infuraNetwork}.infura.io/v3/${encodeURIComponent(
+          infuraApiKey
+        )}`
+      )
+    );
+  } else if (legacyRpc) {
+    // Preserve existing deployments which provide a complete backup URL.
+    transports.push(http(legacyRpc));
+  }
+
+  // Keep Dwellir primary. Viem tries these transports in order, only falling
+  // through to Infura (or the legacy per-chain URL) after a request fails.
+  return fallback(transports, { rank: false });
+};
 
 const V6_MAINNET_START_BLOCKS = {
   jb721TiersHookDeployer: {
@@ -292,19 +330,35 @@ export const mainnetConfig = createConfig({
   chains: {
     ethereum: {
       id: mainnet.id,
-      rpc: process.env.RPC_URL_ETHEREUM,
+      rpc: rpc(
+        "ethereum-mainnet",
+        "mainnet",
+        process.env.RPC_URL_ETHEREUM
+      ),
     },
     arbitrum: {
       id: arbitrum.id,
-      rpc: process.env.RPC_URL_ARBITRUM,
+      rpc: rpc(
+        "arbitrum-mainnet-archive",
+        "arbitrum-mainnet",
+        process.env.RPC_URL_ARBITRUM
+      ),
     },
     base: {
       id: base.id,
-      rpc: process.env.RPC_URL_BASE,
+      rpc: rpc(
+        "base-mainnet-archive",
+        "base-mainnet",
+        process.env.RPC_URL_BASE
+      ),
     },
     optimism: {
       id: optimism.id,
-      rpc: process.env.RPC_URL_OPTIMISM,
+      rpc: rpc(
+        "optimism-mainnet-archive",
+        "optimism-mainnet",
+        process.env.RPC_URL_OPTIMISM
+      ),
     },
   },
   contracts: {
@@ -695,19 +749,35 @@ export const testnetConfig = createConfig({
   chains: {
     ethereumSepolia: {
       id: sepolia.id,
-      rpc: process.env.RPC_URL_ETHEREUM_SEPOLIA,
+      rpc: rpc(
+        "ethereum-sepolia",
+        "sepolia",
+        process.env.RPC_URL_ETHEREUM_SEPOLIA
+      ),
     },
     arbitrumSepolia: {
       id: arbitrumSepolia.id,
-      rpc: process.env.RPC_URL_ARBITRUM_SEPOLIA,
+      rpc: rpc(
+        "arbitrum-sepolia",
+        "arbitrum-sepolia",
+        process.env.RPC_URL_ARBITRUM_SEPOLIA
+      ),
     },
     baseSepolia: {
       id: baseSepolia.id,
-      rpc: process.env.RPC_URL_BASE_SEPOLIA,
+      rpc: rpc(
+        "base-sepolia-archive",
+        "base-sepolia",
+        process.env.RPC_URL_BASE_SEPOLIA
+      ),
     },
     optimismSepolia: {
       id: optimismSepolia.id,
-      rpc: process.env.RPC_URL_OPTIMISM_SEPOLIA,
+      rpc: rpc(
+        "optimism-sepolia",
+        "optimism-sepolia",
+        process.env.RPC_URL_OPTIMISM_SEPOLIA
+      ),
     },
   },
   contracts: {
