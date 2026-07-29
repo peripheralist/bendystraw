@@ -39,6 +39,8 @@ import { JB_UNISWAP_V4_HOOK } from "./src/constants/uniswapV4";
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
 
+const POLLING_INTERVAL_MS = 2_000;
+
 const rpc = (
   dwellirNetwork: string,
   infuraNetwork: string,
@@ -330,6 +332,7 @@ export const mainnetConfig = createConfig({
   chains: {
     ethereum: {
       id: mainnet.id,
+      pollingInterval: POLLING_INTERVAL_MS,
       rpc: rpc(
         "ethereum-mainnet",
         "mainnet",
@@ -338,6 +341,7 @@ export const mainnetConfig = createConfig({
     },
     arbitrum: {
       id: arbitrum.id,
+      pollingInterval: POLLING_INTERVAL_MS,
       rpc: rpc(
         "arbitrum-mainnet-archive",
         "arbitrum-mainnet",
@@ -346,6 +350,7 @@ export const mainnetConfig = createConfig({
     },
     base: {
       id: base.id,
+      pollingInterval: POLLING_INTERVAL_MS,
       rpc: rpc(
         "base-mainnet-archive",
         "base-mainnet",
@@ -354,6 +359,7 @@ export const mainnetConfig = createConfig({
     },
     optimism: {
       id: optimism.id,
+      pollingInterval: POLLING_INTERVAL_MS,
       rpc: rpc(
         "optimism-mainnet-archive",
         "optimism-mainnet",
@@ -749,6 +755,7 @@ export const testnetConfig = createConfig({
   chains: {
     ethereumSepolia: {
       id: sepolia.id,
+      pollingInterval: POLLING_INTERVAL_MS,
       rpc: rpc(
         "ethereum-sepolia",
         "sepolia",
@@ -757,6 +764,7 @@ export const testnetConfig = createConfig({
     },
     arbitrumSepolia: {
       id: arbitrumSepolia.id,
+      pollingInterval: POLLING_INTERVAL_MS,
       rpc: rpc(
         "arbitrum-sepolia",
         "arbitrum-sepolia",
@@ -765,6 +773,7 @@ export const testnetConfig = createConfig({
     },
     baseSepolia: {
       id: baseSepolia.id,
+      pollingInterval: POLLING_INTERVAL_MS,
       rpc: rpc(
         "base-sepolia-archive",
         "base-sepolia",
@@ -773,6 +782,7 @@ export const testnetConfig = createConfig({
     },
     optimismSepolia: {
       id: optimismSepolia.id,
+      pollingInterval: POLLING_INTERVAL_MS,
       rpc: rpc(
         "optimism-sepolia",
         "optimism-sepolia",
