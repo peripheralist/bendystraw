@@ -42,7 +42,7 @@ const addresses = (...items: (`0x${string}` | undefined)[]) =>
 const rpc = (
   dwellirNetwork: string,
   infuraNetwork: string,
-  legacyRpc: string | undefined
+  legacyRpc: string | undefined,
 ) => {
   const dwellirApiKey = process.env.DWELLIR_API_KEY?.trim();
 
@@ -53,8 +53,8 @@ const rpc = (
   const transports = [
     http(
       `https://api-${dwellirNetwork}.n.dwellir.com/${encodeURIComponent(
-        dwellirApiKey
-      )}`
+        dwellirApiKey,
+      )}`,
     ),
   ];
   const infuraApiKey = process.env.INFURA_API_KEY?.trim();
@@ -63,9 +63,9 @@ const rpc = (
     transports.push(
       http(
         `https://${infuraNetwork}.infura.io/v3/${encodeURIComponent(
-          infuraApiKey
-        )}`
-      )
+          infuraApiKey,
+        )}`,
+      ),
     );
   } else if (legacyRpc) {
     // Preserve existing deployments which provide a complete backup URL.
@@ -75,6 +75,18 @@ const rpc = (
   // Keep Dwellir primary. Viem tries these transports in order, only falling
   // through to Infura (or the legacy per-chain URL) after a request fails.
   return fallback(transports, { rank: false });
+};
+
+const ws = (dwellirNetwork: string) => {
+  const dwellirApiKey = process.env.DWELLIR_API_KEY?.trim();
+
+  if (!dwellirApiKey) {
+    throw new Error("DWELLIR_API_KEY is required");
+  }
+
+  return `wss://api-${dwellirNetwork}.n.dwellir.com/${encodeURIComponent(
+    dwellirApiKey,
+  )}`;
 };
 
 const V6_MAINNET_START_BLOCKS = {
@@ -187,10 +199,7 @@ const hookDeployedFactoryConfig6 = factory({
   parameter: "hook",
 });
 const suckerDeployedFactoryConfig = factory({
-  address: addresses(
-    ADDRESS.jbSuckersRegistry,
-    ADDRESS.jbSuckersRegistry5
-  ),
+  address: addresses(ADDRESS.jbSuckersRegistry, ADDRESS.jbSuckersRegistry5),
   event: getAbiItem({ abi: JBSuckersRegistryAbi, name: "SuckerDeployedFor" }),
   parameter: "sucker",
 });
@@ -206,7 +215,7 @@ const JB721TiersHookDeployer = {
     address: addresses(
       ADDRESS.jb721TiersHookDeployer,
       ADDRESS.jb721TiersHookDeployer5,
-      ADDRESS.jb721TiersHookDeployer6
+      ADDRESS.jb721TiersHookDeployer6,
     ),
     chain: {
       ethereum: {
@@ -228,7 +237,7 @@ const JB721TiersHookDeployer = {
     address: addresses(
       ADDRESS.jb721TiersHookDeployer,
       ADDRESS.jb721TiersHookDeployer5,
-      ADDRESS.jb721TiersHookDeployer6
+      ADDRESS.jb721TiersHookDeployer6,
     ),
     chain: {
       ethereumSepolia: {
@@ -289,7 +298,11 @@ const JBTokens = {
 const JBRulesets = {
   mainnet: {
     abi: JBRulesetsAbi,
-    address: addresses(ADDRESS.jbRulesets, ADDRESS.jbRulesets5, ADDRESS.jbRulesets6),
+    address: addresses(
+      ADDRESS.jbRulesets,
+      ADDRESS.jbRulesets5,
+      ADDRESS.jbRulesets6,
+    ),
     chain: {
       ethereum: {
         startBlock: 21863161,
@@ -307,7 +320,11 @@ const JBRulesets = {
   },
   testnet: {
     abi: JBRulesetsAbi,
-    address: addresses(ADDRESS.jbRulesets, ADDRESS.jbRulesets5, ADDRESS.jbRulesets6),
+    address: addresses(
+      ADDRESS.jbRulesets,
+      ADDRESS.jbRulesets5,
+      ADDRESS.jbRulesets6,
+    ),
     chain: {
       ethereumSepolia: {
         startBlock: 7724135,
@@ -330,41 +347,45 @@ export const mainnetConfig = createConfig({
   chains: {
     ethereum: {
       id: mainnet.id,
-      rpc: rpc(
-        "ethereum-mainnet",
-        "mainnet",
-        process.env.RPC_URL_ETHEREUM
-      ),
+      rpc: rpc("ethereum-mainnet", "mainnet", process.env.RPC_URL_ETHEREUM),
+      ws: ws("ethereum-mainnet"),
     },
     arbitrum: {
       id: arbitrum.id,
       rpc: rpc(
         "arbitrum-mainnet-archive",
         "arbitrum-mainnet",
-        process.env.RPC_URL_ARBITRUM
+        process.env.RPC_URL_ARBITRUM,
       ),
+      ws: ws("arbitrum-mainnet-archive"),
     },
     base: {
       id: base.id,
       rpc: rpc(
         "base-mainnet-archive",
         "base-mainnet",
-        process.env.RPC_URL_BASE
+        process.env.RPC_URL_BASE,
       ),
+      ws: ws("base-mainnet-archive"),
     },
     optimism: {
       id: optimism.id,
       rpc: rpc(
         "optimism-mainnet-archive",
         "optimism-mainnet",
-        process.env.RPC_URL_OPTIMISM
+        process.env.RPC_URL_OPTIMISM,
       ),
+      ws: ws("optimism-mainnet-archive"),
     },
   },
   contracts: {
     JBProjects: {
       abi: JBProjectsAbi,
-      address: addresses(ADDRESS.jbProjects, ADDRESS.jbProjects5, ADDRESS.jbProjects6),
+      address: addresses(
+        ADDRESS.jbProjects,
+        ADDRESS.jbProjects5,
+        ADDRESS.jbProjects6,
+      ),
       chain: {
         ethereum: {
           startBlock: 21863142,
@@ -386,7 +407,7 @@ export const mainnetConfig = createConfig({
         ADDRESS.jbController,
         ADDRESS.jbController4_1,
         ADDRESS.jbController5,
-        ADDRESS.jbController6
+        ADDRESS.jbController6,
       ),
       chain: {
         ethereum: {
@@ -408,7 +429,7 @@ export const mainnetConfig = createConfig({
       address: addresses(
         ADDRESS.jbMultiTerminal,
         ADDRESS.jbMultiTerminal5,
-        ADDRESS.jbMultiTerminal6
+        ADDRESS.jbMultiTerminal6,
       ),
       chain: {
         ethereum: {
@@ -505,7 +526,7 @@ export const mainnetConfig = createConfig({
       address: addresses(
         ADDRESS.jbPermissions,
         ADDRESS.jbPermissions5,
-        ADDRESS.jbPermissions6
+        ADDRESS.jbPermissions6,
       ),
       chain: {
         ethereum: {
@@ -560,7 +581,11 @@ export const mainnetConfig = createConfig({
     },
     RevDeployer: {
       abi: REVDeployerAbi,
-      address: addresses(ADDRESS.revDeployer, ADDRESS.revDeployer5, ADDRESS.revDeployer6),
+      address: addresses(
+        ADDRESS.revDeployer,
+        ADDRESS.revDeployer5,
+        ADDRESS.revDeployer6,
+      ),
       chain: {
         ethereum: {
           startBlock: 21869094,
@@ -592,7 +617,7 @@ export const mainnetConfig = createConfig({
       address: addresses(
         ADDRESS.revLoans,
         ADDRESS.revLoans1_1,
-        ADDRESS.revLoans5
+        ADDRESS.revLoans5,
       ),
       chain: {
         ethereum: {
@@ -623,10 +648,7 @@ export const mainnetConfig = createConfig({
     },
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
-      address: addresses(
-        ADDRESS.jbSuckersRegistry,
-        ADDRESS.jbSuckersRegistry5
-      ),
+      address: addresses(ADDRESS.jbSuckersRegistry, ADDRESS.jbSuckersRegistry5),
       chain: {
         ethereum: {
           startBlock: 21863660,
@@ -752,38 +774,46 @@ export const testnetConfig = createConfig({
       rpc: rpc(
         "ethereum-sepolia",
         "sepolia",
-        process.env.RPC_URL_ETHEREUM_SEPOLIA
+        process.env.RPC_URL_ETHEREUM_SEPOLIA,
       ),
+      ws: ws("ethereum-sepolia"),
     },
     arbitrumSepolia: {
       id: arbitrumSepolia.id,
       rpc: rpc(
         "arbitrum-sepolia",
         "arbitrum-sepolia",
-        process.env.RPC_URL_ARBITRUM_SEPOLIA
+        process.env.RPC_URL_ARBITRUM_SEPOLIA,
       ),
+      ws: ws("arbitrum-sepolia"),
     },
     baseSepolia: {
       id: baseSepolia.id,
       rpc: rpc(
         "base-sepolia-archive",
         "base-sepolia",
-        process.env.RPC_URL_BASE_SEPOLIA
+        process.env.RPC_URL_BASE_SEPOLIA,
       ),
+      ws: ws("base-sepolia-archive"),
     },
     optimismSepolia: {
       id: optimismSepolia.id,
       rpc: rpc(
         "optimism-sepolia",
         "optimism-sepolia",
-        process.env.RPC_URL_OPTIMISM_SEPOLIA
+        process.env.RPC_URL_OPTIMISM_SEPOLIA,
       ),
+      ws: ws("optimism-sepolia"),
     },
   },
   contracts: {
     JBProjects: {
       abi: JBProjectsAbi,
-      address: addresses(ADDRESS.jbProjects, ADDRESS.jbProjects5, ADDRESS.jbProjects6),
+      address: addresses(
+        ADDRESS.jbProjects,
+        ADDRESS.jbProjects5,
+        ADDRESS.jbProjects6,
+      ),
       chain: {
         ethereumSepolia: {
           startBlock: 7724105,
@@ -805,7 +835,7 @@ export const testnetConfig = createConfig({
         ADDRESS.jbController,
         ADDRESS.jbController4_1,
         ADDRESS.jbController5,
-        ADDRESS.jbController6
+        ADDRESS.jbController6,
       ),
       chain: {
         ethereumSepolia: {
@@ -827,7 +857,7 @@ export const testnetConfig = createConfig({
       address: addresses(
         ADDRESS.jbMultiTerminal,
         ADDRESS.jbMultiTerminal5,
-        ADDRESS.jbMultiTerminal6
+        ADDRESS.jbMultiTerminal6,
       ),
       chain: {
         ethereumSepolia: {
@@ -894,16 +924,20 @@ export const testnetConfig = createConfig({
       address: hookDeployedFactoryConfig6,
       chain: {
         ethereumSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.ethereumSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.ethereumSepolia,
         },
         arbitrumSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.arbitrumSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.arbitrumSepolia,
         },
         baseSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.baseSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.baseSepolia,
         },
         optimismSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.optimismSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.jb721TiersHookDeployer.optimismSepolia,
         },
       },
     },
@@ -931,7 +965,7 @@ export const testnetConfig = createConfig({
       address: addresses(
         ADDRESS.jbPermissions,
         ADDRESS.jbPermissions5,
-        ADDRESS.jbPermissions6
+        ADDRESS.jbPermissions6,
       ),
       abi: JBPermissionsAbi,
       chain: {
@@ -975,22 +1009,30 @@ export const testnetConfig = createConfig({
       address: [ADDRESS.banny721TokenUriResolver6],
       chain: {
         ethereumSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.ethereumSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.ethereumSepolia,
         },
         arbitrumSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.arbitrumSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.arbitrumSepolia,
         },
         baseSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.baseSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.baseSepolia,
         },
         optimismSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.optimismSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.banny721TokenUriResolver.optimismSepolia,
         },
       },
     },
     RevDeployer: {
       abi: REVDeployerAbi,
-      address: addresses(ADDRESS.revDeployer, ADDRESS.revDeployer5, ADDRESS.revDeployer6),
+      address: addresses(
+        ADDRESS.revDeployer,
+        ADDRESS.revDeployer5,
+        ADDRESS.revDeployer6,
+      ),
       chain: {
         ethereumSepolia: {
           startBlock: 7729792,
@@ -1011,10 +1053,18 @@ export const testnetConfig = createConfig({
       abi: REVOwnerAbi,
       address: addresses(ADDRESS.revOwner6),
       chain: {
-        ethereumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revOwner.ethereumSepolia },
-        arbitrumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revOwner.arbitrumSepolia },
-        baseSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revOwner.baseSepolia },
-        optimismSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revOwner.optimismSepolia },
+        ethereumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.revOwner.ethereumSepolia,
+        },
+        arbitrumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.revOwner.arbitrumSepolia,
+        },
+        baseSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.revOwner.baseSepolia,
+        },
+        optimismSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.revOwner.optimismSepolia,
+        },
       },
     },
     RevLoans: {
@@ -1022,7 +1072,7 @@ export const testnetConfig = createConfig({
       address: addresses(
         ADDRESS.revLoans,
         ADDRESS.revLoans1_1,
-        ADDRESS.revLoans5
+        ADDRESS.revLoans5,
       ),
       chain: {
         ethereumSepolia: {
@@ -1044,18 +1094,23 @@ export const testnetConfig = createConfig({
       abi: REVLoansV6Abi,
       address: addresses(ADDRESS.revLoans6),
       chain: {
-        ethereumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revLoans.ethereumSepolia },
-        arbitrumSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revLoans.arbitrumSepolia },
-        baseSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revLoans.baseSepolia },
-        optimismSepolia: { startBlock: V6_TESTNET_START_BLOCKS.revLoans.optimismSepolia },
+        ethereumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.revLoans.ethereumSepolia,
+        },
+        arbitrumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.revLoans.arbitrumSepolia,
+        },
+        baseSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.revLoans.baseSepolia,
+        },
+        optimismSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.revLoans.optimismSepolia,
+        },
       },
     },
     JBSuckersRegistry: {
       abi: JBSuckersRegistryAbi,
-      address: addresses(
-        ADDRESS.jbSuckersRegistry,
-        ADDRESS.jbSuckersRegistry5
-      ),
+      address: addresses(ADDRESS.jbSuckersRegistry, ADDRESS.jbSuckersRegistry5),
       chain: {
         ethereumSepolia: {
           startBlock: 7724468,
@@ -1153,16 +1208,20 @@ export const testnetConfig = createConfig({
       address: addresses(ADDRESS.jbProjectPayerDeployer6),
       chain: {
         ethereumSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.ethereumSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.ethereumSepolia,
         },
         arbitrumSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.arbitrumSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.arbitrumSepolia,
         },
         baseSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.baseSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.baseSepolia,
         },
         optimismSepolia: {
-          startBlock: V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.optimismSepolia,
+          startBlock:
+            V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.optimismSepolia,
         },
       },
     },
