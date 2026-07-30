@@ -332,20 +332,36 @@ export const autoIssueEventRelations = relations(autoIssueEvent, ({ one }) => ({
 // V4 settlement, or "mint" when a payment's leftover is minted instead.
 // Amounts are denominated from the project's perspective: terminalTokenAmount
 // is the terminal-token side, projectTokenAmount is the project-token side.
-export const swapEvent = onchainTable("swap_event", (t) => ({
-  ...eventParams(t),
-  ...projectId(t),
-  ...suckerGroupId(t),
-  direction: t.text().notNull(),
-  poolId: t.hex(),
-  terminalTokenAmount: t.bigint().notNull(),
-  projectTokenAmount: t.bigint().notNull(),
-  // The exact post-swap V4 spot price. Null for `mint`, which does not touch
-  // the pool. Token ordering is recorded so clients can convert it without
-  // reconstructing the PoolKey.
-  sqrtPriceX96: t.bigint(),
-  projectTokenIsCurrency0: t.boolean(),
-}));
+export const swapEvent = onchainTable(
+  "swap_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    direction: t.text().notNull(),
+    poolId: t.hex(),
+    terminalTokenAmount: t.bigint().notNull(),
+    projectTokenAmount: t.bigint().notNull(),
+    // The exact post-swap V4 spot price. Null for `mint`, which does not touch
+    // the pool. Token ordering is recorded so clients can convert it without
+    // reconstructing the PoolKey.
+    sqrtPriceX96: t.bigint(),
+    projectTokenIsCurrency0: t.boolean(),
+  }),
+  (t) => ({
+    suckerGroupHistoryIdx: index().on(
+      t.suckerGroupId,
+      t.version,
+      t.timestamp
+    ),
+    projectHistoryIdx: index().on(
+      t.chainId,
+      t.projectId,
+      t.version,
+      t.timestamp
+    ),
+  })
+);
 
 export const swapEventRelations = relations(swapEvent, ({ one }) => ({
   project: one(project, {
@@ -385,19 +401,35 @@ export const buybackPoolRelations = relations(buybackPool, ({ one }) => ({
 
 // Buyback hook pool registrations (V6 JBBuybackHook PoolAdded) — which Uniswap
 // V4 pool backs a project's buyback for a given terminal token.
-export const buybackPoolEvent = onchainTable("buyback_pool_event", (t) => ({
-  ...eventParams(t),
-  ...projectId(t),
-  ...suckerGroupId(t),
-  terminalToken: t.hex().notNull(),
-  poolId: t.hex().notNull(),
-  currency0: t.hex(),
-  currency1: t.hex(),
-  projectTokenIsCurrency0: t.boolean(),
-  // Price when the pool was registered (the Initialize price for a new pool,
-  // or slot0 at PoolAdded for an already initialized pool).
-  initialSqrtPriceX96: t.bigint(),
-}));
+export const buybackPoolEvent = onchainTable(
+  "buyback_pool_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    terminalToken: t.hex().notNull(),
+    poolId: t.hex().notNull(),
+    currency0: t.hex(),
+    currency1: t.hex(),
+    projectTokenIsCurrency0: t.boolean(),
+    // Price when the pool was registered (the Initialize price for a new pool,
+    // or slot0 at PoolAdded for an already initialized pool).
+    initialSqrtPriceX96: t.bigint(),
+  }),
+  (t) => ({
+    suckerGroupHistoryIdx: index().on(
+      t.suckerGroupId,
+      t.version,
+      t.timestamp
+    ),
+    projectHistoryIdx: index().on(
+      t.chainId,
+      t.projectId,
+      t.version,
+      t.timestamp
+    ),
+  })
+);
 
 export const buybackPoolEventRelations = relations(
   buybackPoolEvent,
@@ -476,6 +508,7 @@ export const cashOutTaxSnapshot = onchainTable(
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.version, t.chainId, t.projectId, t.rulesetId] }),
+    suckerGroupHistoryIdx: index().on(t.suckerGroupId, t.start),
   })
 );
 
@@ -1631,6 +1664,7 @@ export const suckerGroupMoment = onchainTable(
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.suckerGroupId, t.version, t.timestamp] }),
+    historyIdx: index().on(t.suckerGroupId, t.timestamp),
   })
 );
 
