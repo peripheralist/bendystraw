@@ -357,7 +357,9 @@ export const mainnetConfig = createConfig({
         "arbitrum-mainnet",
         process.env.RPC_URL_ARBITRUM,
       ),
-      ws: ws("arbitrum-mainnet-archive"),
+      pollingInterval: 2000,
+      // No ws for arb due to websocket connection errors (possibly on Dwellir's end)
+      // ws: ws("arbitrum-mainnet-archive"),
     },
     base: {
       id: base.id,
@@ -785,7 +787,9 @@ export const testnetConfig = createConfig({
         "arbitrum-sepolia",
         process.env.RPC_URL_ARBITRUM_SEPOLIA,
       ),
-      ws: ws("arbitrum-sepolia"),
+      pollingInterval: 2000,
+      // No ws for arb due to websocket connection errors (possibly on Dwellir's end)
+      // ws: ws("arbitrum-sepolia"),
     },
     baseSepolia: {
       id: baseSepolia.id,
