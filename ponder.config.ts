@@ -89,6 +89,12 @@ const ws = (dwellirNetwork: string) => {
   )}`;
 };
 
+// Infura caps eth_getLogs at 10k blocks. Since `rpc` puts Dwellir and Infura behind a
+// single viem `fallback` transport, Ponder can't tell which backend served a request, so
+// the range it infers from Dwellir can drift past Infura's limit and wedge the backfill.
+// Pin a range that both accept instead of letting Ponder tune it.
+const ETH_GET_LOGS_BLOCK_RANGE = 10_000;
+
 const V6_MAINNET_START_BLOCKS = {
   jb721TiersHookDeployer: {
     ethereum: 25329907,
@@ -349,6 +355,7 @@ export const mainnetConfig = createConfig({
       id: mainnet.id,
       rpc: rpc("ethereum-mainnet", "mainnet", process.env.RPC_URL_ETHEREUM),
       ws: ws("ethereum-mainnet"),
+      ethGetLogsBlockRange: ETH_GET_LOGS_BLOCK_RANGE,
     },
     arbitrum: {
       id: arbitrum.id,
@@ -360,6 +367,7 @@ export const mainnetConfig = createConfig({
       pollingInterval: 2000,
       // No ws for arb due to websocket connection errors (possibly on Dwellir's end)
       // ws: ws("arbitrum-mainnet-archive"),
+      ethGetLogsBlockRange: ETH_GET_LOGS_BLOCK_RANGE,
     },
     base: {
       id: base.id,
@@ -369,6 +377,7 @@ export const mainnetConfig = createConfig({
         process.env.RPC_URL_BASE,
       ),
       ws: ws("base-mainnet-archive"),
+      ethGetLogsBlockRange: ETH_GET_LOGS_BLOCK_RANGE,
     },
     optimism: {
       id: optimism.id,
@@ -378,6 +387,7 @@ export const mainnetConfig = createConfig({
         process.env.RPC_URL_OPTIMISM,
       ),
       ws: ws("optimism-mainnet-archive"),
+      ethGetLogsBlockRange: ETH_GET_LOGS_BLOCK_RANGE,
     },
   },
   contracts: {
@@ -779,6 +789,7 @@ export const testnetConfig = createConfig({
         process.env.RPC_URL_ETHEREUM_SEPOLIA,
       ),
       ws: ws("ethereum-sepolia"),
+      ethGetLogsBlockRange: ETH_GET_LOGS_BLOCK_RANGE,
     },
     arbitrumSepolia: {
       id: arbitrumSepolia.id,
@@ -790,6 +801,7 @@ export const testnetConfig = createConfig({
       pollingInterval: 2000,
       // No ws for arb due to websocket connection errors (possibly on Dwellir's end)
       // ws: ws("arbitrum-sepolia"),
+      ethGetLogsBlockRange: ETH_GET_LOGS_BLOCK_RANGE,
     },
     baseSepolia: {
       id: baseSepolia.id,
@@ -799,6 +811,7 @@ export const testnetConfig = createConfig({
         process.env.RPC_URL_BASE_SEPOLIA,
       ),
       ws: ws("base-sepolia-archive"),
+      ethGetLogsBlockRange: ETH_GET_LOGS_BLOCK_RANGE,
     },
     optimismSepolia: {
       id: optimismSepolia.id,
@@ -808,6 +821,7 @@ export const testnetConfig = createConfig({
         process.env.RPC_URL_OPTIMISM_SEPOLIA,
       ),
       ws: ws("optimism-sepolia"),
+      ethGetLogsBlockRange: ETH_GET_LOGS_BLOCK_RANGE,
     },
   },
   contracts: {
