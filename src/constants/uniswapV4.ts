@@ -29,6 +29,42 @@ export const JB_UNISWAP_V4_HOOK = {
   },
 } as const;
 
+/**
+ * Canonical Uniswap V4 PositionManager per chain, paired with the block the JB
+ * hook was deployed at: a position in a JB pool cannot predate the hook, so
+ * there is nothing to index before it.
+ */
+export const JB_UNISWAP_V4_POSITION_MANAGER = {
+  ethereum: {
+    address: "0xbd216513d74c8cf14cf4747e6aaa6420ff64ee9e",
+    startBlock: JB_UNISWAP_V4_HOOK.ethereum.startBlock,
+  },
+  arbitrum: {
+    address: "0xd88f38f930b7952f2db2432cb002e7abbf3dd869",
+    startBlock: JB_UNISWAP_V4_HOOK.arbitrum.startBlock,
+  },
+  base: {
+    address: "0x7c5f5a4bbd8fd63184577525326123b519429bdc",
+    startBlock: JB_UNISWAP_V4_HOOK.base.startBlock,
+  },
+  optimism: {
+    address: "0x3c3ea4b57a46241e54610e5f022e5c45859a1017",
+    startBlock: JB_UNISWAP_V4_HOOK.optimism.startBlock,
+  },
+  ethereumSepolia: {
+    address: "0x429ba70129df741b2ca2a85bc3a2a3328e5c09b4",
+    startBlock: JB_UNISWAP_V4_HOOK.ethereumSepolia.startBlock,
+  },
+  arbitrumSepolia: {
+    address: "0xac631556d3d4019c95769033b5e719dd77124bac",
+    startBlock: JB_UNISWAP_V4_HOOK.arbitrumSepolia.startBlock,
+  },
+  baseSepolia: {
+    address: "0x4b2c77d209d3405f41a037ec6c77f7f5b8e2ca80",
+    startBlock: JB_UNISWAP_V4_HOOK.baseSepolia.startBlock,
+  },
+} as const;
+
 export const POOL_MANAGER_BY_CHAIN: Partial<
   Record<number, `0x${string}`>
 > = {

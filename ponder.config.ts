@@ -34,7 +34,11 @@ import { JBSuckersRegistryV6Abi } from "./abis/JBSuckersRegistryV6Abi";
 import { JBBuybackHookV6Abi } from "./abis/JBBuybackHookV6Abi";
 import { JBProjectPayerDeployerAbi } from "./abis/JBProjectPayerDeployerAbi";
 import { JBUniswapV4HookV6Abi } from "./abis/JBUniswapV4HookV6Abi";
-import { JB_UNISWAP_V4_HOOK } from "./src/constants/uniswapV4";
+import { UniswapV4PositionManagerAbi } from "./abis/UniswapV4PositionManagerAbi";
+import {
+  JB_UNISWAP_V4_HOOK,
+  JB_UNISWAP_V4_POSITION_MANAGER,
+} from "./src/constants/uniswapV4";
 
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
@@ -757,6 +761,15 @@ export const mainnetConfig = createConfig({
         optimism: JB_UNISWAP_V4_HOOK.optimism,
       },
     },
+    UniswapV4PositionManager6: {
+      abi: UniswapV4PositionManagerAbi,
+      chain: {
+        ethereum: JB_UNISWAP_V4_POSITION_MANAGER.ethereum,
+        arbitrum: JB_UNISWAP_V4_POSITION_MANAGER.arbitrum,
+        base: JB_UNISWAP_V4_POSITION_MANAGER.base,
+        optimism: JB_UNISWAP_V4_POSITION_MANAGER.optimism,
+      },
+    },
     JBProjectPayerDeployer: {
       abi: JBProjectPayerDeployerAbi,
       address: addresses(ADDRESS.jbProjectPayerDeployer6),
@@ -1219,6 +1232,14 @@ export const testnetConfig = createConfig({
         ethereumSepolia: JB_UNISWAP_V4_HOOK.ethereumSepolia,
         arbitrumSepolia: JB_UNISWAP_V4_HOOK.arbitrumSepolia,
         baseSepolia: JB_UNISWAP_V4_HOOK.baseSepolia,
+      },
+    },
+    UniswapV4PositionManager6: {
+      abi: UniswapV4PositionManagerAbi,
+      chain: {
+        ethereumSepolia: JB_UNISWAP_V4_POSITION_MANAGER.ethereumSepolia,
+        arbitrumSepolia: JB_UNISWAP_V4_POSITION_MANAGER.arbitrumSepolia,
+        baseSepolia: JB_UNISWAP_V4_POSITION_MANAGER.baseSepolia,
       },
     },
     JBProjectPayerDeployer: {
