@@ -34,7 +34,13 @@ import { JBSuckersRegistryV6Abi } from "./abis/JBSuckersRegistryV6Abi";
 import { JBBuybackHookV6Abi } from "./abis/JBBuybackHookV6Abi";
 import { JBProjectPayerDeployerAbi } from "./abis/JBProjectPayerDeployerAbi";
 import { JBUniswapV4HookV6Abi } from "./abis/JBUniswapV4HookV6Abi";
-import { JB_UNISWAP_V4_HOOK } from "./src/constants/uniswapV4";
+import { UniswapV4PoolManagerAbi } from "./abis/UniswapV4PoolManagerAbi";
+import { UniswapV4PositionManagerAbi } from "./abis/UniswapV4PositionManagerAbi";
+import {
+  JB_UNISWAP_V4_HOOK,
+  JB_UNISWAP_V4_POOL_MANAGER,
+  JB_UNISWAP_V4_POSITION_MANAGER,
+} from "./src/constants/uniswapV4";
 
 const addresses = (...items: (`0x${string}` | undefined)[]) =>
   items.filter((item): item is `0x${string}` => !!item);
@@ -757,6 +763,51 @@ export const mainnetConfig = createConfig({
         optimism: JB_UNISWAP_V4_HOOK.optimism,
       },
     },
+    UniswapV4PositionManager6: {
+      abi: UniswapV4PositionManagerAbi,
+      chain: {
+        ethereum: JB_UNISWAP_V4_POSITION_MANAGER.ethereum,
+        arbitrum: JB_UNISWAP_V4_POSITION_MANAGER.arbitrum,
+        base: JB_UNISWAP_V4_POSITION_MANAGER.base,
+        optimism: JB_UNISWAP_V4_POSITION_MANAGER.optimism,
+      },
+    },
+    // Only modifications made through the canonical PositionManager can belong
+    // to a Juicebox pool position, and the handler drops every pool that is not
+    // a registered buyback pool before it makes an RPC call.
+    UniswapV4PoolManager6: {
+      abi: UniswapV4PoolManagerAbi,
+      chain: {
+        ethereum: {
+          ...JB_UNISWAP_V4_POOL_MANAGER.ethereum,
+          filter: {
+            event: "ModifyLiquidity",
+            args: { sender: JB_UNISWAP_V4_POSITION_MANAGER.ethereum.address },
+          },
+        },
+        arbitrum: {
+          ...JB_UNISWAP_V4_POOL_MANAGER.arbitrum,
+          filter: {
+            event: "ModifyLiquidity",
+            args: { sender: JB_UNISWAP_V4_POSITION_MANAGER.arbitrum.address },
+          },
+        },
+        base: {
+          ...JB_UNISWAP_V4_POOL_MANAGER.base,
+          filter: {
+            event: "ModifyLiquidity",
+            args: { sender: JB_UNISWAP_V4_POSITION_MANAGER.base.address },
+          },
+        },
+        optimism: {
+          ...JB_UNISWAP_V4_POOL_MANAGER.optimism,
+          filter: {
+            event: "ModifyLiquidity",
+            args: { sender: JB_UNISWAP_V4_POSITION_MANAGER.optimism.address },
+          },
+        },
+      },
+    },
     JBProjectPayerDeployer: {
       abi: JBProjectPayerDeployerAbi,
       address: addresses(ADDRESS.jbProjectPayerDeployer6),
@@ -1219,6 +1270,46 @@ export const testnetConfig = createConfig({
         ethereumSepolia: JB_UNISWAP_V4_HOOK.ethereumSepolia,
         arbitrumSepolia: JB_UNISWAP_V4_HOOK.arbitrumSepolia,
         baseSepolia: JB_UNISWAP_V4_HOOK.baseSepolia,
+      },
+    },
+    UniswapV4PositionManager6: {
+      abi: UniswapV4PositionManagerAbi,
+      chain: {
+        ethereumSepolia: JB_UNISWAP_V4_POSITION_MANAGER.ethereumSepolia,
+        arbitrumSepolia: JB_UNISWAP_V4_POSITION_MANAGER.arbitrumSepolia,
+        baseSepolia: JB_UNISWAP_V4_POSITION_MANAGER.baseSepolia,
+      },
+    },
+    UniswapV4PoolManager6: {
+      abi: UniswapV4PoolManagerAbi,
+      chain: {
+        ethereumSepolia: {
+          ...JB_UNISWAP_V4_POOL_MANAGER.ethereumSepolia,
+          filter: {
+            event: "ModifyLiquidity",
+            args: {
+              sender: JB_UNISWAP_V4_POSITION_MANAGER.ethereumSepolia.address,
+            },
+          },
+        },
+        arbitrumSepolia: {
+          ...JB_UNISWAP_V4_POOL_MANAGER.arbitrumSepolia,
+          filter: {
+            event: "ModifyLiquidity",
+            args: {
+              sender: JB_UNISWAP_V4_POSITION_MANAGER.arbitrumSepolia.address,
+            },
+          },
+        },
+        baseSepolia: {
+          ...JB_UNISWAP_V4_POOL_MANAGER.baseSepolia,
+          filter: {
+            event: "ModifyLiquidity",
+            args: {
+              sender: JB_UNISWAP_V4_POSITION_MANAGER.baseSepolia.address,
+            },
+          },
+        },
       },
     },
     JBProjectPayerDeployer: {

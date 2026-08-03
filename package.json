@@ -8,7 +8,7 @@
     "start": "ponder start",
     "db": "ponder db",
     "status": "tsx scripts/status.ts",
-    "test": "tsx scripts/check-participant-balance-invariant.ts",
+    "test": "tsx scripts/check-participant-balance-invariant.ts && tsx scripts/check-lp-fee-accounting.ts",
     "serve": "ponder serve --schema=public",
     "codegen": "ponder codegen",
     "lint": "eslint . --ext .ts",

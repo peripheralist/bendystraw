@@ -392,6 +392,71 @@ export const buybackPool = onchainTable(
   })
 );
 
+/**
+ * An LP position in a Juicebox buyback pool, so clients can list a pool's
+ * providers — or a wallet's own positions — without walking PoolManager logs
+ * back to the pool's Initialize. Only positions in registered `buyback_pool`
+ * rows are stored; every other Uniswap V4 position is ignored.
+ */
+export const buybackPoolPosition = onchainTable(
+  "buyback_pool_position",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...version(t),
+    ...createdAt(t),
+    poolId: t.hex().notNull(),
+    /** PositionManager NFT id, which is also the position's salt in the pool. */
+    tokenId: t.bigint().notNull(),
+    owner: t.hex().notNull(),
+    tickLower: t.integer().notNull(),
+    tickUpper: t.integer().notNull(),
+    /** Live liquidity, as the pool records it. */
+    liquidity: t.bigint().notNull(),
+    /**
+     * The position's fee checkpoint, mirroring the pool's. Stored so the next
+     * modification can price the interval that just ended.
+     */
+    feeGrowthInside0LastX128: t.bigint().notNull(),
+    feeGrowthInside1LastX128: t.bigint().notNull(),
+    /**
+     * Fees this position has already taken, summed over every modification.
+     * The pool rewrites its checkpoint on each collect, so this total cannot be
+     * recovered from live state — lifetime earnings are this plus whatever is
+     * currently unclaimed.
+     */
+    feesClaimed0: t.bigint().notNull(),
+    feesClaimed1: t.bigint().notNull(),
+    /** Last block timestamp at which ownership or existence changed. */
+    updatedAt: t.integer().notNull(),
+    /** Burned positions are kept so a client can tell "gone" from "never seen". */
+    burned: t.boolean().notNull().default(false),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.tokenId] }),
+    poolIdx: index().on(t.chainId, t.poolId),
+    ownerIdx: index().on(t.owner),
+  })
+);
+
+export const buybackPoolPositionRelations = relations(
+  buybackPoolPosition,
+  ({ one }) => ({
+    project: one(project, {
+      fields: [
+        buybackPoolPosition.chainId,
+        buybackPoolPosition.projectId,
+        buybackPoolPosition.version,
+      ],
+      references: [project.chainId, project.projectId, project.version],
+    }),
+    pool: one(buybackPool, {
+      fields: [buybackPoolPosition.chainId, buybackPoolPosition.poolId],
+      references: [buybackPool.chainId, buybackPool.poolId],
+    }),
+  })
+);
+
 export const buybackPoolRelations = relations(buybackPool, ({ one }) => ({
   project: one(project, {
     fields: [buybackPool.chainId, buybackPool.projectId, buybackPool.version],

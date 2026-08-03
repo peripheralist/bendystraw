@@ -36,4 +36,17 @@ export const UniswapV4PoolManagerAbi = [
     inputs: [{ name: "slot", type: "bytes32" }],
     outputs: [{ name: "value", type: "bytes32" }],
   },
+  {
+    type: "event",
+    name: "ModifyLiquidity",
+    inputs: [
+      { name: "id", type: "bytes32", indexed: true },
+      { name: "sender", type: "address", indexed: true },
+      { name: "tickLower", type: "int24", indexed: false },
+      { name: "tickUpper", type: "int24", indexed: false },
+      { name: "liquidityDelta", type: "int256", indexed: false },
+      { name: "salt", type: "bytes32", indexed: false },
+    ],
+    anonymous: false,
+  },
 ] as const;
