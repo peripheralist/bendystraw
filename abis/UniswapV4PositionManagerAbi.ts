@@ -11,4 +11,11 @@ export const UniswapV4PositionManagerAbi = [
     ],
     anonymous: false,
   },
+  {
+    type: "function",
+    name: "ownerOf",
+    stateMutability: "view",
+    inputs: [{ name: "id", type: "uint256" }],
+    outputs: [{ name: "owner", type: "address" }],
+  },
 ] as const;

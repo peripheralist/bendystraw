@@ -411,6 +411,22 @@ export const buybackPoolPosition = onchainTable(
     owner: t.hex().notNull(),
     tickLower: t.integer().notNull(),
     tickUpper: t.integer().notNull(),
+    /** Live liquidity, as the pool records it. */
+    liquidity: t.bigint().notNull(),
+    /**
+     * The position's fee checkpoint, mirroring the pool's. Stored so the next
+     * modification can price the interval that just ended.
+     */
+    feeGrowthInside0LastX128: t.bigint().notNull(),
+    feeGrowthInside1LastX128: t.bigint().notNull(),
+    /**
+     * Fees this position has already taken, summed over every modification.
+     * The pool rewrites its checkpoint on each collect, so this total cannot be
+     * recovered from live state — lifetime earnings are this plus whatever is
+     * currently unclaimed.
+     */
+    feesClaimed0: t.bigint().notNull(),
+    feesClaimed1: t.bigint().notNull(),
     /** Last block timestamp at which ownership or existence changed. */
     updatedAt: t.integer().notNull(),
     /** Burned positions are kept so a client can tell "gone" from "never seen". */
