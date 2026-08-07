@@ -5,6 +5,7 @@ import { UniswapV4PoolManagerAbi } from "../abis/UniswapV4PoolManagerAbi";
 import { POOL_MANAGER_BY_CHAIN } from "./constants/uniswapV4";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
+import { usdPerAccountingTokenAtBlock } from "./util/usdPrice";
 
 const VERSION = 6;
 
@@ -76,6 +77,12 @@ ponder.on("JBUniswapV4Hook6:RouteSelected", async ({ event, context }) => {
       projectTokenAmount: magnitude(projectDelta),
       sqrtPriceX96: settled.args.sqrtPriceX96,
       projectTokenIsCurrency0: pool.projectTokenIsCurrency0,
+      accountingTokenUsdRate: await usdPerAccountingTokenAtBlock({
+        context,
+        version: VERSION,
+        projectId: pool.projectId,
+        currency: _project.currency,
+      }),
     });
 
     await insertActivityEvent("swapEvent", {

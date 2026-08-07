@@ -2,6 +2,7 @@ import { eq } from "ponder";
 import { Context } from "ponder:registry";
 import { project, suckerGroup, suckerGroupMoment } from "ponder:schema";
 import { Version } from "./getVersion";
+import { usdPerAccountingTokenAtBlock } from "./usdPrice";
 
 type Project = typeof project.$inferSelect;
 
@@ -131,12 +132,23 @@ export async function onProjectStatsUpdated({
     .update(suckerGroup, { id: _project.suckerGroupId })
     .set(aggregateStats);
 
+  // The balance in this moment is what the cash-out floor is derived from, so the moment also
+  // carries the rate that valued it. Read at THIS block: recovering it later is impossible,
+  // and a present-day rate would restate every historical point.
+  const accountingTokenUsdRate = await usdPerAccountingTokenAtBlock({
+    context,
+    version,
+    projectId,
+    currency: _project.currency,
+  });
+
   await context.db
     .insert(suckerGroupMoment)
     .values({
       ...updatedSuckerGroup,
       suckerGroupId: updatedSuckerGroup.id,
       timestamp: Number(event.block.timestamp),
+      accountingTokenUsdRate,
     })
     .onConflictDoUpdate({
       // Update with latest values when multiple events occur at the same timestamp
@@ -154,5 +166,6 @@ export async function onProjectStatsUpdated({
       trendingVolume: updatedSuckerGroup.trendingVolume,
       trendingPaymentsCount: updatedSuckerGroup.trendingPaymentsCount,
       contributorsCount: updatedSuckerGroup.contributorsCount,
+      accountingTokenUsdRate,
     });
 }

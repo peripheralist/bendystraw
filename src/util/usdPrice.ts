@@ -101,3 +101,56 @@ export async function usdPriceForToken({
     return BigInt(0);
   }
 }
+
+/**
+ * USD per ONE WHOLE accounting token, as an 18-decimal fixed point, read from the on-chain
+ * feed AT THE CURRENT EVENT'S BLOCK.
+ *
+ * This is the historical exchange rate that no live read can recover after the fact. Ponder
+ * pins `context.client` to the block being indexed, so `JBPrices` answers with the rate that
+ * was in force when the swap settled or the balance moved — the same rate `JBTerminalStore`
+ * itself used, not a present-day stand-in.
+ *
+ * Recorded alongside price-bearing rows so a chart can put accounting-token values (pool
+ * price, cash-out floor) on a USD axis WITHOUT restating history. Clients previously had to
+ * derive this from `payEvent.amount / payEvent.amountUsd`, which fails outright for projects
+ * whose payments route through the buyback pool: those rows carry `amount: 0`.
+ *
+ * Distinct from `usdPriceForToken` above, which values an AMOUNT and returns the token's own
+ * decimals. This returns a RATE and is always 18-decimal.
+ *
+ * Null when no feed bridges the pair — never a zero, which a caller would read as free.
+ */
+export async function usdPerAccountingTokenAtBlock({
+  context,
+  version,
+  projectId,
+  currency,
+}: {
+  context: Context;
+  version: Version;
+  projectId: bigint | number;
+  currency: bigint | null;
+}) {
+  if (!currency) return null;
+
+  // USD IS the unit here, so the pair needs no feed and no RPC call.
+  if (currency === CURRENCY_USD) return BigInt(1e18);
+
+  // V4's feed was registered with the pair inverted; see usdPriceForToken.
+  const pricingCurrency = version === 4 ? currency : CURRENCY_USD;
+  const unitCurrency = version === 4 ? CURRENCY_USD : currency;
+
+  try {
+    const rate = await context.client.readContract({
+      abi: JBPricesAbi,
+      address: addressForVersion("jbPrices", version),
+      functionName: "pricePerUnitOf",
+      args: [BigInt(projectId), pricingCurrency, unitCurrency, BigInt(18)],
+    });
+    return rate > BigInt(0) ? rate : null;
+  } catch (e) {
+    // A project with no feed for its accounting token is normal, not an error state.
+    return null;
+  }
+}

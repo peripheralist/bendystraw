@@ -347,6 +347,10 @@ export const swapEvent = onchainTable(
     // reconstructing the PoolKey.
     sqrtPriceX96: t.bigint(),
     projectTokenIsCurrency0: t.boolean(),
+    // USD per ONE whole accounting token at THIS block, 18-dec. The pool price above is
+    // accounting-token denominated; a chart with a USD axis needs the rate that was in force
+    // here, not today's, or it restates the past. Null where no feed bridges the pair.
+    accountingTokenUsdRate: t.bigint(),
   }),
   (t) => ({
     suckerGroupHistoryIdx: index().on(
@@ -1726,6 +1730,10 @@ export const suckerGroupMoment = onchainTable(
     trendingVolume: t.bigint().notNull().default(BigInt(0)),
     trendingPaymentsCount: t.integer().notNull().default(0),
     contributorsCount: t.integer().notNull().default(0),
+    // USD per ONE whole accounting token at THIS block, 18-dec. `balance` moved here, so the
+    // cash-out floor derived from it changed here too — this is the rate to value that change
+    // with. Null where no feed bridges the pair.
+    accountingTokenUsdRate: t.bigint(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.suckerGroupId, t.version, t.timestamp] }),
