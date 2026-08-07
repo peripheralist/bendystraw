@@ -21,6 +21,7 @@ import {
 } from "./constants/uniswapV4";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
+import { usdPerAccountingTokenAtBlock } from "./util/usdPrice";
 
 // JBBuybackHook is a V6-only singleton (events carry `projectId`), so version
 // is always 6 for everything indexed here.
@@ -59,6 +60,12 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
       projectTokenAmount: tokenCount,
       sqrtPriceX96: null,
       projectTokenIsCurrency0: null,
+      accountingTokenUsdRate: await usdPerAccountingTokenAtBlock({
+        context,
+        version: VERSION,
+        projectId,
+        currency: _project.currency,
+      }),
     });
 
     await insertActivityEvent("swapEvent", {
