@@ -34,7 +34,7 @@ export async function parseProjectMetadata(uri: string) {
       requests.map(async (request) => {
         const response = await axios.request({
           ...request,
-          timeout: 5000,
+          timeout: 10_000,
           responseType: "text",
           transformResponse: [(data) => data],
         });
@@ -73,7 +73,14 @@ export function projectMetadataRequests(uri: string): MetadataRequest[] {
     });
   }
 
+  // dweb.link and ipfs.io answer every fetch with 429 since the 2026-09
+  // gateway sunset, so Pinata's public gateway is the path gateway that
+  // actually serves. The two are kept as last resorts.
   requests.push(
+    {
+      method: "get",
+      url: `https://gateway.pinata.cloud/ipfs/${encodedPath}`,
+    },
     {
       method: "get",
       url: `https://dweb.link/ipfs/${encodedPath}`,

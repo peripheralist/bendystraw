@@ -24,16 +24,20 @@ void describe("project metadata", () => {
   void it("uses the eth.sucks subdomain gateway with public gateway fallbacks", () => {
     const requests = projectMetadataRequests(`ipfs://${CID}/metadata.json`);
 
-    assert.equal(requests.length, 3);
+    assert.equal(requests.length, 4);
     assert.equal(
       requests[0]!.url,
       `https://${CID_V1}.eth.sucks/metadata.json`
     );
     assert.equal(
       requests[1]!.url,
+      `https://gateway.pinata.cloud/ipfs/${CID}/metadata.json`
+    );
+    assert.equal(
+      requests[2]!.url,
       `https://dweb.link/ipfs/${CID}/metadata.json`
     );
-    assert.equal(requests[2]!.url, `https://ipfs.io/ipfs/${CID}/metadata.json`);
+    assert.equal(requests[3]!.url, `https://ipfs.io/ipfs/${CID}/metadata.json`);
     assert.ok(requests.every((request) => request.method === "get"));
   });
 
