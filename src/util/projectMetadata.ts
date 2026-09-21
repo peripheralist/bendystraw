@@ -34,7 +34,7 @@ export async function parseProjectMetadata(uri: string) {
       requests.map(async (request) => {
         const response = await axios.request({
           ...request,
-          timeout: 10_000,
+          timeout: 15_000,
           responseType: "text",
           transformResponse: [(data) => data],
         });
@@ -73,10 +73,15 @@ export function projectMetadataRequests(uri: string): MetadataRequest[] {
     });
   }
 
-  // dweb.link and ipfs.io answer every fetch with 429 since the 2026-09
-  // gateway sunset, so Pinata's public gateway is the path gateway that
-  // actually serves. The two are kept as last resorts.
+  // eth.sucks stalls on some CIDs, and since the 2026-09 gateway sunset
+  // dweb.link, ipfs.io and Pinata's public gateway all rate-limit anonymous
+  // fetches with 429, so Filebase is the path gateway that actually serves.
+  // The others stay as last resorts.
   requests.push(
+    {
+      method: "get",
+      url: `https://ipfs.filebase.io/ipfs/${encodedPath}`,
+    },
     {
       method: "get",
       url: `https://gateway.pinata.cloud/ipfs/${encodedPath}`,
