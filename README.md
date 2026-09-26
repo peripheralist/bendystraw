@@ -154,6 +154,19 @@ npm test
 
 The generator reads `../deploy-all-v6/deployments` (override with `--deployments /path/to/deployments`). `--ref` selects a committed artifact snapshot; without it, the current files are read. The example pins the executed production snapshot; choose the newer verified artifact commit for later rollouts, and do not regenerate from an older checkout or branch that predates deployed generations. A successful deployment receipt is required for every included address. Proposed addresses are never indexing sources. The generated ABIs and manifest should be committed together. Changing the schema or restoring older deployment blocks requires the normal Ponder reindex; run `TESTNET=true npm run dev` against a testnet RPC before production rollout.
 
+### Sticky and Homerun projects
+
+`project` and `participant` rows carry `isSticky` and `isHomerun` next to `isRevnet`. `isSticky` means the V6 StickyDeployer owns the project, which it does for every project it launches. `isHomerun` marks FUND projects and their INCOME revnets launched through HomerunDeployer, taken from its `FundLaunched` and `IncomeDeployed` events, because a FUND is handed to its owner at launch and INCOME is owned by the REVOwner. An INCOME revnet has both `isHomerun` and `isRevnet`.
+
+StickyHook positions are available through these GraphQL collections:
+
+| Collection | Contents |
+| --- | --- |
+| `stickyPositions` | Each holder's staked balance per project, the start of their current streak (null when they have none), and their longest completed streak in seconds. |
+| `stickyEvents` | Ordered `staked`, `unstaked`, `streakStarted`, and `streakEnded` history with the resulting staked balance. A transfer between holders is an `unstaked` row for the sender and a `staked` row for the receiver, whose payer is the sender. |
+
+A holder's current streak is the current time minus `streakStartedAt`; their longest streak is the larger of that and `longestCompletedStreak`, as `StickyHook.longestStreakOf` reports.
+
 ### Special Queries
 
 Some data is not conveniently accessible via GraphQL, but may be requested via other endpoints.

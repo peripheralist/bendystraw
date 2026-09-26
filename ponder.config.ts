@@ -37,6 +37,7 @@ import { JBRouterTerminalGatewayV6Abi } from "./abis/JBRouterTerminalGatewayV6Ab
 import { rolloutChains } from "./src/constants/rollout";
 import { JBProjectPayerDeployerAbi } from "./abis/JBProjectPayerDeployerAbi";
 import { HomerunDeployerAbi } from "./abis/HomerunDeployerAbi";
+import { StickyHookAbi } from "./abis/StickyHookAbi";
 import { JBUniswapV4HookV6Abi } from "./abis/JBUniswapV4HookV6Abi";
 import { UniswapV4PoolManagerAbi } from "./abis/UniswapV4PoolManagerAbi";
 import { UniswapV4PositionManagerAbi } from "./abis/UniswapV4PositionManagerAbi";
@@ -158,6 +159,12 @@ const V6_MAINNET_START_BLOCKS = {
     base: 51617944,
     optimism: 157213225,
   },
+  stickyHook: {
+    ethereum: 26057164,
+    arbitrum: 508887149,
+    base: 51791252,
+    optimism: 157386536,
+  },
 } as const;
 
 const V6_TESTNET_START_BLOCKS = {
@@ -203,6 +210,12 @@ const V6_TESTNET_START_BLOCKS = {
     arbitrumSepolia: 311333957,
     baseSepolia: 47128207,
     optimismSepolia: 49111081,
+  },
+  stickyHook: {
+    ethereumSepolia: 11781859,
+    arbitrumSepolia: 312706619,
+    baseSepolia: 47301559,
+    optimismSepolia: 49284433,
   },
 } as const;
 
@@ -845,6 +858,17 @@ export const mainnetConfig = createConfig({
         optimism: { startBlock: V6_MAINNET_START_BLOCKS.homerunDeployer.optimism },
       },
     },
+    // V6-only: Sticky positions and streaks.
+    StickyHook: {
+      abi: StickyHookAbi,
+      address: addresses(ADDRESS.stickyHook6),
+      chain: {
+        ethereum: { startBlock: V6_MAINNET_START_BLOCKS.stickyHook.ethereum },
+        arbitrum: { startBlock: V6_MAINNET_START_BLOCKS.stickyHook.arbitrum },
+        base: { startBlock: V6_MAINNET_START_BLOCKS.stickyHook.base },
+        optimism: { startBlock: V6_MAINNET_START_BLOCKS.stickyHook.optimism },
+      },
+    },
   },
 });
 
@@ -1365,6 +1389,25 @@ export const testnetConfig = createConfig({
         },
         optimismSepolia: {
           startBlock: V6_TESTNET_START_BLOCKS.homerunDeployer.optimismSepolia,
+        },
+      },
+    },
+    // V6-only: Sticky positions and streaks.
+    StickyHook: {
+      abi: StickyHookAbi,
+      address: addresses(ADDRESS.stickyHook6),
+      chain: {
+        ethereumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.stickyHook.ethereumSepolia,
+        },
+        arbitrumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.stickyHook.arbitrumSepolia,
+        },
+        baseSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.stickyHook.baseSepolia,
+        },
+        optimismSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.stickyHook.optimismSepolia,
         },
       },
     },

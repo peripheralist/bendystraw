@@ -2207,3 +2207,73 @@ export const routerPermitFailureEvent = onchainTable(
     terminalHistoryIdx: index().on(t.chainId, t.terminal, t.timestamp),
   })
 );
+
+export const stickyEventType = onchainEnum("sticky_event_type", [
+  "staked",
+  "unstaked",
+  "streakStarted",
+  "streakEnded",
+]);
+
+// A holder's position in a Sticky project, from StickyHook (V6 only). A holder's current
+// streak is now - streakStartedAt; their longest is the larger of that and
+// longestCompletedStreak, matching StickyHook.longestStreakOf.
+export const stickyPosition = onchainTable(
+  "sticky_position",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    ...version(t),
+    holder: t.hex().notNull(),
+    stakedBalance: t.bigint().notNull().default(BigInt(0)),
+    // Null while the holder has no active streak.
+    streakStartedAt: t.integer(),
+    longestCompletedStreak: t.integer().notNull().default(0),
+    ...createdAt(t),
+    updatedAt: t.integer().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.version, t.chainId, t.projectId, t.holder] }),
+    holderIdx: index().on(t.holder),
+    projectBalanceIdx: index().on(t.chainId, t.projectId, t.version, t.stakedBalance),
+  })
+);
+
+// Append-only StickyHook history. A transfer between holders is an `unstaked` row for the
+// sender followed by a `staked` row for the receiver whose payer is the sender.
+export const stickyEvent = onchainTable(
+  "sticky_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    holder: t.hex().notNull(),
+    type: stickyEventType().notNull(),
+    // Set on staked and unstaked.
+    count: t.bigint(),
+    stakedBalance: t.bigint(),
+    // Set on staked.
+    payer: t.hex(),
+    // Set on streakEnded, in seconds.
+    duration: t.integer(),
+  }),
+  (t) => ({
+    holderHistoryIdx: index().on(t.chainId, t.projectId, t.version, t.holder, t.timestamp),
+    projectHistoryIdx: index().on(t.chainId, t.projectId, t.version, t.timestamp),
+  })
+);
+
+export const stickyPositionRelations = relations(stickyPosition, ({ one }) => ({
+  project: one(project, {
+    fields: [stickyPosition.chainId, stickyPosition.projectId, stickyPosition.version],
+    references: [project.chainId, project.projectId, project.version],
+  }),
+}));
+
+export const stickyEventRelations = relations(stickyEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [stickyEvent.chainId, stickyEvent.projectId, stickyEvent.version],
+    references: [project.chainId, project.projectId, project.version],
+  }),
+}));
