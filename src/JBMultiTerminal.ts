@@ -617,7 +617,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         contributorsCount: p.contributorsCount + (payerParticipant ? 0 : 1),
       }));
 
-    const { suckerGroupId, isRevnet } = updatedProject;
+    const { suckerGroupId, isRevnet, isHomerun, isSticky } = updatedProject;
 
     // will update project trending score (uses raw SQL, updates project in DB)
     await handleTrendingPayment(event.block.timestamp, context);
@@ -659,6 +659,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         lastPaidTimestamp: Number(event.block.timestamp),
         suckerGroupId,
         isRevnet,
+        isHomerun,
+        isSticky,
         version,
       })
       .onConflictDoUpdate((p) => ({
@@ -668,6 +670,8 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         paymentsCount: p.paymentsCount + 1,
         suckerGroupId,
         isRevnet,
+        isHomerun,
+        isSticky,
       }));
     await setParticipantSnapshot({ participant: _participant, context, event });
 

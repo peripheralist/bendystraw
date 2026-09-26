@@ -40,6 +40,17 @@ export function isRevnetOwner(
 }
 
 /**
+ * Whether a project owner address means the project is a Sticky project. Sticky only exists on V6,
+ * and the StickyDeployer keeps every project it launches.
+ */
+export function isStickyOwner(
+  owner: `0x${string}`,
+  version: Version
+): boolean {
+  return version === 6 && isAddressEqual(owner, ADDRESS.stickyDeployer6);
+}
+
+/**
  * Gets version of contract
  * @param event Indexer function event object
  * @param contractName Versioned contract name as keyed in /constants/address.ts

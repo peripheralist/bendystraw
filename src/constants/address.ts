@@ -48,4 +48,13 @@ export const ADDRESS = {
   jbRulesets5: "0x6292281d69c3593fcf6ea074e5797341476ab428",
   jbRulesets6: "0x26f2228a4e8b0079ed1c2a3d22f12ff7f83cdfba",
   jbProjectPayerDeployer6: "0x7321740fd0dcf73dd3e2aa8fc060454abfce9517",
+  // Sticky projects stay owned by the StickyDeployer, so owner == stickyDeployer6 marks one.
+  stickyDeployer6: "0xda38ec48b5b1d186b02ba99f297e95153bee33a9",
+  // HomerunDeployer hands a FUND to its owner at launch and never holds INCOME, so Homerun projects
+  // are marked from its FundLaunched and IncomeDeployed events, not from the owner. The current
+  // deployer has one address on all 8 chains; the first deployment (2026-09-21) used one address
+  // on the mainnets and another on the testnets, and launched projects on both.
+  homerunDeployer6: "0x19ce092bc3f9662e40c4670c68ff03c8322d0e76",
+  homerunDeployer6_old_mainnet: "0xac9250654ea223513ffee25fdb647dc016873905",
+  homerunDeployer6_old_testnet: "0xe944fe96765450877f95cc36aa36ec72b4388721",
 } as const;

@@ -8,7 +8,7 @@
     "start": "ponder start",
     "db": "ponder db",
     "status": "tsx scripts/status.ts",
-    "test": "tsx scripts/check-participant-balance-invariant.ts && tsx scripts/check-lp-fee-accounting.ts && node --import tsx scripts/check-router-retained-custody.ts && node --import tsx scripts/check-rollout-deployment-receipts.ts",
+    "test": "tsx scripts/check-participant-balance-invariant.ts && tsx scripts/check-lp-fee-accounting.ts && node --import tsx scripts/check-router-retained-custody.ts && node --import tsx scripts/check-rollout-deployment-receipts.ts && tsx scripts/check-project-flags.ts",
     "serve": "ponder serve --schema=public",
     "codegen": "ponder codegen",
     "lint": "eslint . --ext .ts",

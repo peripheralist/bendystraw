@@ -8,7 +8,7 @@ import {
 import { zeroAddress } from "viem";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { getVersion, isRevnetOwner } from "./util/getVersion";
+import { getVersion, isRevnetOwner, isStickyOwner } from "./util/getVersion";
 import { idForProject, idForSuckerGroup } from "./util/id";
 import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 
@@ -33,6 +33,8 @@ ponder.on("JBProjects:Create", async ({ event, context }) => {
       owner,
       deployer: caller,
       isRevnet: isRevnetOwner(owner, version),
+      isHomerun: false,
+      isSticky: isStickyOwner(owner, version),
       creator: transaction.from,
       createdAt: Number(block.timestamp),
       chainId,
@@ -90,6 +92,7 @@ ponder.on("JBProjects:Transfer", async ({ event, context }) => {
       .set({
         owner,
         isRevnet: isRevnetOwner(owner, version),
+        isSticky: isStickyOwner(owner, version),
       });
 
     if (previousOwner === zeroAddress) return;

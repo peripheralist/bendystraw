@@ -209,6 +209,8 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
         creditBalance: count,
         suckerGroupId: _project.suckerGroupId,
         isRevnet: _project.isRevnet,
+        isHomerun: _project.isHomerun,
+        isSticky: _project.isSticky,
         version,
       })
       .onConflictDoUpdate((p) => ({
@@ -216,6 +218,8 @@ ponder.on("JBTokens:TransferCredits", async ({ event, context }) => {
         balance: p.balance + count,
         suckerGroupId: _project.suckerGroupId,
         isRevnet: _project.isRevnet,
+        isHomerun: _project.isHomerun,
+        isSticky: _project.isSticky,
       }));
     await setParticipantSnapshot({ participant: receiver, context, event });
   } catch (e) {
@@ -286,7 +290,7 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const { suckerGroupId, isRevnet } = _project;
+    const { suckerGroupId, isRevnet, isHomerun, isSticky } = _project;
 
     /**
      * We're only concerned with updating unclaimed token balance.
@@ -306,6 +310,8 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         balance: count,
         suckerGroupId,
         isRevnet,
+        isHomerun,
+        isSticky,
         version,
       })
       .onConflictDoUpdate((p) => ({
@@ -313,6 +319,8 @@ ponder.on("JBTokens:Mint", async ({ event, context }) => {
         balance: p.balance + count,
         suckerGroupId,
         isRevnet,
+        isHomerun,
+        isSticky,
       }));
     await setParticipantSnapshot({ participant: receiver, context, event });
   } catch (e) {

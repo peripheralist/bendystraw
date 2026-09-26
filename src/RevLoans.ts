@@ -61,11 +61,15 @@ ponder.on("RevLoans:Borrow", async ({ event, context }) => {
         createdAt: Number(event.block.timestamp),
         suckerGroupId: _project.suckerGroupId,
         isRevnet: _project.isRevnet,
+        isHomerun: _project.isHomerun,
+        isSticky: _project.isSticky,
         version,
       })
       .onConflictDoUpdate({
         suckerGroupId: _project.suckerGroupId,
         isRevnet: _project.isRevnet,
+        isHomerun: _project.isHomerun,
+        isSticky: _project.isSticky,
       });
     await setParticipantSnapshot({ participant: _participant, context, event });
 

@@ -36,6 +36,7 @@ import { JBRouterTerminalV6Abi } from "./abis/JBRouterTerminalV6Abi";
 import { JBRouterTerminalGatewayV6Abi } from "./abis/JBRouterTerminalGatewayV6Abi";
 import { rolloutChains } from "./src/constants/rollout";
 import { JBProjectPayerDeployerAbi } from "./abis/JBProjectPayerDeployerAbi";
+import { HomerunDeployerAbi } from "./abis/HomerunDeployerAbi";
 import { JBUniswapV4HookV6Abi } from "./abis/JBUniswapV4HookV6Abi";
 import { UniswapV4PoolManagerAbi } from "./abis/UniswapV4PoolManagerAbi";
 import { UniswapV4PositionManagerAbi } from "./abis/UniswapV4PositionManagerAbi";
@@ -150,6 +151,13 @@ const V6_MAINNET_START_BLOCKS = {
     base: 47399351,
     optimism: 152994600,
   },
+  // The first HomerunDeployer (homerunDeployer6_old_mainnet); the current one came later.
+  homerunDeployer: {
+    ethereum: 26028493,
+    arbitrum: 507567289,
+    base: 51617944,
+    optimism: 157213225,
+  },
 } as const;
 
 const V6_TESTNET_START_BLOCKS = {
@@ -188,6 +196,13 @@ const V6_TESTNET_START_BLOCKS = {
     arbitrumSepolia: 277728511,
     baseSepolia: 42909729,
     optimismSepolia: 44892556,
+  },
+  // The first HomerunDeployer (homerunDeployer6_old_testnet); the current one came later.
+  homerunDeployer: {
+    ethereumSepolia: 11753408,
+    arbitrumSepolia: 311333957,
+    baseSepolia: 47128207,
+    optimismSepolia: 49111081,
   },
 } as const;
 
@@ -816,6 +831,20 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    // V6-only: marks FUND and INCOME projects launched through Homerun.
+    HomerunDeployer: {
+      abi: HomerunDeployerAbi,
+      address: addresses(
+        ADDRESS.homerunDeployer6_old_mainnet,
+        ADDRESS.homerunDeployer6,
+      ),
+      chain: {
+        ethereum: { startBlock: V6_MAINNET_START_BLOCKS.homerunDeployer.ethereum },
+        arbitrum: { startBlock: V6_MAINNET_START_BLOCKS.homerunDeployer.arbitrum },
+        base: { startBlock: V6_MAINNET_START_BLOCKS.homerunDeployer.base },
+        optimism: { startBlock: V6_MAINNET_START_BLOCKS.homerunDeployer.optimism },
+      },
+    },
   },
 });
 
@@ -1314,6 +1343,28 @@ export const testnetConfig = createConfig({
         optimismSepolia: {
           startBlock:
             V6_TESTNET_START_BLOCKS.jbProjectPayerDeployer.optimismSepolia,
+        },
+      },
+    },
+    // V6-only: marks FUND and INCOME projects launched through Homerun.
+    HomerunDeployer: {
+      abi: HomerunDeployerAbi,
+      address: addresses(
+        ADDRESS.homerunDeployer6_old_testnet,
+        ADDRESS.homerunDeployer6,
+      ),
+      chain: {
+        ethereumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.homerunDeployer.ethereumSepolia,
+        },
+        arbitrumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.homerunDeployer.arbitrumSepolia,
+        },
+        baseSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.homerunDeployer.baseSepolia,
+        },
+        optimismSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.homerunDeployer.optimismSepolia,
         },
       },
     },
