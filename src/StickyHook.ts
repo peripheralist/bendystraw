@@ -1,5 +1,10 @@
 import { Context, ponder } from "ponder:registry";
-import { project, stickyEvent, stickyPosition } from "ponder:schema";
+import {
+  project,
+  stickyEvent,
+  stickyPosition,
+  stickySettingEvent,
+} from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
 
 // StickyHook only exists on V6.
@@ -53,6 +58,24 @@ async function recordPosition({
       ),
       updatedAt: timestamp,
     }));
+
+  return _project.suckerGroupId;
+}
+
+// Settings events change no position, so their history row only needs the project's suckerGroupId.
+async function suckerGroupIdOf({
+  context,
+  projectId,
+}: {
+  context: Context;
+  projectId: number;
+}) {
+  const _project = await context.db.find(project, {
+    chainId: context.chain.id,
+    projectId,
+    version,
+  });
+  if (!_project) throw new Error("Missing project");
 
   return _project.suckerGroupId;
 }
@@ -167,5 +190,68 @@ ponder.on("StickyHook:StreakEnded", async ({ event, context }) => {
     });
   } catch (e) {
     console.error("StickyHook:StreakEnded", e);
+  }
+});
+
+ponder.on("StickyHook:SetGranter", async ({ event, context }) => {
+  try {
+    const { projectId: _projectId, granter } = event.args;
+    const projectId = Number(_projectId);
+
+    const suckerGroupId = await suckerGroupIdOf({ context, projectId });
+
+    await context.db.insert(stickySettingEvent).values({
+      ...getEventParams({ event, context }),
+      version,
+      projectId,
+      suckerGroupId,
+      type: "granterSet",
+      account: granter,
+    });
+  } catch (e) {
+    console.error("StickyHook:SetGranter", e);
+  }
+});
+
+ponder.on("StickyHook:SetTrustedSender", async ({ event, context }) => {
+  try {
+    const { projectId: _projectId, holder, sender, trusted } = event.args;
+    const projectId = Number(_projectId);
+
+    const suckerGroupId = await suckerGroupIdOf({ context, projectId });
+
+    // SetTrustedSender has no caller, so getEventParams leaves it out and the column stays null.
+    await context.db.insert(stickySettingEvent).values({
+      ...getEventParams({ event, context }),
+      version,
+      projectId,
+      suckerGroupId,
+      type: "trustedSenderSet",
+      account: sender,
+      holder,
+      trusted,
+    });
+  } catch (e) {
+    console.error("StickyHook:SetTrustedSender", e);
+  }
+});
+
+ponder.on("StickyHook:ExcludeOrphanedBalance", async ({ event, context }) => {
+  try {
+    const { projectId: _projectId, amount } = event.args;
+    const projectId = Number(_projectId);
+
+    const suckerGroupId = await suckerGroupIdOf({ context, projectId });
+
+    await context.db.insert(stickySettingEvent).values({
+      ...getEventParams({ event, context }),
+      version,
+      projectId,
+      suckerGroupId,
+      type: "orphanedBalanceExcluded",
+      amount,
+    });
+  } catch (e) {
+    console.error("StickyHook:ExcludeOrphanedBalance", e);
   }
 });
