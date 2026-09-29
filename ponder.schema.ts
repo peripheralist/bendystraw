@@ -2264,6 +2264,44 @@ export const stickyEvent = onchainTable(
   })
 );
 
+export const stickySettingType = onchainEnum("sticky_setting_type", [
+  "granterSet",
+  "trustedSenderSet",
+  "orphanedBalanceExcluded",
+]);
+
+// Append-only StickyHook settings history (V6 only). SetTrustedSender has no caller, so the
+// event columns are composed one by one, as projectTransferEvent does.
+export const stickySettingEvent = onchainTable(
+  "sticky_setting_event",
+  (t) => ({
+    ...uniqueId(t),
+    ...chainId(t),
+    ...version(t),
+    ...txHash(t),
+    ...timestamp(t),
+    ...from(t),
+    ...logIndex(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    type: stickySettingType().notNull(),
+    // granterSet: the granter. trustedSenderSet: the sender.
+    account: t.hex(),
+    // trustedSenderSet: the holder who trusts or untrusts the sender.
+    holder: t.hex(),
+    // trustedSenderSet only.
+    trusted: t.boolean(),
+    // orphanedBalanceExcluded only.
+    amount: t.bigint(),
+    // Null on trustedSenderSet, whose event has no caller.
+    caller: t.hex(),
+  }),
+  (t) => ({
+    projectHistoryIdx: index().on(t.chainId, t.projectId, t.version, t.timestamp),
+    holderIdx: index().on(t.chainId, t.projectId, t.version, t.holder),
+  })
+);
+
 export const stickyPositionRelations = relations(stickyPosition, ({ one }) => ({
   project: one(project, {
     fields: [stickyPosition.chainId, stickyPosition.projectId, stickyPosition.version],
@@ -2274,6 +2312,13 @@ export const stickyPositionRelations = relations(stickyPosition, ({ one }) => ({
 export const stickyEventRelations = relations(stickyEvent, ({ one }) => ({
   project: one(project, {
     fields: [stickyEvent.chainId, stickyEvent.projectId, stickyEvent.version],
+    references: [project.chainId, project.projectId, project.version],
+  }),
+}));
+
+export const stickySettingEventRelations = relations(stickySettingEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [stickySettingEvent.chainId, stickySettingEvent.projectId, stickySettingEvent.version],
     references: [project.chainId, project.projectId, project.version],
   }),
 }));

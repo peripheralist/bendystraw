@@ -158,12 +158,13 @@ The generator reads `../deploy-all-v6/deployments` (override with `--deployments
 
 `project` and `participant` rows carry `isSticky` and `isHomerun` next to `isRevnet`. `isSticky` means the V6 StickyDeployer owns the project, which it does for every project it launches. `isHomerun` marks FUND projects and their INCOME revnets launched through HomerunDeployer, taken from its `FundLaunched` and `IncomeDeployed` events, because a FUND is handed to its owner at launch and INCOME is owned by the REVOwner. An INCOME revnet has both `isHomerun` and `isRevnet`.
 
-StickyHook positions are available through these GraphQL collections:
+StickyHook positions and settings are available through these GraphQL collections:
 
 | Collection | Contents |
 | --- | --- |
 | `stickyPositions` | Each holder's staked balance per project, the start of their current streak (null when they have none), and their longest completed streak in seconds. |
 | `stickyEvents` | Ordered `staked`, `unstaked`, `streakStarted`, and `streakEnded` history with the resulting staked balance. A transfer between holders is an `unstaked` row for the sender and a `staked` row for the receiver, whose payer is the sender. |
+| `stickySettingEvents` | Ordered `granterSet`, `trustedSenderSet`, and `orphanedBalanceExcluded` history. In a `granterSet` row, `account` is an address allowed to airdrop stakes to any holder of the project. In a `trustedSenderSet` row, `holder` allows (`trusted` true) or stops allowing (`trusted` false) `account` to add stakes to their position, and `caller` is null. In an `orphanedBalanceExcluded` row, `amount` is the project's total excluded backing after the event, in underlying token atoms. |
 
 A holder's current streak is the current time minus `streakStartedAt`; their longest streak is the larger of that and `longestCompletedStreak`, as `StickyHook.longestStreakOf` reports.
 

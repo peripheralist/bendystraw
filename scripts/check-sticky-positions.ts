@@ -76,7 +76,9 @@ runInNewContext(compiled, {
     throw new Error(`Unexpected import ${name}`);
   },
 });
-assert.equal(handlers.size, 4);
+for (const name of ["Staked", "Unstaked", "StreakStarted", "StreakEnded"]) {
+  assert.ok(handlers.has(`StickyHook:${name}`), `StickyHook:${name} handler is registered`);
+}
 
 const chainId = 8453;
 const holder = "0x1111111111111111111111111111111111111111";
