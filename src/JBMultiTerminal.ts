@@ -4,6 +4,7 @@ import {
   cashOutTokensEvent,
   participant,
   payEvent,
+  processFeeEvent,
   project,
   projectPayer,
   sendPayoutsEvent,
@@ -774,6 +775,39 @@ ponder.on("JBMultiTerminal:HookAfterRecordPay", async ({ event, context }) => {
 });
 
 ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
+  // The fee as the paying project's terminal reports it. A fee paid to the fee project in another
+  // way than a Pay on this terminal has no pay to mark below, so it is recorded on its own.
+  try {
+    const { projectId: _projectId, token, amount, wasHeld, beneficiary } =
+      event.args;
+    const projectId = Number(_projectId);
+
+    const version = getVersion(event, "jbMultiTerminal");
+
+    const _project = await context.db.find(project, {
+      chainId: context.chain.id,
+      projectId,
+      version,
+    });
+
+    if (!_project) {
+      throw new Error("Missing project");
+    }
+
+    await context.db.insert(processFeeEvent).values({
+      ...getEventParams({ event, context }),
+      version,
+      projectId,
+      suckerGroupId: _project.suckerGroupId,
+      token,
+      amount,
+      wasHeld,
+      beneficiary,
+    });
+  } catch (e) {
+    console.error("JBMultiTerminal:ProcessFee", e);
+  }
+
   try {
     const latestPayEvent = await getLatestPayEvent({
       context,

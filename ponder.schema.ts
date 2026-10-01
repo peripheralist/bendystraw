@@ -1188,6 +1188,34 @@ export const payEventRelations = relations(payEvent, ({ one }) => ({
   }),
 }));
 
+// Every fee a terminal processed for a project (JBMultiTerminal ProcessFee), in the token and
+// amount the paying project's balance was charged. A held fee (`wasHeld`) left the balance when it
+// was held, so processing it later moves none.
+export const processFeeEvent = onchainTable(
+  "process_fee_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    token: t.hex().notNull(),
+    amount: t.bigint().notNull(),
+    wasHeld: t.boolean().notNull(),
+    // Receives the fee project's tokens. A V6 fee with no beneficiary is added to the fee
+    // project's balance instead.
+    beneficiary: t.hex().notNull(),
+  }),
+  (t) => ({
+    projectHistoryIdx: index().on(t.chainId, t.projectId, t.version, t.timestamp),
+  })
+);
+
+export const processFeeEventRelations = relations(processFeeEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [processFeeEvent.projectId, processFeeEvent.chainId, processFeeEvent.version],
+    references: [project.projectId, project.chainId, project.version],
+  }),
+}));
+
 export const projectPayer = onchainTable(
   "project_payer",
   (t) => ({
