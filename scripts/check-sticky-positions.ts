@@ -47,11 +47,21 @@ const db = {
   },
 };
 
+const compile = (path: string) =>
+  ts.transpileModule(readFileSync(new URL(path, import.meta.url), "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText;
+const sticky: Row = {};
+runInNewContext(compile("../src/util/sticky.ts"), {
+  exports: sticky,
+  require(name: string) {
+    if (name === "ponder:schema") return { project: "project" };
+    throw new Error(`Unexpected import ${name}`);
+  },
+});
+
 const handlers = new Map<string, (input: Row) => Promise<void>>();
-const source = readFileSync(new URL("../src/StickyHook.ts", import.meta.url), "utf8");
-const compiled = ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-}).outputText;
+const compiled = compile("../src/StickyHook.ts");
 const errors: unknown[] = [];
 runInNewContext(compiled, {
   exports: {},
@@ -73,6 +83,7 @@ runInNewContext(compiled, {
         }),
       };
     }
+    if (name === "./util/sticky") return sticky;
     throw new Error(`Unexpected import ${name}`);
   },
 });

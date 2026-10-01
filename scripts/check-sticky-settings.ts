@@ -49,6 +49,10 @@ function load(path: string, require: (name: string) => unknown) {
 const { getEventParams } = load("../src/util/getEventParams.ts", (name) => {
   throw new Error(`Unexpected import ${name}`);
 }).exports;
+const sticky = load("../src/util/sticky.ts", (name) => {
+  if (name === "ponder:schema") return { project: "project" };
+  throw new Error(`Unexpected import ${name}`);
+}).exports;
 
 const handlers = new Map<string, (input: Row) => Promise<void>>();
 const { errors } = load("../src/StickyHook.ts", (name) => {
@@ -64,6 +68,7 @@ const { errors } = load("../src/StickyHook.ts", (name) => {
     };
   }
   if (name === "./util/getEventParams") return { getEventParams };
+  if (name === "./util/sticky") return sticky;
   throw new Error(`Unexpected import ${name}`);
 });
 for (const name of ["SetGranter", "SetTrustedSender", "ExcludeOrphanedBalance"]) {
