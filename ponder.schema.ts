@@ -2306,6 +2306,51 @@ export const stickySettingEvent = onchainTable(
   })
 );
 
+// Each Sticky project's token, from StickyHook's SetToken (V6 only). StickyDistributor names the
+// Sticky token in its events, so their rows find the project here.
+export const stickyToken = onchainTable(
+  "sticky_token",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    ...version(t),
+    token: t.hex().notNull(),
+    ...createdAt(t),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.version, t.chainId, t.token] }),
+    projectIdx: index().on(t.chainId, t.projectId, t.version),
+  })
+);
+
+// Append-only StickyDistributor funding history (V6 only): rewards sent to one group of a Sticky
+// token's holders, in one reward token, for the round the event names. Anyone can fund the default
+// group of any address, so only funding of a Sticky token has a row.
+export const stickyFundEvent = onchainTable(
+  "sticky_fund_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    ...suckerGroupId(t),
+    // The Sticky token whose holders share the rewards (the event's `hook`).
+    hook: t.hex().notNull(),
+    // 0 is everyone holding at the round's snapshot. Any other group is a stake-age window,
+    // minWeeks * 1000 + maxWeeks, where maxWeeks 0 means no upper bound.
+    groupId: t.bigint().notNull(),
+    // The reward token.
+    token: t.hex().notNull(),
+    round: t.bigint().notNull(),
+    // What the distributor accepted, after any transfer fee.
+    amount: t.bigint().notNull(),
+    blockNumber: t.bigint().notNull(),
+  }),
+  (t) => ({
+    hookHistoryIdx: index().on(t.chainId, t.hook, t.timestamp),
+    projectHistoryIdx: index().on(t.chainId, t.projectId, t.version, t.timestamp),
+  })
+);
+
 export const stickyPositionRelations = relations(stickyPosition, ({ one }) => ({
   project: one(project, {
     fields: [stickyPosition.chainId, stickyPosition.projectId, stickyPosition.version],
@@ -2381,5 +2426,19 @@ export const configurePostingCriteriaEventRelations = relations(configurePosting
   project: one(project, {
     fields: [configurePostingCriteriaEvent.projectId, configurePostingCriteriaEvent.chainId, configurePostingCriteriaEvent.version],
     references: [project.projectId, project.chainId, project.version],
+  }),
+}));
+
+export const stickyTokenRelations = relations(stickyToken, ({ one }) => ({
+  project: one(project, {
+    fields: [stickyToken.chainId, stickyToken.projectId, stickyToken.version],
+    references: [project.chainId, project.projectId, project.version],
+  }),
+}));
+
+export const stickyFundEventRelations = relations(stickyFundEvent, ({ one }) => ({
+  project: one(project, {
+    fields: [stickyFundEvent.chainId, stickyFundEvent.projectId, stickyFundEvent.version],
+    references: [project.chainId, project.projectId, project.version],
   }),
 }));

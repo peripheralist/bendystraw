@@ -1,5 +1,4 @@
-// Position and settings events emitted by StickyHook (mejango/sticky src/interfaces/IStickyHook.sol).
-// SetToken is left out because nothing reads it.
+// Position, settings and token events emitted by StickyHook (mejango/sticky src/interfaces/IStickyHook.sol).
 export const StickyHookAbi = [
   {
     type: "event",
@@ -74,6 +73,16 @@ export const StickyHookAbi = [
     inputs: [
       { name: "projectId", type: "uint256", indexed: true },
       { name: "amount", type: "uint256", indexed: false },
+      { name: "caller", type: "address", indexed: false },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "SetToken",
+    inputs: [
+      { name: "projectId", type: "uint256", indexed: true },
+      { name: "token", type: "address", indexed: false },
       { name: "caller", type: "address", indexed: false },
     ],
     anonymous: false,
