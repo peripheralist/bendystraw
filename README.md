@@ -154,6 +154,10 @@ npm test
 
 The generator reads `../deploy-all-v6/deployments` (override with `--deployments /path/to/deployments`). `--ref` selects a committed artifact snapshot; without it, the current files are read. The example pins the executed production snapshot; choose the newer verified artifact commit for later rollouts, and do not regenerate from an older checkout or branch that predates deployed generations. A successful deployment receipt is required for every included address. Proposed addresses are never indexing sources. The generated ABIs and manifest should be committed together. Changing the schema or restoring older deployment blocks requires the normal Ponder reindex; run `TESTNET=true npm run dev` against a testnet RPC before production rollout.
 
+### Fees
+
+`processFeeEvents` holds every fee a `JBMultiTerminal` processed, as the paying project's terminal reports it: `projectId` is the project that paid, `token` and `amount` what its balance was charged, and `wasHeld` whether the fee had been held. A held fee left the project's balance when it was held, so processing it later moves none. `payEvent.feeFromProject` marks the fee project's pay that carried a fee only when that pay is a `Pay` on an indexed terminal. A fee queued by the router gateway or added to the fee project's balance has no marked pay, and a marked pay's `amount` is what the fee project received, which after a swap is in another token.
+
 ### Sticky and Homerun projects
 
 `project` and `participant` rows carry `isSticky` and `isHomerun` next to `isRevnet`. `isSticky` means the V6 StickyDeployer owns the project, which it does for every project it launches. `isHomerun` marks FUND projects and their INCOME revnets launched through HomerunDeployer, taken from its `FundLaunched` and `IncomeDeployed` events, because a FUND is handed to its owner at launch and INCOME is owned by the REVOwner. An INCOME revnet has both `isHomerun` and `isRevnet`.
