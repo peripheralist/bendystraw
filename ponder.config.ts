@@ -39,6 +39,7 @@ import { rolloutChains } from "./src/constants/rollout";
 import { JBProjectPayerDeployerAbi } from "./abis/JBProjectPayerDeployerAbi";
 import { HomerunDeployerAbi } from "./abis/HomerunDeployerAbi";
 import { StickyHookAbi } from "./abis/StickyHookAbi";
+import { StickyDistributorAbi } from "./abis/StickyDistributorAbi";
 import { JBUniswapV4HookV6Abi } from "./abis/JBUniswapV4HookV6Abi";
 import { UniswapV4PoolManagerAbi } from "./abis/UniswapV4PoolManagerAbi";
 import { UniswapV4PositionManagerAbi } from "./abis/UniswapV4PositionManagerAbi";
@@ -166,6 +167,12 @@ const V6_MAINNET_START_BLOCKS = {
     base: 51791252,
     optimism: 157386536,
   },
+  stickyDistributor: {
+    ethereum: 26057166,
+    arbitrum: 508887191,
+    base: 51791257,
+    optimism: 157386542,
+  },
 } as const;
 
 const V6_TESTNET_START_BLOCKS = {
@@ -217,6 +224,12 @@ const V6_TESTNET_START_BLOCKS = {
     arbitrumSepolia: 312706619,
     baseSepolia: 47301559,
     optimismSepolia: 49284433,
+  },
+  stickyDistributor: {
+    ethereumSepolia: 11781861,
+    arbitrumSepolia: 312706660,
+    baseSepolia: 47301564,
+    optimismSepolia: 49284439,
   },
 } as const;
 
@@ -874,6 +887,17 @@ export const mainnetConfig = createConfig({
         optimism: { startBlock: V6_MAINNET_START_BLOCKS.stickyHook.optimism },
       },
     },
+    // V6-only: Sticky reward funding.
+    StickyDistributor: {
+      abi: StickyDistributorAbi,
+      address: addresses(ADDRESS.stickyDistributor6),
+      chain: {
+        ethereum: { startBlock: V6_MAINNET_START_BLOCKS.stickyDistributor.ethereum },
+        arbitrum: { startBlock: V6_MAINNET_START_BLOCKS.stickyDistributor.arbitrum },
+        base: { startBlock: V6_MAINNET_START_BLOCKS.stickyDistributor.base },
+        optimism: { startBlock: V6_MAINNET_START_BLOCKS.stickyDistributor.optimism },
+      },
+    },
   },
 });
 
@@ -1417,6 +1441,25 @@ export const testnetConfig = createConfig({
         },
         optimismSepolia: {
           startBlock: V6_TESTNET_START_BLOCKS.stickyHook.optimismSepolia,
+        },
+      },
+    },
+    // V6-only: Sticky reward funding.
+    StickyDistributor: {
+      abi: StickyDistributorAbi,
+      address: addresses(ADDRESS.stickyDistributor6),
+      chain: {
+        ethereumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.stickyDistributor.ethereumSepolia,
+        },
+        arbitrumSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.stickyDistributor.arbitrumSepolia,
+        },
+        baseSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.stickyDistributor.baseSepolia,
+        },
+        optimismSepolia: {
+          startBlock: V6_TESTNET_START_BLOCKS.stickyDistributor.optimismSepolia,
         },
       },
     },

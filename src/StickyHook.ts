@@ -1,5 +1,10 @@
 import { Context, ponder } from "ponder:registry";
-import { stickyEvent, stickyPosition, stickySettingEvent } from "ponder:schema";
+import {
+  stickyEvent,
+  stickyPosition,
+  stickySettingEvent,
+  stickyToken,
+} from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
 import { stickyVersion as version, suckerGroupIdOf } from "./util/sticky";
 
@@ -227,5 +232,26 @@ ponder.on("StickyHook:ExcludeOrphanedBalance", async ({ event, context }) => {
     });
   } catch (e) {
     console.error("StickyHook:ExcludeOrphanedBalance", e);
+  }
+});
+
+ponder.on("StickyHook:SetToken", async ({ event, context }) => {
+  try {
+    const { projectId: _projectId, token } = event.args;
+    const projectId = Number(_projectId);
+
+    const suckerGroupId = await suckerGroupIdOf({ context, projectId });
+
+    // The deployer sets a new token once per launch, so a token never moves to another project.
+    await context.db.insert(stickyToken).values({
+      chainId: context.chain.id,
+      projectId,
+      suckerGroupId,
+      version,
+      token,
+      createdAt: Number(event.block.timestamp),
+    });
+  } catch (e) {
+    console.error("StickyHook:SetToken", e);
   }
 });
