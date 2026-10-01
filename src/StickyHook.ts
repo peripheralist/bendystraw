@@ -1,14 +1,7 @@
 import { Context, ponder } from "ponder:registry";
-import {
-  project,
-  stickyEvent,
-  stickyPosition,
-  stickySettingEvent,
-} from "ponder:schema";
+import { stickyEvent, stickyPosition, stickySettingEvent } from "ponder:schema";
 import { getEventParams } from "./util/getEventParams";
-
-// StickyHook only exists on V6.
-const version = 6;
+import { stickyVersion as version, suckerGroupIdOf } from "./util/sticky";
 
 type PositionUpdate = {
   stakedBalance?: bigint;
@@ -32,8 +25,7 @@ async function recordPosition({
   update: PositionUpdate;
 }) {
   const chainId = context.chain.id;
-  const _project = await context.db.find(project, { chainId, projectId, version });
-  if (!_project) throw new Error("Missing project");
+  const suckerGroupId = await suckerGroupIdOf({ context, projectId });
 
   const { completedStreak, ...fields } = update;
 
@@ -44,7 +36,7 @@ async function recordPosition({
       projectId,
       version,
       holder,
-      suckerGroupId: _project.suckerGroupId,
+      suckerGroupId,
       longestCompletedStreak: completedStreak ?? 0,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -59,25 +51,7 @@ async function recordPosition({
       updatedAt: timestamp,
     }));
 
-  return _project.suckerGroupId;
-}
-
-// Settings events change no position, so their history row only needs the project's suckerGroupId.
-async function suckerGroupIdOf({
-  context,
-  projectId,
-}: {
-  context: Context;
-  projectId: number;
-}) {
-  const _project = await context.db.find(project, {
-    chainId: context.chain.id,
-    projectId,
-    version,
-  });
-  if (!_project) throw new Error("Missing project");
-
-  return _project.suckerGroupId;
+  return suckerGroupId;
 }
 
 ponder.on("StickyHook:Staked", async ({ event, context }) => {
