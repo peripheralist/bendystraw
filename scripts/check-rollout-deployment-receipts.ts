@@ -13,7 +13,7 @@ try {
   for (const subdirectory of ["deployments/sepolia", "src/constants", "abis"]) {
     mkdirSync(resolve(directory, subdirectory), { recursive: true });
   }
-  const contracts = ["JBBuybackHook", "JBRouterTerminal", "JBRouterTerminalGateway"];
+  const contracts = ["JBBuybackHook", "JBRouterTerminal", "JBRouterTerminalGateway", "CTPublisher"];
   const artifact = {
     address: "0x1111111111111111111111111111111111111111",
     chainId: "0xaa36a7",

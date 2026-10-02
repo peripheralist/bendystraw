@@ -1049,6 +1049,8 @@ export const nftHook = onchainTable(
 export const nftHookRelations = relations(nftHook, ({ many, one }) => ({
   nfts: many(nft),
   nftTiers: many(nftTier),
+  postingAllowances: many(postingAllowance),
+  postingAllowanceEvents: many(configurePostingCriteriaEvent),
   project: one(project, {
     fields: [nftHook.projectId, nftHook.chainId, nftHook.version],
     references: [project.projectId, project.chainId, project.version],
@@ -1375,6 +1377,8 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   participants: many(participant),
   nfts: many(nft),
   nftHooks: many(nftHook),
+  postingAllowances: many(postingAllowance),
+  postingAllowanceEvents: many(configurePostingCriteriaEvent),
   projectMoments: many(projectMoment),
   projectPayers: many(projectPayer),
   permissionHolders: many(permissionHolder),
@@ -2320,5 +2324,62 @@ export const stickySettingEventRelations = relations(stickySettingEvent, ({ one 
   project: one(project, {
     fields: [stickySettingEvent.chainId, stickySettingEvent.projectId, stickySettingEvent.version],
     references: [project.chainId, project.projectId, project.version],
+  }),
+}));
+
+// Publisher generations remain separate even when they share a hook/category.
+const postingAllowanceColumns = (t: PGCB) => ({
+  ...chainId(t), ...projectId(t), ...version(t),
+  publisher: t.hex().notNull(),
+  hook: t.hex().notNull(),
+  category: t.integer().notNull(),
+  minimumPrice: t.bigint().notNull(),
+  minimumTotalSupply: t.bigint().notNull(),
+  maximumTotalSupply: t.bigint().notNull(),
+  maximumSplitPercent: t.bigint().notNull(),
+  allowedAddresses: t.hex().array().notNull(),
+});
+
+export const postingAllowance = onchainTable("posting_allowance", (t) => ({
+  ...postingAllowanceColumns(t),
+  updatedAtBlock: t.bigint().notNull(),
+  updatedAt: t.integer().notNull(),
+  logIndex: t.integer().notNull(),
+  txHash: t.hex().notNull(),
+  caller: t.hex().notNull(),
+}), (t) => ({
+  pk: primaryKey({ columns: [t.chainId, t.publisher, t.hook, t.category, t.version] }),
+  hookIdx: index().on(t.chainId, t.hook, t.version),
+  projectIdx: index().on(t.chainId, t.projectId, t.version),
+}));
+
+export const configurePostingCriteriaEvent = onchainTable("configure_posting_criteria_event", (t) => ({
+  ...postingAllowanceColumns(t),
+  ...eventParams(t),
+  blockNumber: t.bigint().notNull(),
+}), (t) => ({
+  hookIdx: index().on(t.chainId, t.hook, t.version),
+  projectIdx: index().on(t.chainId, t.projectId, t.version),
+}));
+
+export const postingAllowanceRelations = relations(postingAllowance, ({ one }) => ({
+  collection: one(nftHook, {
+    fields: [postingAllowance.hook, postingAllowance.chainId, postingAllowance.version],
+    references: [nftHook.address, nftHook.chainId, nftHook.version],
+  }),
+  project: one(project, {
+    fields: [postingAllowance.projectId, postingAllowance.chainId, postingAllowance.version],
+    references: [project.projectId, project.chainId, project.version],
+  }),
+}));
+
+export const configurePostingCriteriaEventRelations = relations(configurePostingCriteriaEvent, ({ one }) => ({
+  collection: one(nftHook, {
+    fields: [configurePostingCriteriaEvent.hook, configurePostingCriteriaEvent.chainId, configurePostingCriteriaEvent.version],
+    references: [nftHook.address, nftHook.chainId, nftHook.version],
+  }),
+  project: one(project, {
+    fields: [configurePostingCriteriaEvent.projectId, configurePostingCriteriaEvent.chainId, configurePostingCriteriaEvent.version],
+    references: [project.projectId, project.chainId, project.version],
   }),
 }));
