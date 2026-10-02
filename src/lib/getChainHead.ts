@@ -4,9 +4,12 @@ import { ChainId } from "../constants/networks";
 export function getChainHead(chainId: ChainId) {
   return axios
     .get<{ result: `0x${string}` }>(
-      `https://api.etherscan.io/v2/api?chainId=${chainId}&module=proxy&action=eth_blockNumber&apiKey=${process.env.ETHERSCAN_API_KEY}`
+      `https://api.etherscan.io/v2/api?chainId=${chainId}&module=proxy&action=eth_blockNumber&apiKey=${process.env.ETHERSCAN_API_KEY}`,
     )
-    .then((res) => parseInt(res.data.result, 16) ?? JSON.stringify(res.data))
+    .then((res) => {
+      if (!res.data.result) return null;
+      return parseInt(res.data.result, 16) ?? JSON.stringify(res.data);
+    })
     .catch((e) => {
       console.warn(`Error getting block height for ${chainId}: ${e}`);
       return 0;

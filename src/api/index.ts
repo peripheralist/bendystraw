@@ -120,7 +120,7 @@ app.get("/status-table", async (c) => {
     }</code></td><td><code style="color: var(--body);">${
       block?.toLocaleString() ?? "--"
     }</code></td><td><span class="${className}">${
-      isNaN(blocksBehind) ? "?" : blocksBehind.toLocaleString()
+      isNaN(blocksBehind) ? "--" : blocksBehind.toLocaleString()
     } ${behindTimeStr}</span></td></tr>`;
   }).join("\n");
 
