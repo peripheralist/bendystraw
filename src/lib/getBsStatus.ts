@@ -11,7 +11,7 @@ import {
 } from "viem/chains";
 import { IS_DEV } from "../constants/dev";
 import { ChainId, MAINNETS, NETWORKS, TESTNETS } from "../constants/networks";
-import { getBlockHeight } from "./getBlockHeight";
+import { getChainHead } from "./getChainHead";
 
 async function getStatus(testnet?: boolean) {
   try {
@@ -64,37 +64,37 @@ export async function getBsStatus() {
     timestamp: s.block.timestamp as number | null,
   }));
 
-  const mainnetsBlockHeights = await Promise.all(
+  const mainnetsChainheads = await Promise.all(
     MAINNETS.map(async (chain) => ({
       chainId: chain.id,
-      blockHeight: await getBlockHeight(chain.id),
+      chainHead: await getChainHead(chain.id),
     }))
   );
 
   await new Promise((r) => setTimeout(() => r(null), 1100)); // avoid rate limit with getting block height (max 5 req/s)
 
-  const testnetsBlockHeights = await Promise.all(
+  const testnetsChainheads = await Promise.all(
     TESTNETS.map(async (chain) => ({
       chainId: chain.id,
-      blockHeight: await getBlockHeight(chain.id),
+      chainHead: await getChainHead(chain.id),
     }))
   );
 
-  const blockHeights = [...mainnetsBlockHeights, ...testnetsBlockHeights];
+  const chainHeads = [...mainnetsChainheads, ...testnetsChainheads];
 
   return NETWORKS.reduce((acc, curr) => {
-    const blockHeight = blockHeights.find(
+    const chainHead = chainHeads.find(
       ({ chainId }) => curr.id === chainId
-    )!.blockHeight;
+    )!.chainHead;
 
-    const bsBlockHeight = chainStatuses.find(
+    const currentBlock = chainStatuses.find(
       ({ chainId }) => curr.id === chainId
     )!.block;
 
     const blocksBehind =
-      bsBlockHeight === null
+      currentBlock === null
         ? "error"
-        : Math.max(blockHeight - bsBlockHeight, 0);
+        : Math.max(chainHead - currentBlock, 0);
 
     const bsTimestamp = chainStatuses.find(
       ({ chainId }) => curr.id === chainId
@@ -108,10 +108,11 @@ export async function getBsStatus() {
     return {
       ...acc,
       [curr.id]: {
-        block: bsBlockHeight,
+        chainHead,
+        block: currentBlock,
         blocksBehind,
         secsBehind,
       },
     };
-  }, {} as Record<ChainId, { block: number; blocksBehind: number; secsBehind: number }>);
+  }, {} as Record<ChainId, { chainHead: number; block: number; blocksBehind: number; secsBehind: number }>);
 }
