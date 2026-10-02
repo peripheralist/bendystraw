@@ -1,3 +1,4 @@
+import { CTPublisherV6Abi } from "./abis/CTPublisherV6Abi";
 import { createConfig, factory } from "ponder";
 import { erc20Abi, fallback, getAbiItem, http } from "viem";
 
@@ -765,6 +766,10 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    CTPublisher6: {
+      abi: CTPublisherV6Abi,
+      chain: rolloutChains("CTPublisher", false),
+    },
     JBBuybackHook6: {
       abi: JBBuybackHookV6Abi,
       chain: rolloutChains("JBBuybackHook", false),
@@ -1291,6 +1296,10 @@ export const testnetConfig = createConfig({
           startBlock: V6_TESTNET_START_BLOCKS.jbSuckersRegistry.optimismSepolia,
         },
       },
+    },
+    CTPublisher6: {
+      abi: CTPublisherV6Abi,
+      chain: rolloutChains("CTPublisher", true),
     },
     JBBuybackHook6: {
       abi: JBBuybackHookV6Abi,
