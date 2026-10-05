@@ -7,8 +7,8 @@ export function getChainHead(chainId: ChainId) {
       `https://api.etherscan.io/v2/api?chainId=${chainId}&module=proxy&action=eth_blockNumber&apiKey=${process.env.ETHERSCAN_API_KEY}`,
     )
     .then((res) => {
-      if (!res.data.result) return null;
-      return parseInt(res.data.result, 16) ?? JSON.stringify(res.data);
+      if (!res.data.result || isNaN(parseInt(res.data.result))) return null;
+      return parseInt(res.data.result, 16);
     })
     .catch((e) => {
       console.warn(`Error getting block height for ${chainId}: ${e}`);

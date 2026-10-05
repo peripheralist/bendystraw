@@ -103,13 +103,13 @@ app.get("/status-table", async (c) => {
   const statuses = await getBsStatus();
 
   const rows = NETWORKS.map((n) => {
-    const { chainHead, block, blocksBehind, secsBehind } = statuses[n.id];
+    const { chainHead, block, secsBehind } = statuses[n.id];
 
     const behindTimeStr = isNaN(secsBehind)
       ? ""
       : secsBehind < 60
-      ? `(${secsBehind.toLocaleString()}s)`
-      : `(${Math.round(secsBehind / 60).toLocaleString()}m)`;
+      ? `${secsBehind.toLocaleString()}s`
+      : `${Math.round(secsBehind / 60).toLocaleString()}m`;
 
     let className = "good";
     if (secsBehind > 60 * 5 || isNaN(secsBehind)) className = "danger";
@@ -119,9 +119,7 @@ app.get("/status-table", async (c) => {
       chainHead?.toLocaleString() ?? "--"
     }</code></td><td><code style="color: var(--body);">${
       block?.toLocaleString() ?? "--"
-    }</code></td><td><span class="${className}">${
-      isNaN(blocksBehind) ? "--" : blocksBehind.toLocaleString()
-    } ${behindTimeStr}</span></td></tr>`;
+    }</code></td><td><span class="${className}">${behindTimeStr}</span></td></tr>`;
   }).join("\n");
 
   return c.text(`

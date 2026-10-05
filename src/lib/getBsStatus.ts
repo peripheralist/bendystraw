@@ -85,16 +85,11 @@ export async function getBsStatus() {
   return NETWORKS.reduce((acc, curr) => {
     const chainHead = chainHeads.find(
       ({ chainId }) => curr.id === chainId
-    )!.chainHead ?? 0;
+    )!.chainHead;
 
     const currentBlock = chainStatuses.find(
       ({ chainId }) => curr.id === chainId
     )!.block;
-
-    const blocksBehind =
-      currentBlock === null
-        ? "error"
-        : Math.max(chainHead - currentBlock, 0);
 
     const bsTimestamp = chainStatuses.find(
       ({ chainId }) => curr.id === chainId
@@ -110,7 +105,6 @@ export async function getBsStatus() {
       [curr.id]: {
         chainHead,
         block: currentBlock,
-        blocksBehind,
         secsBehind,
       },
     };
