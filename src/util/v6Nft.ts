@@ -9,25 +9,16 @@ import {
 } from "ponder:schema";
 import { JB721TiersHookV6Abi } from "../../abis/JB721TiersHookV6Abi";
 import { JB721TiersHookStoreV6Abi } from "../../abis/JB721TiersHookStoreV6Abi";
-import { ADDRESS } from "../constants/address";
 import { insertActivityEvent } from "./activityEvent";
 import { getEventParams } from "./getEventParams";
 import { addressForVersion } from "./getVersion";
-import {
-  recordAddNftTierActivity,
-  recordRemoveNftTierActivity,
-} from "./nftTierActivity";
 import { setParticipantSnapshot } from "./participantSnapshot";
-import { tierOf } from "./tierOf";
-import { parseTierMetadata, parseTokenUri } from "./tokenUri";
-import { isAddressEqual } from "viem";
-import { bannyRetailHookForVersion } from "../constants/bannyHook";
-import { getBannySvg } from "./getBannySvg";
+import { parseTokenUri } from "./tokenUri";
 
 const version = 6;
 const hookStore = addressForVersion("jb721TiersHookStore", version);
 
-export async function recordV6NftTransfer({ event, context }: { event: Event<"JB721TiersHook6:Transfer">; context: Context }) {
+export async function recordV6NftTransfer({ event, context, strict = false }: { event: Event<"JB721TiersHook6:Transfer">; context: Context; strict?: boolean }) {
     const { tokenId, to } = event.args;
     const hook = event.log.address;
     const chainId = context.chain.id;
@@ -144,11 +135,12 @@ export async function recordV6NftTransfer({ event, context }: { event: Event<"JB
           remainingSupply: tier.remainingSupply,
         });
     } catch (e) {
+      if (strict) throw e;
       console.error("JB721TiersHook6:Transfer", e);
     }
 }
 
-export async function recordV6NftMint({ event, context }: { event: Event<"JB721TiersHook6:Mint">; context: Context }) {
+export async function recordV6NftMint({ event, context, strict = false }: { event: Event<"JB721TiersHook6:Mint">; context: Context; strict?: boolean }) {
     try {
       const { beneficiary, tierId, tokenId, totalAmountPaid } = event.args;
       const hook = event.log.address;
@@ -189,6 +181,7 @@ export async function recordV6NftMint({ event, context }: { event: Event<"JB721T
         version,
       });
     } catch (e) {
+      if (strict) throw e;
       console.error("JB721TiersHook6:Mint", e);
     }
 }

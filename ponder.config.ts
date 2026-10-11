@@ -1,3 +1,6 @@
+import { DefifaDeployerAbi } from "./abis/DefifaDeployerAbi";
+import { DefifaHookAbi } from "./abis/DefifaHookAbi";
+import { DEFIFA_DEPLOYMENTS } from "./src/constants/defifa";
 import { CTPublisherV6Abi } from "./abis/CTPublisherV6Abi";
 import { createConfig, factory } from "ponder";
 import { erc20Abi, fallback, getAbiItem, http } from "viem";
@@ -507,6 +510,16 @@ export const mainnetConfig = createConfig({
         },
       },
     },
+    DefifaDeployer: { abi: DefifaDeployerAbi, ...DEFIFA_DEPLOYMENTS.mainnet },
+    DefifaHook: {
+      abi: DefifaHookAbi,
+      address: factory({
+        address: DEFIFA_DEPLOYMENTS.mainnet.address,
+        event: getAbiItem({ abi: DefifaDeployerAbi, name: "LaunchGame" }),
+        parameter: "hook",
+      }),
+      chain: DEFIFA_DEPLOYMENTS.mainnet.chain,
+    },
     JB721TiersHookDeployer: JB721TiersHookDeployer.mainnet,
     JB721TiersHook: {
       abi: JB721TiersHookAbi,
@@ -1014,6 +1027,16 @@ export const testnetConfig = createConfig({
           startBlock: 23975987,
         },
       },
+    },
+    DefifaDeployer: { abi: DefifaDeployerAbi, ...DEFIFA_DEPLOYMENTS.testnet },
+    DefifaHook: {
+      abi: DefifaHookAbi,
+      address: factory({
+        address: DEFIFA_DEPLOYMENTS.testnet.address,
+        event: getAbiItem({ abi: DefifaDeployerAbi, name: "LaunchGame" }),
+        parameter: "hook",
+      }),
+      chain: DEFIFA_DEPLOYMENTS.testnet.chain,
     },
     JB721TiersHookDeployer: JB721TiersHookDeployer.testnet,
     JB721TiersHook: {

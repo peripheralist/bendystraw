@@ -1,25 +1,13 @@
 import { ponder } from "ponder:registry";
-import {
-  mintNftEvent,
-  nft,
-  nftTier,
-  participant,
-  project,
-  wallet,
-} from "ponder:schema";
+import { nftTier, project } from "ponder:schema";
 import { JB721TiersHookV6Abi } from "../abis/JB721TiersHookV6Abi";
-import { JB721TiersHookStoreV6Abi } from "../abis/JB721TiersHookStoreV6Abi";
 import { ADDRESS } from "./constants/address";
-import { insertActivityEvent } from "./util/activityEvent";
-import { getEventParams } from "./util/getEventParams";
-import { addressForVersion } from "./util/getVersion";
 import {
   recordAddNftTierActivity,
   recordRemoveNftTierActivity,
 } from "./util/nftTierActivity";
-import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { tierOf } from "./util/tierOf";
-import { parseTierMetadata, parseTokenUri } from "./util/tokenUri";
+import { parseTierMetadata } from "./util/tokenUri";
 import { isAddressEqual } from "viem";
 import { bannyRetailHookForVersion } from "./constants/bannyHook";
 import { getBannySvg } from "./util/getBannySvg";
