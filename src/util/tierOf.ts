@@ -8,18 +8,20 @@ export function tierOf({
   hook,
   tierId,
   version,
+  includeResolvedUri = true,
 }: {
   context: Context;
   hook: `0x${string}`;
   tierId: bigint;
   version: Version;
+  includeResolvedUri?: boolean;
 }) {
   if (version === 6) {
     return context.client.readContract({
       abi: JB721TiersHookStoreV6Abi,
       address: addressForVersion("jb721TiersHookStore", version),
       functionName: "tierOf",
-      args: [hook, tierId, true],
+      args: [hook, tierId, includeResolvedUri],
     });
   }
 
@@ -27,6 +29,6 @@ export function tierOf({
     abi: JB721TiersHookStoreAbi,
     address: addressForVersion("jb721TiersHookStore", version),
     functionName: "tierOf",
-    args: [hook, tierId, true],
+    args: [hook, tierId, includeResolvedUri],
   });
 }

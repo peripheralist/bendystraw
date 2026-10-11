@@ -174,6 +174,14 @@ StickyHook positions and settings, and StickyDistributor funding, are available 
 
 A holder's current streak is the current time minus `streakStartedAt`; their longest streak is the larger of that and `longestCompletedStreak`, as `StickyHook.longestStreakOf` reports.
 
+### Defifa markets
+
+Native V6 Defifa hooks are discovered from `LaunchGame` and populate the existing
+NFT collections, tiers, ownership and mint activity queries. Tier names are read
+from the hook and are available without an IPFS tier document. This does not make
+Defifa a generic JB721 shop. See [indexing and historical rollout](docs/defifa-indexing.md)
+for source provenance, amount semantics, checks and the required reindex/cutover.
+
 ### Special Queries
 
 Some data is not conveniently accessible via GraphQL, but may be requested via other endpoints.

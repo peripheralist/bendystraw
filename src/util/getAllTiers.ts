@@ -8,10 +8,12 @@ export async function getAllTiers({
   context,
   hook,
   version,
+  includeResolvedUri = true,
 }: {
   context: Context;
   hook: `0x${string}`;
   version: Version;
+  includeResolvedUri?: boolean;
 }) {
   const maxTierCall =
     version === 6
@@ -31,7 +33,7 @@ export async function getAllTiers({
   const tierPromises = [];
 
   for (let tierId = BigInt(1); tierId <= maxTierCall; tierId += BigInt(1)) {
-    tierPromises.push(tierOf({ context, hook, tierId, version }));
+    tierPromises.push(tierOf({ context, hook, tierId, version, includeResolvedUri }));
   }
 
   return Promise.all(tierPromises);

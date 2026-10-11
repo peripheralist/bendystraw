@@ -1,0 +1,151 @@
+{
+  "rows": {
+    "project": [
+      {
+        "projectId": 27,
+        "chainId": 8453,
+        "version": 6,
+        "suckerGroupId": "group",
+        "nftsMintedCount": 1,
+        "isRevnet": false,
+        "isHomerun": false,
+        "isSticky": false
+      }
+    ],
+    "nftHook": [],
+    "nftTier": [
+      {
+        "hook": "0x1111111111111111111111111111111111111111",
+        "tierId": 1,
+        "chainId": 8453,
+        "version": 6,
+        "remainingSupply": 999999998
+      }
+    ],
+    "nft": [
+      {
+        "id": "nft-[8453,\"0x1111111111111111111111111111111111111111\",\"1\",6]",
+        "chainId": 8453,
+        "hook": "0x1111111111111111111111111111111111111111",
+        "mintTx": "0x1111111111111111111111111111111111111111",
+        "tokenId": "1n",
+        "category": 0,
+        "owner": "0x0000000000000000000000000000000000000000",
+        "projectId": 27,
+        "createdAt": 100,
+        "customizedAt": 100,
+        "tokenUri": "data:application/json;base64,eyJuYW1lIjoicmVzb2x2ZXIgbmFtZSIsImltYWdlIjoidGVzdCJ9",
+        "metadata": {
+          "name": "resolver name",
+          "image": "test"
+        },
+        "tierId": 1,
+        "version": 6
+      }
+    ],
+    "wallet": [
+      {
+        "id": "wallet-[\"0x2222222222222222222222222222222222222222\"]",
+        "address": "0x2222222222222222222222222222222222222222"
+      },
+      {
+        "id": "wallet-[\"0x3333333333333333333333333333333333333333\"]",
+        "address": "0x3333333333333333333333333333333333333333"
+      },
+      {
+        "id": "wallet-[\"0x0000000000000000000000000000000000000000\"]",
+        "address": "0x0000000000000000000000000000000000000000"
+      }
+    ],
+    "participant": [
+      {
+        "id": "participant-[\"0x2222222222222222222222222222222222222222\",8453,27,6]",
+        "address": "0x2222222222222222222222222222222222222222",
+        "chainId": 8453,
+        "projectId": 27,
+        "createdAt": 100,
+        "suckerGroupId": "group",
+        "isRevnet": false,
+        "isHomerun": false,
+        "isSticky": false,
+        "version": 6
+      },
+      {
+        "id": "participant-[\"0x3333333333333333333333333333333333333333\",8453,27,6]",
+        "address": "0x3333333333333333333333333333333333333333",
+        "chainId": 8453,
+        "projectId": 27,
+        "createdAt": 100,
+        "suckerGroupId": "group",
+        "isRevnet": false,
+        "isHomerun": false,
+        "isSticky": false,
+        "version": 6
+      },
+      {
+        "id": "participant-[\"0x0000000000000000000000000000000000000000\",8453,27,6]",
+        "address": "0x0000000000000000000000000000000000000000",
+        "chainId": 8453,
+        "projectId": 27,
+        "createdAt": 100,
+        "suckerGroupId": "group",
+        "isRevnet": false,
+        "isHomerun": false,
+        "isSticky": false,
+        "version": 6
+      }
+    ],
+    "mintNftEvent": [
+      {
+        "id": "mintNftEvent-[1]",
+        "logIndex": 1,
+        "projectId": 27,
+        "suckerGroupId": "group",
+        "hook": "0x1111111111111111111111111111111111111111",
+        "tierId": 1,
+        "tokenId": "1n",
+        "beneficiary": "0x2222222222222222222222222222222222222222",
+        "totalAmountPaid": "100n",
+        "version": 6
+      }
+    ]
+  },
+  "snapshots": [
+    {
+      "id": "participant-[\"0x2222222222222222222222222222222222222222\",8453,27,6]",
+      "address": "0x2222222222222222222222222222222222222222",
+      "chainId": 8453,
+      "projectId": 27,
+      "createdAt": 100,
+      "suckerGroupId": "group",
+      "isRevnet": false,
+      "isHomerun": false,
+      "isSticky": false,
+      "version": 6
+    },
+    {
+      "id": "participant-[\"0x3333333333333333333333333333333333333333\",8453,27,6]",
+      "address": "0x3333333333333333333333333333333333333333",
+      "chainId": 8453,
+      "projectId": 27,
+      "createdAt": 100,
+      "suckerGroupId": "group",
+      "isRevnet": false,
+      "isHomerun": false,
+      "isSticky": false,
+      "version": 6
+    },
+    {
+      "id": "participant-[\"0x0000000000000000000000000000000000000000\",8453,27,6]",
+      "address": "0x0000000000000000000000000000000000000000",
+      "chainId": 8453,
+      "projectId": 27,
+      "createdAt": 100,
+      "suckerGroupId": "group",
+      "isRevnet": false,
+      "isHomerun": false,
+      "isSticky": false,
+      "version": 6
+    }
+  ]
+}
