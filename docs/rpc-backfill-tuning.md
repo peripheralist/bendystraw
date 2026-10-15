@@ -6,7 +6,15 @@ in place later.
 
 Context: this is a complex omnichain Ponder instance (4 mainnets + 4 testnets,
 many contracts, multiple `factory()` configs) where a fresh full reindex can take
-multiple days. Ponder `^0.16.6` (installed `0.16.6`), viem `^2.21.3`.
+multiple days. Originally written against Ponder `0.16.6`; line references and
+mechanics below re-checked against `0.18.2`.
+
+Since this was written, Ponder has shipped backfill improvements that land
+without config changes: compatible `eth_getLogs` requests are combined/merged
+(`0.17.6`, `0.17.8`), backfill memory allocation is reduced (`0.18.1`), and
+live-indexing `eth_getLogs` now carries `address`/`topics` filters (`0.18.2`).
+Merged requests can mean fewer but heavier getLogs calls, so the timeout
+analysis below still applies — re-measure before tuning.
 
 ---
 
@@ -32,9 +40,9 @@ timeout the same as a 429.
 Mechanics, from the installed Ponder source
 (`node_modules/ponder/dist/esm/rpc/index.js`):
 
-- Per-request HTTP timeout is **10000ms** (`getHttpRpcClient(..., { timeout: 10000 })`,
-  ~line 78).
-- On error, line ~415:
+- Per-request HTTP timeout is **10000ms** (`timeout: 10_000`, ~line 84 in
+  `0.18.2`).
+- On error, line ~421 in `0.18.2`:
   ```js
   if (error.code === 429 || error.status === 429 || error instanceof TimeoutError) {
     bucket.isActive = false;
@@ -44,11 +52,12 @@ Mechanics, from the installed Ponder source
   }
   ```
   A **`TimeoutError` is bucketed with 429** → the provider is deactivated, its
-  `rpsLimit` is ratcheted down toward `MIN_RPS` (that's the **3.47** in the log),
+  `rpsLimit` is ratcheted down (×0.95) toward `MIN_RPS` = 3 (that's the **3.47**
+  in the log),
   and a delayed reactivation is scheduled.
 - With **one** provider per chain, `buckets.every(b => b.isActive === false)`
   becomes true → **no available buckets at all**.
-- `getBucket()` then spins (`wait(20)` loop, ~line 245); the 15s timer fires and
+- `getBucket()` then spins (`wait(20)` loop); the 15s timer fires and
   emits the "Unable to find available JSON-RPC provider" warning.
 - Bucket reactivates after backoff → the **same heavy request times out again** →
   back to deactivation. **Self-sustaining stuck loop.**
@@ -66,7 +75,7 @@ A slow/oversized **`eth_getLogs`**. Base has dense logs, and this config has two
 `SuckerDeployedFor`) plus many contracts. A wide-range or many-address getLogs can
 exceed 10s.
 
-Important nuance (lines ~380–407): Ponder only auto-splits a getLogs range when
+Important nuance (~line 389 in `0.18.2`): Ponder only auto-splits a getLogs range when
 the provider returns a **recognizable range error** AND
 `chain.ethGetLogsBlockRange === undefined`. A **timeout is not a range error**, so
 Ponder never shrinks the range — it just deactivates and retries the same
@@ -173,11 +182,13 @@ bisect (no timeouts → raise; timeouts → lower). Slow to converge, no tooling
 
 ## Other backfill levers (range isn't the only one)
 
-- **`concurrency`** — rpc queue concurrency, default **25** per chain in this
-  Ponder version (`createRpc({ ..., concurrency = 25 })`). With a 400 req/s
-  Chainstack cap there is likely headroom to raise it; parallelizes the many
-  getLogs calls a smaller range creates, offsetting range's request-count cost.
-  (Verify how to set it in 0.16.x config before relying on it.)
+- **`concurrency`** — rpc queue concurrency. As of `0.18.2` this is **not
+  configurable from `ponder.config.ts`**: Ponder uses an internal
+  `rpcMaxConcurrency` of **256** split evenly across chains
+  (`build/config.js`: `Math.floor(rpcMaxConcurrency / chains.length)`), i.e.
+  **64 per chain** for our 4-chain configs. The `createRpc` default of 25 only
+  applies when no value is passed. Not a lever we can pull without patching
+  Ponder.
 
 - **Multiple RPC endpoints per chain** (array form `rpc: [a, b]`) — more buckets
   = more aggregate throughput AND timeout resilience. Critically, with >1 bucket,
@@ -201,13 +212,12 @@ bisect (no timeouts → raise; timeouts → lower). Slow to converge, no tooling
 2. Set per-chain `ethGetLogsBlockRange` to each chain's measured knee (start
    conservative on base: ~500–1000, raise toward the knee).
 3. Add a 2nd RPC endpoint per chain (array form) for throughput + anti-deadlock.
-4. Evaluate raising `concurrency` given the 400 req/s headroom.
+4. (`concurrency` is fixed at 64/chain in `0.18.x` — see above.)
 5. Only if backfill time is still the bottleneck and handlers permit: revisit
    omnichain vs multichain.
 
 ## Open questions to resolve later
 
-- Exact way to set rpc `concurrency` via `ponder.config.ts` in 0.16.x.
 - Do any handlers actually depend on global omnichain ordering, or could a subset
   of chains run multichain?
 - Per-chain p99 getLogs latency at various ranges (needs Option A or B data).
