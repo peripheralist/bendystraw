@@ -15,7 +15,8 @@ const hook = "0x1111111111111111111111111111111111111111";
 const alice = "0x2222222222222222222222222222222222222222";
 const bob = "0x3333333333333333333333333333333333333333";
 const tier = { id: 1, price: 100n, initialSupply: 999999999, remainingSupply: 999999998, category: 0,
-  allowOwnerMint: false, cannotBeRemoved: true, transfersPausable: false, reserveBeneficiary: zeroAddress,
+  flags: { allowOwnerMint: false, transfersPausable: false, cantBeRemoved: true, cantIncreaseDiscountPercent: false, cantBuyWithCredits: false },
+  reserveBeneficiary: zeroAddress,
   reserveFrequency: 0, encodedIPFSUri: `0x${"00".repeat(32)}`, votingUnits: 0n,
   resolvedUri: "data:application/json;base64," + Buffer.from(JSON.stringify({ name: "resolver name", image: "test" })).toString("base64") };
 const tables = ["project", "nftHook", "nftTier", "nft", "wallet", "participant", "mintNftEvent"];
@@ -118,6 +119,7 @@ if (existsSync("src/DefifaDeployer.ts")) {
   assert.equal([...f.rows.nftTier.values()][0].metadata.name, "Rekt");
   assert.equal([...f.rows.nftTier.values()][0].metadata.image, undefined);
   assert.equal([...f.rows.nftTier.values()][0].resolvedUri, "");
+  assert.deepEqual([...f.rows.nftTier.values()].map(({ allowOwnerMint, cannotBeRemoved, transfersPausable }) => [allowOwnerMint, cannotBeRemoved, transfersPausable])[0], [false, true, false]);
   f.load(readFileSync("src/DefifaHook.ts", "utf8"));
   Object.assign([...f.rows.project.values()][0], {
     id: "project-27", paymentsCount: 0, redeemCount: 0, volume: 0n, volumeUsd: 0n,

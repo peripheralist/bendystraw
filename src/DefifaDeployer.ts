@@ -21,16 +21,16 @@ ponder.on("DefifaDeployer:LaunchGame", async ({ event, context }) => {
   const tiers = await getAllTiers({ context, hook, version, includeResolvedUri: false });
   // Keep Ponder DB writes sequential; parallel writes share its transaction/savepoints.
   for (const tier of tiers) {
-    if ("flags" in tier) throw new Error("Expected the V6 tier format for Defifa");
+    if (!("flags" in tier)) throw new Error("Expected the V6 tier format for Defifa");
     const name = await context.client.readContract({ abi: DefifaHookAbi, address: hook, functionName: "tierNameOf", args: [BigInt(tier.id)] });
     const metadata = await parseTierMetadata({ resolvedUri: tier.resolvedUri, encodedIpfsUri: tier.encodedIPFSUri });
     await context.db.insert(nftTier).values({
       tierId: tier.id, chainId: context.chain.id, price: tier.price, hook, projectId: Number(gameId),
-      allowOwnerMint: tier.allowOwnerMint, createdAt: Number(event.block.timestamp),
-      cannotBeRemoved: tier.cannotBeRemoved, reserveBeneficiary: tier.reserveBeneficiary,
+      allowOwnerMint: tier.flags.allowOwnerMint, createdAt: Number(event.block.timestamp),
+      cannotBeRemoved: tier.flags.cantBeRemoved, reserveBeneficiary: tier.reserveBeneficiary,
       reserveFrequency: tier.reserveFrequency, category: tier.category, encodedIpfsUri: tier.encodedIPFSUri,
       initialSupply: tier.initialSupply, remainingSupply: tier.remainingSupply,
-      transfersPausable: tier.transfersPausable, votingUnits: BigInt(tier.votingUnits),
+      transfersPausable: tier.flags.transfersPausable, votingUnits: BigInt(tier.votingUnits),
       resolvedUri: tier.resolvedUri, metadata: { ...metadata, name }, version,
     });
   }
