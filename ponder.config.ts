@@ -892,7 +892,7 @@ export const mainnetConfig = createConfig({
     // V6-only: Sticky positions and streaks.
     StickyHook: {
       abi: StickyHookAbi,
-      address: addresses(ADDRESS.stickyHook6),
+      address: addresses(ADDRESS.stickyHook6, ADDRESS.stickyHook6_legacy),
       chain: {
         ethereum: { startBlock: V6_MAINNET_START_BLOCKS.stickyHook.ethereum },
         arbitrum: { startBlock: V6_MAINNET_START_BLOCKS.stickyHook.arbitrum },
@@ -903,7 +903,7 @@ export const mainnetConfig = createConfig({
     // V6-only: Sticky reward funding.
     StickyDistributor: {
       abi: StickyDistributorAbi,
-      address: addresses(ADDRESS.stickyDistributor6),
+      address: addresses(ADDRESS.stickyDistributor6, ADDRESS.stickyDistributor6_legacy),
       chain: {
         ethereum: { startBlock: V6_MAINNET_START_BLOCKS.stickyDistributor.ethereum },
         arbitrum: { startBlock: V6_MAINNET_START_BLOCKS.stickyDistributor.arbitrum },
@@ -1451,7 +1451,7 @@ export const testnetConfig = createConfig({
     // V6-only: Sticky positions and streaks.
     StickyHook: {
       abi: StickyHookAbi,
-      address: addresses(ADDRESS.stickyHook6),
+      address: addresses(ADDRESS.stickyHook6, ADDRESS.stickyHook6_legacy),
       chain: {
         ethereumSepolia: {
           startBlock: V6_TESTNET_START_BLOCKS.stickyHook.ethereumSepolia,
@@ -1470,7 +1470,7 @@ export const testnetConfig = createConfig({
     // V6-only: Sticky reward funding.
     StickyDistributor: {
       abi: StickyDistributorAbi,
-      address: addresses(ADDRESS.stickyDistributor6),
+      address: addresses(ADDRESS.stickyDistributor6, ADDRESS.stickyDistributor6_legacy),
       chain: {
         ethereumSepolia: {
           startBlock: V6_TESTNET_START_BLOCKS.stickyDistributor.ethereumSepolia,

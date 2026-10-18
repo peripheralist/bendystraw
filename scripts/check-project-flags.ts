@@ -11,8 +11,10 @@ type Row = Record<string, any>;
 
 // isSticky follows the owner, like isRevnet, and only on V6.
 assert.equal(isStickyOwner(ADDRESS.stickyDeployer6, 6), true);
-assert.equal(isStickyOwner("0xdA38Ec48B5b1d186B02BA99F297e95153BEE33a9", 6), true);
+assert.equal(isStickyOwner("0x78D3809Db6221b41F72375eB7361B2a43d29B27A", 6), true);
 assert.equal(isStickyOwner(ADDRESS.stickyDeployer6, 5), false);
+assert.equal(isStickyOwner(ADDRESS.stickyDeployer6_legacy, 6), true);
+assert.equal(isStickyOwner(ADDRESS.stickyDeployer6_legacy, 5), false);
 assert.equal(isStickyOwner(ADDRESS.revOwner6, 6), false);
 assert.equal(isRevnetOwner(ADDRESS.stickyDeployer6, 6), false);
 

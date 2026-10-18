@@ -47,7 +47,10 @@ export function isStickyOwner(
   owner: `0x${string}`,
   version: Version
 ): boolean {
-  return version === 6 && isAddressEqual(owner, ADDRESS.stickyDeployer6);
+  return version === 6 && (
+    isAddressEqual(owner, ADDRESS.stickyDeployer6) ||
+    isAddressEqual(owner, ADDRESS.stickyDeployer6_legacy)
+  );
 }
 
 /**
