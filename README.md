@@ -162,8 +162,6 @@ The generator reads `../deploy-all-v6/deployments` (override with `--deployments
 
 `project` and `participant` rows carry `isSticky` and `isHomerun` next to `isRevnet`. `isSticky` means the V6 StickyDeployer owns the project, which it does for every project it launches. `isHomerun` marks FUND projects and their INCOME revnets launched through HomerunDeployer, taken from its `FundLaunched` and `IncomeDeployed` events, because a FUND is handed to its owner at launch and INCOME is owned by the REVOwner. An INCOME revnet has both `isHomerun` and `isRevnet`.
 
-Both deployed Sticky generations are indexed. Current singleton addresses are `stickyDeployer6`, `stickyHook6` and `stickyDistributor6` in `src/constants/address.ts`; the previous generation remains under the corresponding `_legacy` keys. Hook and Distributor sources watch both addresses from each chain's existing earliest-generation start block, so a replay includes historical and current positions, settings and funding. Project classification recognizes either Deployer owner. Installing this configuration requires the indexer operator to replay/cut over the affected sources before the new generation is available through the live API; a merged PR alone does not update indexed data.
-
 StickyHook positions and settings, and StickyDistributor funding, are available through these GraphQL collections:
 
 | Collection | Contents |
