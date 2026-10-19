@@ -22,7 +22,22 @@ const storeAbi = parseAbi([
 // fees and hooks) and miss movements with no handler (refunded payouts, fee
 // reverts, migrations), which a running sum would turn into phantom balances.
 // Volume is payments only, so it accrues from Pay amounts.
-export async function updateProjectTokenBalance({
+//
+// Never throws: a failed read must not cost the calling handler the rest of
+// its event, and indexing never halts. The row keeps its last values (logged),
+// and the next event's read, an absolute balance, repairs it.
+export async function updateProjectTokenBalance(input: Parameters<typeof writeProjectTokenBalance>[0]) {
+  try {
+    await writeProjectTokenBalance(input);
+  } catch (e) {
+    console.error(
+      `projectTokenBalance: not updated, kept its last values: chain ${input.context.chain.id} project ${input.projectId} token ${input.tokenContext?.token}`,
+      e
+    );
+  }
+}
+
+async function writeProjectTokenBalance({
   context,
   version,
   projectId,
@@ -81,8 +96,25 @@ export async function updateProjectTokenBalance({
     .onConflictDoUpdate(moment);
 }
 
-/** Refresh one token's row for an event that names a token but no amount we track. */
-export async function refreshProjectTokenBalance({
+/** Refresh one token's row for an event that names a token but no amount we track. Never throws. */
+export async function refreshProjectTokenBalance(input: {
+  context: Context;
+  version: Version;
+  projectId: bigint;
+  token: Address;
+  block: { number: bigint; timestamp: bigint };
+}) {
+  try {
+    await refreshTokenRow(input);
+  } catch (e) {
+    console.error(
+      `projectTokenBalance: not refreshed: chain ${input.context.chain.id} project ${input.projectId} token ${input.token}`,
+      e
+    );
+  }
+}
+
+async function refreshTokenRow({
   context,
   version,
   projectId,
@@ -102,7 +134,7 @@ export async function refreshProjectTokenBalance({
     functionName: "accountingContextForTokenOf",
     args: [projectId, token],
   });
-  await updateProjectTokenBalance({
+  await writeProjectTokenBalance({
     context,
     version,
     projectId,

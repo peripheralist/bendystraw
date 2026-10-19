@@ -239,6 +239,7 @@ runInNewContext(
     exports: tokenBalanceModule,
     BigInt,
     Number,
+    console: { error: (...args: unknown[]) => console.error(...args) },
     require(name: string) {
       if (name === "ponder:schema") {
         return { projectTokenBalance: "projectTokenBalance", projectTokenBalanceMoment: "projectTokenBalanceMoment" };
@@ -338,6 +339,24 @@ const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance
   });
   // The moment's rate uses the event's accounting currency.
   assert.equal(moments.get(`1:12:6:${USDC}@1`).tokenUsdRate, 2n * 10n ** 18n);
+
+  // A failed read never throws into the handler: the row keeps its last values.
+  const quietError = console.error;
+  const logged: unknown[] = [];
+  console.error = (...args: unknown[]) => void logged.push(args);
+  try {
+    ctx.client.readContract = async () => {
+      throw new Error("RPC timeout");
+    };
+    await move(6, eth, 6, 1n);
+    await refreshProjectTokenBalance({
+      context: ctx, version: 6, projectId: 12n, token: USDC, block: { number: 6n, timestamp: 72n },
+    });
+  } finally {
+    console.error = quietError;
+  }
+  assert.equal(logged.length, 2);
+  assert.deepEqual(pick(rows), { [`1:12:6:${ETH}`]: [50n, 100n], [`1:12:6:${USDC}`]: [7n, 5n] });
 }
 
 {
