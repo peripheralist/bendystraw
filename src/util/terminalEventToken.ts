@@ -39,8 +39,7 @@ export type CallFrame = {
   logs?: TraceLog[];
 };
 
-// Halts indexing instead of storing an event without its token. Handlers
-// rethrow it past their own catch.
+// A trace that cannot pair an event with its record call.
 export class TerminalEventTokenError extends Error {}
 
 // V6 JBTerminalStore record calls; each names the token.
@@ -151,9 +150,10 @@ export function tokensForLog({
 }
 
 /**
- * The accounting context of the token a terminal event moved. Throws
- * TerminalEventTokenError when it cannot be determined, so an event is never
- * stored without its token.
+ * The accounting context of the token a V6 terminal event moved, or null when
+ * it cannot be determined. Null must never fall back to the project's context:
+ * callers store no token and value the event at 0 USD, which this logs as an
+ * error. Ponder's RPC client retries the trace first.
  *
  * A project with one accounting context on the terminal can only have moved
  * that token. Otherwise the transaction is traced (debug_traceTransaction with
@@ -173,7 +173,7 @@ export async function terminalEventToken({
   context: Context;
   kind: TerminalEventKind;
   projectId: bigint;
-}): Promise<TokenContext> {
+}): Promise<TokenContext | null> {
   const terminal = event.log.address;
   const where = `chain ${context.chain.id} tx ${event.transaction.hash} log ${event.log.logIndex} (${kind}, project ${projectId})`;
   try {
@@ -214,6 +214,7 @@ export async function terminalEventToken({
     }
     return toContext(found);
   } catch (e) {
-    throw new TerminalEventTokenError(`terminal event token unresolved: ${where}`, { cause: e });
+    console.error(`terminalEventToken: unresolved, stored without a token at 0 USD: ${where}`, e);
+    return null;
   }
 }

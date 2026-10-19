@@ -114,8 +114,7 @@ assert.throws(
   TerminalEventTokenError
 );
 
-// terminalEventToken: one context needs no trace; several use it; anything
-// unresolved throws rather than storing the event without its token.
+// terminalEventToken: one context needs no trace; several use it.
 const contexts12 = [
   { token: ETH, decimals: 18, currency: 61166 },
   { token: USDC, decimals: 6, currency: 906423112 },
@@ -177,22 +176,29 @@ const event = (l: { topics: Hex[]; data: Hex }, logIndex = 132) => ({
     kind: "pay",
     projectId: 12n,
   });
-  assert.equal(second.token, USDC);
+  assert.equal(second?.token, USDC);
   assert.deepEqual(calls, ["readContract", "request", "receipt"]);
 }
-// No record for the log, or an RPC without the debug namespace: throws.
-await assert.rejects(
-  terminalEventToken({ event: event(payLog12), context: fakeContext(contexts12, frame([], [])).context, kind: "pay", projectId: 12n }),
-  TerminalEventTokenError
-);
-await assert.rejects(
-  terminalEventToken({
-    event: event(payLog12),
-    context: fakeContext(contexts12, new Error("method not found")).context,
-    kind: "pay",
-    projectId: 12n,
-  }),
-  TerminalEventTokenError
-);
+// No record for the log, or an RPC without the debug namespace: null, which
+// handlers store as no token at 0 USD.
+const quiet = console.error;
+console.error = () => {};
+try {
+  assert.equal(
+    await terminalEventToken({ event: event(payLog12), context: fakeContext(contexts12, frame([], [])).context, kind: "pay", projectId: 12n }),
+    null
+  );
+  assert.equal(
+    await terminalEventToken({
+      event: event(payLog12),
+      context: fakeContext(contexts12, new Error("method not found")).context,
+      kind: "pay",
+      projectId: 12n,
+    }),
+    null
+  );
+} finally {
+  console.error = quiet;
+}
 
 console.log("terminal event token checks passed");
