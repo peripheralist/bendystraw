@@ -64,6 +64,8 @@ const addresses = (...items: (`0x${string}` | undefined)[]) =>
 const httpTransport = (url: string) =>
   http(url, { maxResponseBodySize: false });
 
+// Must serve debug_traceTransaction (callTracer): terminal events on projects
+// with several accounting tokens are resolved from their call traces.
 const rpc = (
   dwellirNetwork: string,
   infuraNetwork: string,
