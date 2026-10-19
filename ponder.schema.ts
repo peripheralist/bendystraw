@@ -360,9 +360,10 @@ export const swapEvent = onchainTable(
     // reconstructing the PoolKey.
     sqrtPriceX96: t.bigint(),
     projectTokenIsCurrency0: t.boolean(),
-    // USD per ONE whole accounting token at THIS block, 18-dec. The pool price above is
-    // accounting-token denominated; a chart with a USD axis needs the rate that was in force
-    // here, not today's, or it restates the past. Null where no feed bridges the pair.
+    // USD per ONE whole terminal token (the pool's, or the paid token for `mint`) at THIS
+    // block, 18-dec. The pool price above is denominated in it; a chart with a USD axis needs
+    // the rate that was in force here, not today's, or it restates the past. Null where no
+    // feed bridges the pair.
     accountingTokenUsdRate: t.bigint(),
   }),
   (t) => ({
@@ -1262,6 +1263,34 @@ export const projectPayer = onchainTable(
   })
 );
 
+// A V6 project's balance and payment volume in one token, raw in that token's
+// decimals. Unlike project.balance, each row has a single unit.
+export const projectTokenBalance = onchainTable(
+  "project_token_balance",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...version(t),
+    token: t.hex().notNull(),
+    decimals: t.integer().notNull(),
+    // Null when the token does not answer `symbol()`.
+    tokenSymbol: t.text(),
+    balance: t.bigint().notNull().default(BigInt(0)),
+    volume: t.bigint().notNull().default(BigInt(0)),
+  }),
+  (t) => ({
+    projectIdx: index().on(t.projectId),
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.version, t.token] }),
+  })
+);
+
+export const projectTokenBalanceRelations = relations(projectTokenBalance, ({ one }) => ({
+  project: one(project, {
+    fields: [projectTokenBalance.projectId, projectTokenBalance.chainId, projectTokenBalance.version],
+    references: [project.projectId, project.chainId, project.version],
+  }),
+}));
+
 export const projectPayerRelations = relations(projectPayer, ({ one }) => ({
   project: one(project, {
     fields: [
@@ -1379,11 +1408,16 @@ export const project = onchainTable(
     contributorsCount: t.integer().notNull().default(0),
     createdWithinTrendingWindow: t.boolean(),
 
-    // accountingContext
+    // accountingContext: the last one set
     token: t.hex(),
     tokenSymbol: t.text(),
     decimals: t.integer(),
     currency: t.bigint(),
+    // Tokens the project's terminal accepts. Above 1, the raw `balance`,
+    // `volume` and `redeemVolume` here, on the sucker group and on their
+    // moments add amounts in different tokens and have no single unit; use the
+    // *Usd twins, or projectTokenBalances for V6.
+    accountingTokenCount: t.integer().notNull().default(0),
 
     // metadata items, intended for searchability
     coverImageUri: t.text(),
@@ -1420,6 +1454,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   postingAllowanceEvents: many(configurePostingCriteriaEvent),
   projectMoments: many(projectMoment),
   projectPayers: many(projectPayer),
+  projectTokenBalances: many(projectTokenBalance),
   permissionHolders: many(permissionHolder),
 
   // events

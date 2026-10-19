@@ -22,6 +22,7 @@ import { usdPriceForToken, usdRate18ForToken } from "./util/usdPrice";
 import { getVersion, type Version } from "./util/getVersion";
 import { terminalEventToken } from "./util/terminalEventToken";
 import { tokenSymbol as tokenSymbolOf } from "./util/tokenSymbol";
+import { updateProjectTokenBalance } from "./util/projectTokenBalance";
 import type { Context } from "ponder:registry";
 
 async function updateProjectPayerStats({
@@ -143,6 +144,14 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
         balance: p.balance + amount,
         balanceUsd: p.balanceUsd + amountUsd,
       }));
+
+    await updateProjectTokenBalance({
+      context,
+      version,
+      projectId: projectId,
+      tokenContext,
+      balanceDelta: amount,
+    });
 
     const projectPayerAddress = await findProjectPayerAddress({
       context,
@@ -267,6 +276,14 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         balance: p.balance - amountPaidOut,
         balanceUsd: p.balanceUsd - amountPaidOutUsd,
       }));
+
+    await updateProjectTokenBalance({
+      context,
+      version,
+      projectId: projectId,
+      tokenContext,
+      balanceDelta: -amountPaidOut,
+    });
 
     const { suckerGroupId } = updatedProject;
 
@@ -474,6 +491,14 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
         balanceUsd: p.balanceUsd - reclaimAmountUsd,
       }));
 
+    await updateProjectTokenBalance({
+      context,
+      version,
+      projectId: projectId,
+      tokenContext,
+      balanceDelta: -reclaimAmount,
+    });
+
     const { suckerGroupId } = updatedProject;
 
     await onProjectStatsUpdated({
@@ -577,6 +602,14 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
         balance: p.balance - event.args.amountPaidOut,
         balanceUsd: p.balanceUsd - amountPaidOutUsd,
       }));
+
+    await updateProjectTokenBalance({
+      context,
+      version,
+      projectId: projectId,
+      tokenContext,
+      balanceDelta: -event.args.amountPaidOut,
+    });
 
     const { suckerGroupId } = updatedProject;
 
@@ -711,6 +744,15 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         paymentsCount: p.paymentsCount + 1,
         contributorsCount: p.contributorsCount + (payerParticipant ? 0 : 1),
       }));
+
+    await updateProjectTokenBalance({
+      context,
+      version,
+      projectId: projectId,
+      tokenContext,
+      balanceDelta: amount,
+      volumeDelta: amount,
+    });
 
     const { suckerGroupId, isRevnet, isHomerun, isSticky } = updatedProject;
 
@@ -860,6 +902,22 @@ ponder.on("JBMultiTerminal:HookAfterRecordPay", async ({ event, context }) => {
         balanceUsd: p.balanceUsd - amountUsd,
       }));
 
+    // The forwarded amount names its own token.
+    await updateProjectTokenBalance({
+      context,
+      version,
+      projectId,
+      tokenContext:
+        version === 6
+          ? {
+              token: paid.token,
+              decimals: paid.decimals,
+              symbol: await tokenSymbolOf(context, paid.token),
+            }
+          : null,
+      balanceDelta: -amount,
+    });
+
     await onProjectStatsUpdated({
       projectId,
       version,
@@ -942,12 +1000,14 @@ ponder.on(
           chainId: context.chain.id,
           version,
         })
-        .set({
+        .set((p) => ({
           currency: BigInt(event.args.context.currency),
           decimals: event.args.context.decimals,
           token,
           tokenSymbol,
-        });
+          // The terminal reverts on a token it already accepts, so each event adds one.
+          accountingTokenCount: p.accountingTokenCount + 1,
+        }));
     } catch (e) {
       console.error("JBMultiTerminal:SetAccountingContext", e);
     }

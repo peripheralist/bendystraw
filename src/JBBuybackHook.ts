@@ -21,7 +21,8 @@ import {
 } from "./constants/uniswapV4";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { usdPerAccountingTokenAtBlock } from "./util/usdPrice";
+import { getLatestPayEvent } from "./util/getLatestPayEvent";
+import { currencyOfToken, usdPerAccountingTokenAtBlock } from "./util/usdPrice";
 
 // JBBuybackHook is a V6-only singleton (events carry `projectId`), so version
 // is always 6 for everything indexed here.
@@ -48,6 +49,11 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     const _project = await findProject(context, projectId);
+    // The leftover is in the paid token. The hook runs after the terminal
+    // emits Pay, so this transaction's pay is the latest one indexed.
+    const pay = await getLatestPayEvent({ context });
+    const paidToken =
+      pay?.txHash === event.transaction.hash && pay.projectId === projectId ? pay.token : null;
 
     const { id } = await context.db.insert(swapEvent).values({
       ...getEventParams({ event, context }),
@@ -64,7 +70,7 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
         context,
         version: VERSION,
         projectId,
-        currency: _project.currency,
+        currency: paidToken ? currencyOfToken(paidToken) : null,
       }),
     });
 

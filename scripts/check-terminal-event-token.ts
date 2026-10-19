@@ -4,6 +4,8 @@
 // Run: node --import tsx scripts/check-terminal-event-token.ts
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+import ts from "typescript";
 import { encodeFunctionData, parseAbi, toEventSelector, type Hex } from "viem";
 import {
   TerminalEventTokenError,
@@ -12,6 +14,7 @@ import {
   type CallFrame,
   type TraceLog,
 } from "../src/util/terminalEventToken";
+import { currencyOfToken } from "../src/util/usdPrice";
 
 const terminal = "0x130f5dd2bd8805443cf41755253d778a75a67f53" as const;
 const store = "0x7497ae014a60561925b51c0a3b4ade7460b9927c";
@@ -221,6 +224,56 @@ try {
   );
 } finally {
   console.error = quiet;
+}
+
+// A token's JB currency is the low 32 bits of its address; a pool's zero address is native.
+assert.equal(currencyOfToken(ETH), 61166n);
+assert.equal(currencyOfToken("0x0000000000000000000000000000000000000000"), 61166n);
+assert.equal(currencyOfToken(USDC), 906423112n);
+
+// projectTokenBalance imports ponder's virtual schema module, so it runs with a stand-in.
+const tokenBalanceModule: { updateProjectTokenBalance?: (input: any) => Promise<void> } = {};
+runInNewContext(
+  ts.transpileModule(readFileSync(new URL("../src/util/projectTokenBalance.ts", import.meta.url), "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+  }).outputText,
+  {
+    exports: tokenBalanceModule,
+    BigInt,
+    require(name: string) {
+      if (name === "ponder:schema") return { projectTokenBalance: "projectTokenBalance" };
+      throw new Error(`Unexpected import ${name}`);
+    },
+  }
+);
+const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
+
+{
+  // Per-token balances: one row per token, deltas accrue; pre-V6 and unresolved events write nothing.
+  const rows = new Map<string, { balance: bigint; volume: bigint; tokenSymbol: string | null }>();
+  const db = {
+    insert: () => ({
+      values: (v: any) => ({
+        onConflictDoUpdate: async (f: (row: any) => any) => {
+          const key = `${v.chainId}:${v.projectId}:${v.version}:${v.token}`;
+          const row = rows.get(key);
+          rows.set(key, row ? { ...row, ...f(row) } : { balance: v.balance, volume: v.volume, tokenSymbol: v.tokenSymbol });
+        },
+      }),
+    }),
+  };
+  const ctx = { chain: { id: 1 }, db } as any;
+  const eth = { token: ETH, decimals: 18, symbol: "ETH" };
+  const usdc = { token: USDC, decimals: 6, symbol: "USDC" };
+  await updateProjectTokenBalance({ context: ctx, version: 6, projectId: 12, tokenContext: eth, balanceDelta: 100n, volumeDelta: 100n });
+  await updateProjectTokenBalance({ context: ctx, version: 6, projectId: 12, tokenContext: usdc, balanceDelta: 5n, volumeDelta: 5n });
+  await updateProjectTokenBalance({ context: ctx, version: 6, projectId: 12, tokenContext: eth, balanceDelta: -40n });
+  await updateProjectTokenBalance({ context: ctx, version: 5, projectId: 12, tokenContext: eth, balanceDelta: 1n });
+  await updateProjectTokenBalance({ context: ctx, version: 6, projectId: 12, tokenContext: null, balanceDelta: 1n });
+  assert.deepEqual(Object.fromEntries(rows), {
+    [`1:12:6:${ETH}`]: { balance: 60n, volume: 100n, tokenSymbol: "ETH" },
+    [`1:12:6:${USDC}`]: { balance: 5n, volume: 5n, tokenSymbol: "USDC" },
+  });
 }
 
 console.log("terminal event token checks passed");

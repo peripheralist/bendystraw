@@ -10,6 +10,15 @@ const CURRENCY_NATIVE = BigInt(61166);
 // const CURRENCY_ETH = BigInt(1);
 const CURRENCY_USD = BigInt(2);
 
+/**
+ * A V6 token's JB currency: the low 32 bits of its address (the native token's
+ * is 61166). A buyback pool stores the native token as the zero address.
+ */
+export function currencyOfToken(token: Address): bigint {
+  if (token === zeroAddress) return CURRENCY_NATIVE;
+  return BigInt(token) & BigInt(0xffffffff);
+}
+
 // const STABLES = new Set(
 //   [
 //     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC ETH
