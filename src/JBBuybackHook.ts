@@ -1,10 +1,8 @@
 import { Context } from "ponder:registry";
 import { ponder } from "ponder:registry";
-import { and, desc, eq, lt } from "ponder";
 import {
   buybackPool,
   buybackPoolEvent,
-  payEvent,
   project,
   swapEvent,
 } from "ponder:schema";
@@ -22,8 +20,9 @@ import {
   POOL_MANAGER_BY_CHAIN,
 } from "./constants/uniswapV4";
 import { insertActivityEvent } from "./util/activityEvent";
+import { buybackMintForwardedAmount } from "./util/buybackMintAmount";
 import { getEventParams } from "./util/getEventParams";
-import { acceptedTokenCurrency, usdPerAccountingTokenAtBlock } from "./util/usdPrice";
+import { usdPerAccountingTokenAtBlock } from "./util/usdPrice";
 
 // JBBuybackHook is a V6-only singleton (events carry `projectId`), so version
 // is always 6 for everything indexed here.
@@ -50,18 +49,13 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     const _project = await findProject(context, projectId);
-    // The leftover is in the paid token. The hook runs after the terminal
-    // emits Pay, so the pay is this transaction's last one before the Mint.
-    const [pay] = await context.db.sql.query.payEvent.findMany({
-      where: and(
-        eq(payEvent.chainId, context.chain.id),
-        eq(payEvent.txHash, event.transaction.hash),
-        eq(payEvent.projectId, projectId),
-        eq(payEvent.version, VERSION),
-        lt(payEvent.logIndex, event.log.logIndex)
-      ),
-      orderBy: [desc(payEvent.logIndex)],
-      limit: 1,
+    // The leftover is in the amount the terminal forwarded to this hook.
+    const receipt = await context.client.getTransactionReceipt({ hash: event.transaction.hash });
+    const forwarded = buybackMintForwardedAmount({
+      logs: receipt.logs,
+      mintLogIndex: event.log.logIndex,
+      hook: event.log.address,
+      projectId: _projectId,
     });
 
     const { id } = await context.db.insert(swapEvent).values({
@@ -79,9 +73,7 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
         context,
         version: VERSION,
         projectId,
-        currency: pay?.token
-          ? await acceptedTokenCurrency({ context, projectId, token: pay.token })
-          : null,
+        currency: forwarded ? BigInt(forwarded.currency) : null,
       }),
     });
 

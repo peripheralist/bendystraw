@@ -4,9 +4,12 @@
 // Run: node --import tsx scripts/check-terminal-event-token.ts
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { JBMultiTerminalAbi } from "../abis/JBMultiTerminalAbi";
+import { ADDRESS } from "../src/constants/address";
+import { buybackMintForwardedAmount } from "../src/util/buybackMintAmount";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
-import { encodeFunctionData, parseAbi, toEventSelector, type Hex } from "viem";
+import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, getAbiItem, parseAbi, toEventSelector, type Hex } from "viem";
 import {
   TerminalEventTokenError,
   terminalEventToken,
@@ -227,7 +230,7 @@ try {
 }
 
 // projectTokenBalance imports ponder's virtual schema module, so it runs with a stand-in.
-const tokenBalanceModule: { updateProjectTokenBalance?: (input: any) => Promise<void> } = {};
+const tokenBalanceModule: Record<string, (input: any) => Promise<void>> = {};
 runInNewContext(
   ts.transpileModule(readFileSync(new URL("../src/util/projectTokenBalance.ts", import.meta.url), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -235,10 +238,15 @@ runInNewContext(
   {
     exports: tokenBalanceModule,
     BigInt,
+    Number,
     require(name: string) {
       if (name === "ponder:schema") {
         return { projectTokenBalance: "projectTokenBalance", projectTokenBalanceMoment: "projectTokenBalanceMoment" };
       }
+      if (name === "viem") return { parseAbi };
+      if (name === "../../abis/JBMultiTerminalAbi") return { JBMultiTerminalAbi: [] };
+      if (name === "../constants/address") return { ADDRESS };
+      if (name === "./tokenSymbol") return { tokenSymbol: async () => "USDC" };
       // Stand-in rate: the context's currency in whole dollars, so the test sees which currency was used.
       if (name === "./usdPrice") {
         return { usdPerAccountingTokenAtBlock: async ({ currency }: { currency: bigint }) => currency * 10n ** 18n };
@@ -248,12 +256,19 @@ runInNewContext(
   }
 );
 const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
+const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance!;
 
 {
-  // Per-token balances: one row per token, deltas accrue, and each block keeps
-  // its last balance as a moment. Pre-V6 and unresolved events write nothing.
+  // Per-token balances are the store's own balanceOf at each event's block,
+  // never a running sum of event amounts; volume accrues from payments. Each
+  // block keeps its last balance as a moment. Pre-V6 and unresolved events
+  // write nothing.
   const rows = new Map<string, any>();
   const moments = new Map<string, any>();
+  // The store's balance per token and block.
+  const store: Record<string, bigint> = {};
+  const reads: string[] = [];
+  let block = 0;
   const db = {
     insert: (table: string) => ({
       values: (v: any) => ({
@@ -268,29 +283,100 @@ const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
       }),
     }),
   };
-  const ctx = { chain: { id: 1 }, db } as any;
+  const client = {
+    readContract: async ({ functionName, address, args }: any) => {
+      reads.push(functionName);
+      if (functionName === "accountingContextForTokenOf") return { token: args[1], decimals: 6, currency: 2 };
+      assert.equal(address, ADDRESS.jbTerminalStore6);
+      assert.equal(args[0], ADDRESS.jbMultiTerminal6);
+      return store[`${args[2]}@${block}`] ?? 0n;
+    },
+  };
+  const ctx = { chain: { id: 1 }, db, client } as any;
   const eth = { token: ETH, decimals: 18, currency: 61166n, symbol: "ETH" };
   // USDC accounted as USD (currency 2), not its address-derived currency.
   const usdc = { token: USDC, decimals: 6, currency: 2n, symbol: "USDC" };
-  const at = (n: number) => ({ number: BigInt(n), timestamp: BigInt(n * 12) });
-  const move = (version: number, tokenContext: { token: `0x${string}`; decimals: number; currency: bigint; symbol: string } | null, balanceDelta: bigint, block: number, volumeDelta?: bigint) =>
-    updateProjectTokenBalance({ context: ctx, version, projectId: 12, tokenContext, balanceDelta, volumeDelta, block: at(block) });
-  await move(6, eth, 100n, 1, 100n);
-  await move(6, usdc, 5n, 1, 5n);
-  await move(6, eth, -40n, 2);
-  await move(6, eth, -10n, 2);
-  await move(5, eth, 1n, 3);
-  await move(6, null, 1n, 3);
+  const move = async (version: number, tokenContext: any, at: number, volumeDelta?: bigint) => {
+    block = at;
+    await updateProjectTokenBalance({
+      context: ctx, version, projectId: 12, tokenContext, volumeDelta,
+      block: { number: BigInt(at), timestamp: BigInt(at * 12) },
+    });
+  };
+  // Block 1: pays of 100 ETH-wei and 5 USDC-units.
+  store[`${ETH}@1`] = 100n;
+  store[`${USDC}@1`] = 5n;
+  await move(6, eth, 1, 100n);
+  await move(6, usdc, 1, 5n);
+  // Block 2: a cash-out whose event reclaims 39 net, while fees and a hook took
+  // the store's balance down by 50 — the row follows the store, not the event.
+  store[`${ETH}@2`] = 50n;
+  await move(6, eth, 2);
+  // Block 3: a payout of 50 whose transfer reverted and was refunded leaves the store at 50.
+  store[`${ETH}@3`] = 50n;
+  await move(6, eth, 3);
+  // Block 4: a fee revert credits USDC with no amount event; the refresh reads it.
+  store[`${USDC}@4`] = 7n;
+  block = 4;
+  await refreshProjectTokenBalance({
+    context: ctx, version: 6, projectId: 12n, token: USDC, block: { number: 4n, timestamp: 48n },
+  });
+  const readsBefore = reads.length;
+  await move(5, eth, 5);
+  await move(6, null, 5);
+  assert.equal(reads.length, readsBefore, "pre-V6 and unresolved events read nothing");
+
   const pick = (m: Map<string, any>) =>
     Object.fromEntries([...m].map(([k, v]) => [k, [v.balance, v.volume]]));
-  assert.deepEqual(pick(rows), { [`1:12:6:${ETH}`]: [50n, 100n], [`1:12:6:${USDC}`]: [5n, 5n] });
+  assert.deepEqual(pick(rows), { [`1:12:6:${ETH}`]: [50n, 100n], [`1:12:6:${USDC}`]: [7n, 5n] });
   assert.deepEqual(pick(moments), {
     [`1:12:6:${ETH}@1`]: [100n, 100n],
     [`1:12:6:${USDC}@1`]: [5n, 5n],
     [`1:12:6:${ETH}@2`]: [50n, 100n],
+    [`1:12:6:${ETH}@3`]: [50n, 100n],
+    [`1:12:6:${USDC}@4`]: [7n, 5n],
   });
   // The moment's rate uses the event's accounting currency.
   assert.equal(moments.get(`1:12:6:${USDC}@1`).tokenUsdRate, 2n * 10n ** 18n);
+}
+
+{
+  // A buyback Mint takes the amount forwarded to it from the first matching
+  // HookAfterRecordPay after it: a nested payment's comes before the Mint.
+  const hook = "0x00000000000000000000000000000000000000cc" as const;
+  const other = "0x00000000000000000000000000000000000000dd" as const;
+  const hookAfter = (logIndex: number, hookAddress: `0x${string}`, projectId: bigint, token: `0x${string}`, currency: number) => {
+    const abiItem = getAbiItem({ abi: JBMultiTerminalAbi, name: "HookAfterRecordPay" });
+    const amount = (t: `0x${string}`, c: number) => ({ token: t, decimals: 18, currency: c, value: 1n });
+    const args = {
+      hook: hookAddress,
+      context: {
+        payer: holder, projectId, rulesetId: 1n,
+        amount: amount(token, currency), forwardedAmount: amount(token, currency),
+        weight: 1n, newlyIssuedTokenCount: 0n, beneficiary: holder, hookMetadata: "0x", payerMetadata: "0x",
+      },
+      specificationAmount: 1n,
+      caller: holder,
+    };
+    const indexed = abiItem.inputs.filter((i) => i.indexed);
+    const plain = abiItem.inputs.filter((i) => !i.indexed);
+    return {
+      address: ADDRESS.jbMultiTerminal6,
+      topics: encodeEventTopics({ abi: [abiItem], eventName: "HookAfterRecordPay", args: Object.fromEntries(indexed.map((i) => [i.name, (args as any)[i.name]])) as any }),
+      data: encodeAbiParameters(plain, plain.map((i) => (args as any)[i.name])),
+      logIndex,
+      blockHash: "0x00", blockNumber: 1n, transactionHash: "0x00", transactionIndex: 0, removed: false,
+    } as any;
+  };
+  const logs = [
+    hookAfter(4, hook, 12n, USDC, 2), // a nested payment's, before the Mint
+    hookAfter(7, other, 12n, USDC, 2), // another hook
+    hookAfter(8, hook, 13n, USDC, 2), // another project
+    hookAfter(9, hook, 12n, ETH, 61166), // the enclosing call
+  ];
+  const forwarded = buybackMintForwardedAmount({ logs, mintLogIndex: 6, hook, projectId: 12n });
+  assert.equal(forwarded?.currency, 61166);
+  assert.equal(buybackMintForwardedAmount({ logs: logs.slice(0, 3), mintLogIndex: 6, hook, projectId: 12n }), undefined);
 }
 
 console.log("terminal event token checks passed");

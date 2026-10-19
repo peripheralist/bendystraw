@@ -22,7 +22,10 @@ import { usdPriceForToken, usdRate18ForToken } from "./util/usdPrice";
 import { getVersion, type Version } from "./util/getVersion";
 import { terminalEventToken } from "./util/terminalEventToken";
 import { tokenSymbol as tokenSymbolOf } from "./util/tokenSymbol";
-import { updateProjectTokenBalance } from "./util/projectTokenBalance";
+import {
+  refreshProjectTokenBalance,
+  updateProjectTokenBalance,
+} from "./util/projectTokenBalance";
 import type { Context } from "ponder:registry";
 
 async function updateProjectPayerStats({
@@ -150,7 +153,6 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       version,
       projectId: projectId,
       tokenContext,
-      balanceDelta: amount,
       block: event.block,
     });
 
@@ -283,7 +285,6 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       version,
       projectId: projectId,
       tokenContext,
-      balanceDelta: -amountPaidOut,
       block: event.block,
     });
 
@@ -498,7 +499,6 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       version,
       projectId: projectId,
       tokenContext,
-      balanceDelta: -reclaimAmount,
       block: event.block,
     });
 
@@ -611,7 +611,6 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       version,
       projectId: projectId,
       tokenContext,
-      balanceDelta: -event.args.amountPaidOut,
       block: event.block,
     });
 
@@ -754,7 +753,6 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       version,
       projectId: projectId,
       tokenContext,
-      balanceDelta: amount,
       volumeDelta: amount,
       block: event.block,
     });
@@ -921,7 +919,6 @@ ponder.on("JBMultiTerminal:HookAfterRecordPay", async ({ event, context }) => {
               symbol: await tokenSymbolOf(context, paid.token),
             }
           : null,
-      balanceDelta: -amount,
       block: event.block,
     });
 
@@ -988,6 +985,35 @@ ponder.on("JBMultiTerminal:ProcessFee", async ({ event, context }) => {
       .set({ feeFromProject: Number(event.args.projectId) });
   } catch (e) {
     console.error("JBMultiTerminal:ProcessFee", e);
+  }
+});
+
+// Balance movements no other handler sees; each names its token.
+ponder.on("JBMultiTerminal:FeeReverted", async ({ event, context }) => {
+  try {
+    await refreshProjectTokenBalance({
+      context,
+      version: getVersion(event, "jbMultiTerminal"),
+      projectId: event.args.projectId,
+      token: event.args.token,
+      block: event.block,
+    });
+  } catch (e) {
+    console.error("JBMultiTerminal:FeeReverted", e);
+  }
+});
+
+ponder.on("JBMultiTerminal:MigrateTerminal", async ({ event, context }) => {
+  try {
+    await refreshProjectTokenBalance({
+      context,
+      version: getVersion(event, "jbMultiTerminal"),
+      projectId: event.args.projectId,
+      token: event.args.token,
+      block: event.block,
+    });
+  } catch (e) {
+    console.error("JBMultiTerminal:MigrateTerminal", e);
   }
 });
 
