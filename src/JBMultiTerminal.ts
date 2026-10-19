@@ -21,7 +21,7 @@ import { handleTrendingPayment } from "./util/trending";
 import { usdPriceForToken, usdRate18ForToken } from "./util/usdPrice";
 import { getVersion, type Version } from "./util/getVersion";
 import { erc20Abi, isAddressEqual, zeroAddress } from "viem";
-import { terminalEventToken } from "./util/terminalEventToken";
+import { TerminalEventTokenError, terminalEventToken } from "./util/terminalEventToken";
 import type { Context } from "ponder:registry";
 
 async function updateProjectPayerStats({
@@ -106,12 +106,16 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const tokenContext = await terminalEventToken({
-      event,
-      context,
-      kind: "addToBalance",
-      match: { projectId, amount: amount + returnedFees },
-    });
+    // Pre-V6 events keep the project's last-set accounting context.
+    const tokenContext =
+      version === 6
+        ? await terminalEventToken({
+            event,
+            context,
+            kind: "addToBalance",
+            projectId,
+          })
+        : null;
 
     // Valued BEFORE the balance update so the USD delta accrues alongside the
     // raw one.
@@ -120,9 +124,9 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       version,
       projectId,
       amount,
-      currency: tokenContext?.currency ?? null,
-      token: tokenContext?.token ?? null,
-      decimals: tokenContext?.decimals ?? null,
+      currency: tokenContext?.currency ?? _project.currency,
+      token: tokenContext?.token ?? _project.token,
+      decimals: tokenContext?.decimals ?? _project.decimals,
       timestamp: event.block.timestamp,
     });
 
@@ -189,6 +193,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       version,
     });
   } catch (e) {
+    if (e instanceof TerminalEventTokenError) throw e;
     console.error("JBMultiTerminal:AddToBalance", e);
   }
 });
@@ -224,21 +229,25 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
     // One 18-dec USD-per-whole-token rate reused for every conversion. The
     // previous 1e18-sized usdPriceForToken probe returned token-decimal-scaled
     // values, so USD figures for non-18-decimal accounting tokens were wrong.
-    const tokenContext = await terminalEventToken({
-      event,
-      context,
-      kind: "payout",
-      match: { projectId: _projectId, amount },
-    });
+    // Pre-V6 events keep the project's last-set accounting context.
+    const tokenContext =
+      version === 6
+        ? await terminalEventToken({
+            event,
+            context,
+            kind: "payout",
+            projectId: _projectId,
+          })
+        : null;
     const usdRate = await usdRate18ForToken({
       context,
       version,
       projectId: _projectId,
-      currency: tokenContext?.currency ?? null,
-      token: tokenContext?.token ?? null,
+      currency: tokenContext?.currency ?? _project.currency,
+      token: tokenContext?.token ?? _project.token,
       timestamp,
     });
-    const scale = BigInt(10) ** BigInt(tokenContext?.decimals ?? 18);
+    const scale = BigInt(10) ** BigInt(tokenContext?.decimals ?? _project.decimals ?? 18);
     const amountUsd = usdRate > 0 ? (amount * usdRate) / scale : BigInt(0);
     const amountPaidOutUsd = usdRate > 0 ? (amountPaidOut * usdRate) / scale : BigInt(0);
     const feeUsd = usdRate > 0 ? (fee * usdRate) / scale : BigInt(0);
@@ -292,6 +301,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       version,
     });
   } catch (e) {
+    if (e instanceof TerminalEventTokenError) throw e;
     console.error("JBMultiTerminal:SendPayouts", e);
   }
 });
@@ -321,12 +331,16 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
     }
 
     // The payout's own record call; a split carries a share of its amount.
-    const tokenContext = await terminalEventToken({
-      event,
-      context,
-      kind: "payout",
-      match: { projectId: _projectId },
-    });
+    // Pre-V6 events keep the project's last-set accounting context.
+    const tokenContext =
+      version === 6
+        ? await terminalEventToken({
+            event,
+            context,
+            kind: "payout",
+            projectId: _projectId,
+          })
+        : null;
 
     // insert event
     const { id } = await context.db.insert(sendPayoutToSplitEvent).values({
@@ -339,9 +353,9 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
         version,
         projectId: _projectId,
         amount,
-        currency: tokenContext?.currency ?? null,
-        token: tokenContext?.token ?? null,
-        decimals: tokenContext?.decimals ?? null,
+        currency: tokenContext?.currency ?? _project.currency,
+        token: tokenContext?.token ?? _project.token,
+        decimals: tokenContext?.decimals ?? _project.decimals,
         timestamp: event.block.timestamp,
       }),
       token: tokenContext?.token,
@@ -381,6 +395,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       });
     }
   } catch (e) {
+    if (e instanceof TerminalEventTokenError) throw e;
     console.error("JBMultiTerminal:SendPayoutToSplit", e);
   }
 });
@@ -414,21 +429,25 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const tokenContext = await terminalEventToken({
-      event,
-      context,
-      kind: "cashOut",
-      match: { projectId: _projectId, holder, cashOutCount },
-    });
+    // Pre-V6 events keep the project's last-set accounting context.
+    const tokenContext =
+      version === 6
+        ? await terminalEventToken({
+            event,
+            context,
+            kind: "cashOut",
+            projectId: _projectId,
+          })
+        : null;
 
     const reclaimAmountUsd = await usdPriceForToken({
       context,
       version,
       projectId: _projectId,
       amount: reclaimAmount,
-      currency: tokenContext?.currency ?? null,
-      token: tokenContext?.token ?? null,
-      decimals: tokenContext?.decimals ?? null,
+      currency: tokenContext?.currency ?? _project.currency,
+      token: tokenContext?.token ?? _project.token,
+      decimals: tokenContext?.decimals ?? _project.decimals,
       timestamp: event.block.timestamp,
     });
 
@@ -484,6 +503,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       version,
     });
   } catch (e) {
+    if (e instanceof TerminalEventTokenError) throw e;
     console.error("JBMultiTerminal:CashOutTokens", e);
   }
 });
@@ -514,21 +534,25 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const tokenContext = await terminalEventToken({
-      event,
-      context,
-      kind: "useAllowance",
-      match: { projectId, amount },
-    });
+    // Pre-V6 events keep the project's last-set accounting context.
+    const tokenContext =
+      version === 6
+        ? await terminalEventToken({
+            event,
+            context,
+            kind: "useAllowance",
+            projectId,
+          })
+        : null;
 
     const amountPaidOutUsd = await usdPriceForToken({
       context,
       version,
       projectId,
       amount: amountPaidOut,
-      currency: tokenContext?.currency ?? null,
-      token: tokenContext?.token ?? null,
-      decimals: tokenContext?.decimals ?? null,
+      currency: tokenContext?.currency ?? _project.currency,
+      token: tokenContext?.token ?? _project.token,
+      decimals: tokenContext?.decimals ?? _project.decimals,
       timestamp: event.block.timestamp,
     });
 
@@ -580,6 +604,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       version,
     });
   } catch (e) {
+    if (e instanceof TerminalEventTokenError) throw e;
     console.error("JBMultiTerminal:UseAllowance", e);
   }
 });
@@ -610,21 +635,25 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       throw new Error("Missing project");
     }
 
-    const tokenContext = await terminalEventToken({
-      event,
-      context,
-      kind: "pay",
-      match: { projectId: _projectId, amount },
-    });
+    // Pre-V6 events keep the project's last-set accounting context.
+    const tokenContext =
+      version === 6
+        ? await terminalEventToken({
+            event,
+            context,
+            kind: "pay",
+            projectId: _projectId,
+          })
+        : null;
 
     const amountUsd = await usdPriceForToken({
       context,
       version,
       projectId: _projectId,
       amount,
-      currency: tokenContext?.currency ?? null,
-      token: tokenContext?.token ?? null,
-      decimals: tokenContext?.decimals ?? null,
+      currency: tokenContext?.currency ?? _project.currency,
+      token: tokenContext?.token ?? _project.token,
+      decimals: tokenContext?.decimals ?? _project.decimals,
       timestamp: event.block.timestamp,
     });
 
@@ -767,6 +796,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     // beneficiary participant/wallet will be handled on token mint
   } catch (error) {
+    if (error instanceof TerminalEventTokenError) throw error;
     console.error("JBMultiTerminal:Pay", {
       chain: context.chain.id,
       tx: event.transaction.hash,

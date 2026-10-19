@@ -2,7 +2,7 @@ import type { Context } from "ponder:registry";
 import { decodeFunctionData, isAddressEqual, parseAbi, type Hex } from "viem";
 import { JBMultiTerminalAbi } from "../../abis/JBMultiTerminalAbi";
 
-// Terminal events (Pay, AddToBalance, CashOutTokens, SendPayouts,
+// V6 terminal events (Pay, AddToBalance, CashOutTokens, SendPayouts,
 // SendPayoutToSplit, UseAllowance) carry no token. A project can accept
 // several, so the project's last-set accounting context says nothing about
 // which one an event moved. The terminal names the token in its record call to
@@ -21,35 +21,36 @@ export type TokenContext = {
   currency: bigint;
 };
 
-// What the event says about its record call. Omitted fields are not matched.
-export type RecordMatch = {
-  projectId: bigint;
-  amount?: bigint;
-  holder?: `0x${string}`;
-  cashOutCount?: bigint;
+export type TraceLog = {
+  address: string;
+  topics: Hex[];
+  data: Hex;
+  // Index into the frame's `calls` the log was emitted before (hex or number).
+  position?: Hex | number;
 };
 
 export type CallFrame = {
+  type?: string;
   from: string;
   to?: string;
   input: Hex;
   error?: string;
   calls?: CallFrame[];
+  logs?: TraceLog[];
 };
 
-// V4/V5 stores take an accounting context where V6 takes a token. Each
-// selector here is checked against the deployed stores' bytecode.
+// Halts indexing instead of storing an event without its token. Handlers
+// rethrow it past their own catch.
+export class TerminalEventTokenError extends Error {}
+
+// V6 JBTerminalStore record calls; each names the token.
 const storeAbi = parseAbi([
   "struct JBTokenAmount { address token; uint8 decimals; uint32 currency; uint256 value; }",
-  "struct JBAccountingContext { address token; uint8 decimals; uint32 currency; }",
   "function recordPaymentFrom(address payer, JBTokenAmount amount, uint256 projectId, address beneficiary, bytes metadata)",
   "function recordAddedBalanceFor(uint256 projectId, address token, uint256 amount)",
   "function recordCashOutFor(address holder, uint256 projectId, uint256 cashOutCount, address tokenToReclaim, bool beneficiaryIsFeeless, bytes metadata)",
-  "function recordCashOutFor(address holder, uint256 projectId, uint256 cashOutCount, JBAccountingContext accountingContext, JBAccountingContext[] balanceAccountingContexts, bytes metadata)",
   "function recordPayoutFor(uint256 projectId, address token, uint256 amount, uint256 currency)",
-  "function recordPayoutFor(uint256 projectId, JBAccountingContext accountingContext, uint256 amount, uint256 currency)",
   "function recordUsedAllowanceOf(uint256 projectId, address token, uint256 amount, uint256 currency)",
-  "function recordUsedAllowanceOf(uint256 projectId, JBAccountingContext accountingContext, uint256 amount, uint256 currency)",
 ]);
 
 const functionForKind = {
@@ -60,16 +61,11 @@ const functionForKind = {
   useAllowance: "recordUsedAllowanceOf",
 } as const;
 
-type Record_ = {
-  token: `0x${string}`;
-  projectId: bigint;
-  amount?: bigint;
-  holder?: `0x${string}`;
-  cashOutCount?: bigint;
-};
+// JBMultiTerminal emits AddToBalance and then records the balance in the same
+// frame; every other kind records first and emits after.
+const emitsBeforeRecord = (kind: TerminalEventKind) => kind === "addToBalance";
 
-const tokenOf = (x: `0x${string}` | { token: `0x${string}` }) =>
-  typeof x === "string" ? x : x.token;
+type Record_ = { token: `0x${string}`; projectId: bigint };
 
 function decodeRecord(kind: TerminalEventKind, input: Hex): Record_ | null {
   let decoded;
@@ -83,121 +79,141 @@ function decodeRecord(kind: TerminalEventKind, input: Hex): Record_ | null {
   const a = decoded.args as readonly any[];
   switch (decoded.functionName) {
     case "recordPaymentFrom":
-      return { token: a[1].token, amount: a[1].value, projectId: a[2] };
-    case "recordAddedBalanceFor":
-      return { projectId: a[0], token: a[1], amount: a[2] };
+      return { token: a[1].token, projectId: a[2] };
     case "recordCashOutFor":
-      return { holder: a[0], projectId: a[1], cashOutCount: a[2], token: tokenOf(a[3]) };
+      return { token: a[3], projectId: a[1] };
     default:
-      return { projectId: a[0], token: tokenOf(a[1]), amount: a[2] };
+      return { token: a[1], projectId: a[0] };
   }
 }
 
-function matches(record: Record_, match: RecordMatch) {
-  if (record.projectId !== match.projectId) return false;
-  if (match.amount !== undefined && record.amount !== match.amount) return false;
-  if (match.cashOutCount !== undefined && record.cashOutCount !== match.cashOutCount) return false;
-  if (match.holder && (!record.holder || !isAddressEqual(record.holder, match.holder))) return false;
-  return true;
-}
+const sameLog = (a: { address: string; topics: readonly Hex[]; data: Hex }, b: TargetLog) =>
+  isAddressEqual(a.address as `0x${string}`, b.address) &&
+  a.data.toLowerCase() === b.data.toLowerCase() &&
+  a.topics.length === b.topics.length &&
+  a.topics.every((t, i) => t.toLowerCase() === b.topics[i]!.toLowerCase());
+
+export type TargetLog = { address: `0x${string}`; topics: readonly Hex[]; data: Hex };
 
 /**
- * The token the terminal recorded for an event, from the transaction's
- * callTracer trace. Only successful calls from `terminal` count. Calls must
- * match every field in `match`; when none do, calls matching the project alone
- * are used. Null unless every candidate names the same token.
+ * For each copy of `log` in a callTracer trace (withLog), in emission order:
+ * the token of the `kind` record call for `projectId` that the terminal made
+ * for it, or null if there is none. For record-then-emit kinds that is the
+ * latest such call before the log on its call path; for AddToBalance it is the
+ * next such call after the log in the same frame. Reverted frames are skipped,
+ * as their logs are not in the receipt. A delegatecall runs in the caller's
+ * context, so its records carry back out.
  */
-export function tokenFromTrace({
+export function tokensForLog({
   trace,
-  terminal,
   kind,
-  match,
+  projectId,
+  log,
 }: {
   trace: CallFrame;
-  terminal: `0x${string}`;
   kind: TerminalEventKind;
-  match: RecordMatch;
-}): `0x${string}` | null {
-  const records: Record_[] = [];
-  const walk = (frame: CallFrame) => {
-    if (frame.error) return; // reverted along with everything below it
-    if (isAddressEqual(frame.from as `0x${string}`, terminal)) {
-      const record = decodeRecord(kind, frame.input);
-      if (record) records.push(record);
+  projectId: bigint;
+  log: TargetLog;
+}): (`0x${string}` | null)[] {
+  const found: { token: `0x${string}` | null }[] = [];
+  const walk = (frame: CallFrame, recorded: `0x${string}` | null) => {
+    const calls = frame.calls ?? [];
+    const logs = frame.logs ?? [];
+    const waiting: { token: `0x${string}` | null }[] = [];
+    for (let i = 0; i <= calls.length; i++) {
+      for (const l of logs) {
+        if (l.position === undefined) {
+          throw new TerminalEventTokenError("trace logs carry no position");
+        }
+        if (Number(l.position) !== i || !sameLog(l, log)) continue;
+        const entry = { token: emitsBeforeRecord(kind) ? null : recorded };
+        found.push(entry);
+        if (emitsBeforeRecord(kind)) waiting.push(entry);
+      }
+      const call = calls[i];
+      if (!call || call.error) continue;
+      const record = isAddressEqual(call.from as `0x${string}`, log.address)
+        ? decodeRecord(kind, call.input)
+        : null;
+      if (record) {
+        if (record.projectId !== projectId) continue;
+        recorded = record.token;
+        for (const entry of waiting.splice(0)) entry.token = record.token;
+      } else {
+        const inner = walk(call, recorded);
+        if (call.type === "DELEGATECALL") recorded = inner;
+      }
     }
-    frame.calls?.forEach(walk);
+    return recorded;
   };
-  walk(trace);
-
-  const exact = records.filter((r) => matches(r, match));
-  const candidates = exact.length
-    ? exact
-    : records.filter((r) => r.projectId === match.projectId);
-
-  const tokens = new Set(candidates.map((r) => r.token.toLowerCase()));
-  return tokens.size === 1 ? candidates[0]!.token : null;
+  if (!trace.error) walk(trace, null);
+  return found.map((f) => f.token);
 }
 
 /**
- * The accounting context of the token a terminal event moved, or null when it
- * cannot be determined. Null must never be priced: callers value it at 0 USD.
+ * The accounting context of the token a terminal event moved. Throws
+ * TerminalEventTokenError when it cannot be determined, so an event is never
+ * stored without its token.
  *
  * A project with one accounting context on the terminal can only have moved
- * that token. Otherwise the transaction is traced (debug_traceTransaction,
- * which Ponder caches), so the RPC must support the debug namespace.
+ * that token. Otherwise the transaction is traced (debug_traceTransaction with
+ * callTracer withLog, which Ponder caches) and the event's log is paired with
+ * the record call before it.
  */
 export async function terminalEventToken({
   event,
   context,
   kind,
-  match,
+  projectId,
 }: {
-  event: { log: { address: `0x${string}` }; transaction: { hash: Hex } };
+  event: {
+    log: { address: `0x${string}`; topics: readonly Hex[]; data: Hex; logIndex: number };
+    transaction: { hash: Hex };
+  };
   context: Context;
   kind: TerminalEventKind;
-  match: RecordMatch;
-}): Promise<TokenContext | null> {
+  projectId: bigint;
+}): Promise<TokenContext> {
   const terminal = event.log.address;
-  const contexts = await context.client.readContract({
-    abi: JBMultiTerminalAbi,
-    address: terminal,
-    functionName: "accountingContextsOf",
-    args: [match.projectId],
-  });
-
-  const toContext = (c: (typeof contexts)[number]): TokenContext => ({
-    token: c.token,
-    decimals: c.decimals,
-    currency: BigInt(c.currency),
-  });
-
-  if (contexts.length === 1) return toContext(contexts[0]!);
-
-  // A failed trace leaves the token unknown rather than failing the handler,
-  // which would drop the event itself.
-  let token: `0x${string}` | null = null;
+  const where = `chain ${context.chain.id} tx ${event.transaction.hash} log ${event.log.logIndex} (${kind}, project ${projectId})`;
   try {
+    const contexts = await context.client.readContract({
+      abi: JBMultiTerminalAbi,
+      address: terminal,
+      functionName: "accountingContextsOf",
+      args: [projectId],
+    });
+    const toContext = (c: (typeof contexts)[number]): TokenContext => ({
+      token: c.token,
+      decimals: c.decimals,
+      currency: BigInt(c.currency),
+    });
+
+    if (contexts.length === 1) return toContext(contexts[0]!);
+
     const trace = (await context.client.request({
       method: "debug_traceTransaction",
-      params: [event.transaction.hash, { tracer: "callTracer" }],
+      params: [event.transaction.hash, { tracer: "callTracer", tracerConfig: { withLog: true } }],
     } as any)) as CallFrame;
-    token = tokenFromTrace({ trace, terminal, kind, match });
+    const tokens = tokensForLog({ trace, kind, projectId, log: event.log });
+
+    let token = tokens[0];
+    if (tokens.length > 1) {
+      // Identical logs: pick this one by its order among them in the receipt.
+      const receipt = await context.client.getTransactionReceipt({ hash: event.transaction.hash });
+      const same = receipt.logs.filter((l) => sameLog(l, event.log));
+      if (same.length !== tokens.length) {
+        throw new TerminalEventTokenError(`trace has ${tokens.length} copies of the log, receipt ${same.length}`);
+      }
+      token = tokens[same.findIndex((l) => l.logIndex === event.log.logIndex)];
+    }
+
+    const found = token && contexts.find((c) => isAddressEqual(c.token, token));
+    if (!found) {
+      throw new TerminalEventTokenError(`no accounting context for recorded token ${token ?? "none"}`);
+    }
+    return toContext(found);
   } catch (e) {
-    console.error("terminalEventToken: debug_traceTransaction failed", e);
+    throw new TerminalEventTokenError(`terminal event token unresolved: ${where}`, { cause: e });
   }
-
-  const found = token && contexts.find((c) => isAddressEqual(c.token, token));
-
-  if (!found) {
-    console.warn("terminalEventToken: unresolved token", {
-      chain: context.chain.id,
-      tx: event.transaction.hash,
-      kind,
-      projectId: match.projectId,
-      token,
-    });
-    return null;
-  }
-
-  return toContext(found);
 }
