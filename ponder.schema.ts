@@ -38,6 +38,13 @@ export const suckerGroupId = (t: PGCB) => ({
   suckerGroupId: t.text().notNull(),
 });
 export const version = (t: PGCB) => ({ version: t.integer().notNull() });
+// The token a terminal event moved and its decimals. Null when the indexer
+// could not tell which of the project's accounting tokens it was; such an
+// event's USD values are 0.
+export const eventToken = (t: PGCB) => ({
+  token: t.hex(),
+  decimals: t.integer(),
+});
 
 export const eventParams = (t: PGCB) => ({
   ...uniqueId(t),
@@ -287,6 +294,7 @@ export const activityEventRelations = relations(activityEvent, ({ one }) => ({
 
 export const addToBalanceEvent = onchainTable("add_to_balance_event", (t) => ({
   ...eventParams(t),
+  ...eventToken(t),
   ...projectId(t),
   ...suckerGroupId(t),
   amount: t.bigint().notNull(),
@@ -655,6 +663,7 @@ export const cashOutTokensEvent = onchainTable(
   "cash_out_tokens_event",
   (t) => ({
     ...eventParams(t),
+    ...eventToken(t),
     ...projectId(t),
     ...suckerGroupId(t),
     cashOutCount: t.bigint().notNull(),
@@ -1169,6 +1178,7 @@ export const participantSnapshot = onchainTable(
 
 export const payEvent = onchainTable("pay_event", (t) => ({
   ...eventParams(t),
+  ...eventToken(t),
   ...projectId(t),
   ...suckerGroupId(t),
   ...version(t),
@@ -1625,6 +1635,7 @@ export const reallocateLoanEventRelations = relations(
 
 export const sendPayoutsEvent = onchainTable("send_payouts_event", (t) => ({
   ...eventParams(t),
+  ...eventToken(t),
   ...projectId(t),
   ...suckerGroupId(t),
   amount: t.bigint().notNull(),
@@ -1656,6 +1667,7 @@ export const sendPayoutToSplitEvent = onchainTable(
   "send_payout_to_split_event",
   (t) => ({
     ...eventParams(t),
+    ...eventToken(t),
     ...projectId(t),
     ...suckerGroupId(t),
     amount: t.bigint().notNull(),
@@ -2060,6 +2072,7 @@ export const bridgeClaimEventRelations = relations(
 
 export const useAllowanceEvent = onchainTable("use_allowance_event", (t) => ({
   ...eventParams(t),
+  ...eventToken(t),
   ...projectId(t),
   ...suckerGroupId(t),
   ...version(t),
