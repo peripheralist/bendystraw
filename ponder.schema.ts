@@ -38,11 +38,13 @@ export const suckerGroupId = (t: PGCB) => ({
   suckerGroupId: t.text().notNull(),
 });
 export const version = (t: PGCB) => ({ version: t.integer().notNull() });
-// The token a V6 terminal event moved and its decimals. Null before V6, and
-// for a V6 event whose token could not be resolved (valued at 0 USD).
+// The token a V6 terminal event moved, its decimals and symbol. Null before V6,
+// and for a V6 event whose token could not be resolved (valued at 0 USD). The
+// symbol is also null for a token that does not answer `symbol()`.
 export const eventToken = (t: PGCB) => ({
   token: t.hex(),
   decimals: t.integer(),
+  tokenSymbol: t.text(),
 });
 
 export const eventParams = (t: PGCB) => ({

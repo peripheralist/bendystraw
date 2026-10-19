@@ -20,8 +20,8 @@ import { setParticipantSnapshot } from "./util/participantSnapshot";
 import { handleTrendingPayment } from "./util/trending";
 import { usdPriceForToken, usdRate18ForToken } from "./util/usdPrice";
 import { getVersion, type Version } from "./util/getVersion";
-import { erc20Abi, isAddressEqual, zeroAddress } from "viem";
 import { terminalEventToken } from "./util/terminalEventToken";
+import { tokenSymbol as tokenSymbolOf } from "./util/tokenSymbol";
 import type { Context } from "ponder:registry";
 
 async function updateProjectPayerStats({
@@ -181,6 +181,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       amountUsd,
       token: tokenContext?.token,
       decimals: tokenContext?.decimals,
+      tokenSymbol: tokenContext?.symbol,
       memo,
       metadata,
       returnedFees,
@@ -286,6 +287,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       amountUsd,
       token: tokenContext?.token,
       decimals: tokenContext?.decimals,
+      tokenSymbol: tokenContext?.symbol,
       amountPaidOut,
       amountPaidOutUsd,
       netLeftoverPayoutAmount,
@@ -364,6 +366,7 @@ ponder.on("JBMultiTerminal:SendPayoutToSplit", async ({ event, context }) => {
       }),
       token: tokenContext?.token,
       decimals: tokenContext?.decimals,
+      tokenSymbol: tokenContext?.symbol,
       netAmount,
       rulesetId: Number(rulesetId),
       group,
@@ -493,6 +496,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       reclaimAmountUsd,
       token: tokenContext?.token,
       decimals: tokenContext?.decimals,
+      tokenSymbol: tokenContext?.symbol,
       metadata,
       cashOutTaxRate,
       rulesetCycleNumber,
@@ -592,6 +596,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       amount,
       token: tokenContext?.token,
       decimals: tokenContext?.decimals,
+      tokenSymbol: tokenContext?.symbol,
       amountPaidOut,
       netAmountPaidOut,
       beneficiary,
@@ -787,6 +792,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       amountUsd,
       token: tokenContext?.token,
       decimals: tokenContext?.decimals,
+      tokenSymbol: tokenContext?.symbol,
       beneficiary,
       memo,
       newlyIssuedTokenCount,
@@ -928,20 +934,7 @@ ponder.on(
 
       const token = event.args.context.token;
 
-      let tokenSymbol = "ETH";
-
-      if (
-        !isAddressEqual(token, zeroAddress) &&
-        !isAddressEqual(token, "0x000000000000000000000000000000000000eeee")
-      ) {
-        try {
-          tokenSymbol = await context.client.readContract({
-            abi: erc20Abi,
-            address: token,
-            functionName: "symbol",
-          });
-        } catch (e) {}
-      }
+      const tokenSymbol = (await tokenSymbolOf(context, token)) ?? "ETH";
 
       await context.db
         .update(project, {

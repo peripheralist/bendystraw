@@ -120,7 +120,7 @@ const contexts12 = [
   { token: USDC, decimals: 6, currency: 906423112 },
 ];
 const fakeContext = (
-  contexts: typeof contexts12,
+  contexts: { token: `0x${string}`; decimals: number; currency: number }[],
   trace: CallFrame | Error,
   receiptLogs: { address: string; topics: Hex[]; data: Hex; logIndex: number }[] = []
 ) => {
@@ -130,7 +130,12 @@ const fakeContext = (
     context: {
       chain: { id: 1 },
       client: {
-        readContract: async () => (calls.push("readContract"), contexts),
+        readContract: async ({ functionName, address }: { functionName: string; address: string }) => {
+          if (functionName !== "symbol") return calls.push("readContract"), contexts;
+          calls.push(`symbol ${address}`);
+          if (address === USDC) return "USDC";
+          throw new Error("execution reverted");
+        },
         request: async () => {
           calls.push("request");
           if (trace instanceof Error) throw trace;
@@ -150,17 +155,34 @@ const event = (l: { topics: Hex[]; data: Hex }, logIndex = 132) => ({
   const { context, calls } = fakeContext(contexts12, trace12);
   assert.deepEqual(
     await terminalEventToken({ event: event(payLog12), context, kind: "pay", projectId: 12n }),
-    { token: ETH, decimals: 18, currency: 61166n }
+    { token: ETH, decimals: 18, currency: 61166n, symbol: "ETH" }
   );
+  // The native token's symbol needs no read.
   assert.deepEqual(calls, ["readContract", "request"]);
 }
 {
   const { context, calls } = fakeContext([contexts12[1]!], trace12);
   assert.deepEqual(
     await terminalEventToken({ event: event(payLog12), context, kind: "pay", projectId: 12n }),
-    { token: USDC, decimals: 6, currency: 906423112n }
+    { token: USDC, decimals: 6, currency: 906423112n, symbol: "USDC" }
   );
+  assert.deepEqual(calls, ["readContract", `symbol ${USDC}`]);
+}
+{
+  // A symbol is read once per chain and token, then cached.
+  const { context, calls } = fakeContext([contexts12[1]!], trace12);
+  const again = await terminalEventToken({ event: event(payLog12), context, kind: "pay", projectId: 12n });
+  assert.equal(again?.symbol, "USDC");
   assert.deepEqual(calls, ["readContract"]);
+}
+{
+  // A token that does not answer symbol() keeps its token, with a null symbol.
+  const odd = "0x00000000000000000000000000000000000000bb" as const;
+  const { context } = fakeContext([{ token: odd, decimals: 18, currency: 1 }], trace12);
+  assert.deepEqual(
+    await terminalEventToken({ event: event(payLog12), context, kind: "pay", projectId: 12n }),
+    { token: odd, decimals: 18, currency: 1n, symbol: null }
+  );
 }
 {
   // Identical logs: the receipt order picks this one.
