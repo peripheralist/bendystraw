@@ -1,8 +1,10 @@
 import { Context } from "ponder:registry";
 import { ponder } from "ponder:registry";
+import { and, desc, eq, lt } from "ponder";
 import {
   buybackPool,
   buybackPoolEvent,
+  payEvent,
   project,
   swapEvent,
 } from "ponder:schema";
@@ -21,8 +23,7 @@ import {
 } from "./constants/uniswapV4";
 import { insertActivityEvent } from "./util/activityEvent";
 import { getEventParams } from "./util/getEventParams";
-import { getLatestPayEvent } from "./util/getLatestPayEvent";
-import { currencyOfToken, usdPerAccountingTokenAtBlock } from "./util/usdPrice";
+import { acceptedTokenCurrency, usdPerAccountingTokenAtBlock } from "./util/usdPrice";
 
 // JBBuybackHook is a V6-only singleton (events carry `projectId`), so version
 // is always 6 for everything indexed here.
@@ -50,10 +51,18 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
 
     const _project = await findProject(context, projectId);
     // The leftover is in the paid token. The hook runs after the terminal
-    // emits Pay, so this transaction's pay is the latest one indexed.
-    const pay = await getLatestPayEvent({ context });
-    const paidToken =
-      pay?.txHash === event.transaction.hash && pay.projectId === projectId ? pay.token : null;
+    // emits Pay, so the pay is this transaction's last one before the Mint.
+    const [pay] = await context.db.sql.query.payEvent.findMany({
+      where: and(
+        eq(payEvent.chainId, context.chain.id),
+        eq(payEvent.txHash, event.transaction.hash),
+        eq(payEvent.projectId, projectId),
+        eq(payEvent.version, VERSION),
+        lt(payEvent.logIndex, event.log.logIndex)
+      ),
+      orderBy: [desc(payEvent.logIndex)],
+      limit: 1,
+    });
 
     const { id } = await context.db.insert(swapEvent).values({
       ...getEventParams({ event, context }),
@@ -70,7 +79,9 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
         context,
         version: VERSION,
         projectId,
-        currency: paidToken ? currencyOfToken(paidToken) : null,
+        currency: pay?.token
+          ? await acceptedTokenCurrency({ context, projectId, token: pay.token })
+          : null,
       }),
     });
 

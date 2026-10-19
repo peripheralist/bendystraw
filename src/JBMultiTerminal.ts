@@ -917,6 +917,7 @@ ponder.on("JBMultiTerminal:HookAfterRecordPay", async ({ event, context }) => {
           ? {
               token: paid.token,
               decimals: paid.decimals,
+              currency: BigInt(paid.currency),
               symbol: await tokenSymbolOf(context, paid.token),
             }
           : null,

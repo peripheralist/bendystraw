@@ -14,7 +14,6 @@ import {
   type CallFrame,
   type TraceLog,
 } from "../src/util/terminalEventToken";
-import { currencyOfToken } from "../src/util/usdPrice";
 
 const terminal = "0x130f5dd2bd8805443cf41755253d778a75a67f53" as const;
 const store = "0x7497ae014a60561925b51c0a3b4ade7460b9927c";
@@ -172,11 +171,12 @@ const event = (l: { topics: Hex[]; data: Hex }, logIndex = 132) => ({
   assert.deepEqual(calls, ["readContract", `symbol ${USDC}`]);
 }
 {
-  // A symbol is read once per chain and token, then cached.
+  // No process-wide cache: every event reads its symbol at its own block, so a
+  // re-index stores the same values.
   const { context, calls } = fakeContext([contexts12[1]!], trace12);
   const again = await terminalEventToken({ event: event(payLog12), context, kind: "pay", projectId: 12n });
   assert.equal(again?.symbol, "USDC");
-  assert.deepEqual(calls, ["readContract"]);
+  assert.deepEqual(calls, ["readContract", `symbol ${USDC}`]);
 }
 {
   // A token that does not answer symbol() keeps its token, with a null symbol.
@@ -202,7 +202,7 @@ const event = (l: { topics: Hex[]; data: Hex }, logIndex = 132) => ({
     projectId: 12n,
   });
   assert.equal(second?.token, USDC);
-  assert.deepEqual(calls, ["readContract", "request", "receipt"]);
+  assert.deepEqual(calls, ["readContract", "request", "receipt", `symbol ${USDC}`]);
 }
 // No record for the log, or an RPC without the debug namespace: null, which
 // handlers store as no token at 0 USD.
@@ -226,11 +226,6 @@ try {
   console.error = quiet;
 }
 
-// A token's JB currency is the low 32 bits of its address; a pool's zero address is native.
-assert.equal(currencyOfToken(ETH), 61166n);
-assert.equal(currencyOfToken("0x0000000000000000000000000000000000000000"), 61166n);
-assert.equal(currencyOfToken(USDC), 906423112n);
-
 // projectTokenBalance imports ponder's virtual schema module, so it runs with a stand-in.
 const tokenBalanceModule: { updateProjectTokenBalance?: (input: any) => Promise<void> } = {};
 runInNewContext(
@@ -244,9 +239,9 @@ runInNewContext(
       if (name === "ponder:schema") {
         return { projectTokenBalance: "projectTokenBalance", projectTokenBalanceMoment: "projectTokenBalanceMoment" };
       }
-      // Stand-in rate: $1 per whole token.
+      // Stand-in rate: the context's currency in whole dollars, so the test sees which currency was used.
       if (name === "./usdPrice") {
-        return { currencyOfToken, usdPerAccountingTokenAtBlock: async () => 10n ** 18n };
+        return { usdPerAccountingTokenAtBlock: async ({ currency }: { currency: bigint }) => currency * 10n ** 18n };
       }
       throw new Error(`Unexpected import ${name}`);
     },
@@ -274,10 +269,11 @@ const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
     }),
   };
   const ctx = { chain: { id: 1 }, db } as any;
-  const eth = { token: ETH, decimals: 18, symbol: "ETH" };
-  const usdc = { token: USDC, decimals: 6, symbol: "USDC" };
+  const eth = { token: ETH, decimals: 18, currency: 61166n, symbol: "ETH" };
+  // USDC accounted as USD (currency 2), not its address-derived currency.
+  const usdc = { token: USDC, decimals: 6, currency: 2n, symbol: "USDC" };
   const at = (n: number) => ({ number: BigInt(n), timestamp: BigInt(n * 12) });
-  const move = (version: number, tokenContext: { token: `0x${string}`; decimals: number; symbol: string } | null, balanceDelta: bigint, block: number, volumeDelta?: bigint) =>
+  const move = (version: number, tokenContext: { token: `0x${string}`; decimals: number; currency: bigint; symbol: string } | null, balanceDelta: bigint, block: number, volumeDelta?: bigint) =>
     updateProjectTokenBalance({ context: ctx, version, projectId: 12, tokenContext, balanceDelta, volumeDelta, block: at(block) });
   await move(6, eth, 100n, 1, 100n);
   await move(6, usdc, 5n, 1, 5n);
@@ -293,7 +289,8 @@ const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
     [`1:12:6:${USDC}@1`]: [5n, 5n],
     [`1:12:6:${ETH}@2`]: [50n, 100n],
   });
-  assert.equal(moments.get(`1:12:6:${USDC}@1`).tokenUsdRate, 10n ** 18n);
+  // The moment's rate uses the event's accounting currency.
+  assert.equal(moments.get(`1:12:6:${USDC}@1`).tokenUsdRate, 2n * 10n ** 18n);
 }
 
 console.log("terminal event token checks passed");
