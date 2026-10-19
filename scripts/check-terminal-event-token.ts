@@ -4,12 +4,12 @@
 // Run: node --import tsx scripts/check-terminal-event-token.ts
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { JBMultiTerminalAbi } from "../abis/JBMultiTerminalAbi";
+import { JBBuybackHookV6Abi } from "../abis/JBBuybackHookV6Abi";
 import { ADDRESS } from "../src/constants/address";
 import { buybackMintForwardedAmount } from "../src/util/buybackMintAmount";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
-import { encodeAbiParameters, encodeEventTopics, encodeFunctionData, getAbiItem, parseAbi, toEventSelector, type Hex } from "viem";
+import { encodeFunctionData, parseAbi, toEventSelector, type Hex } from "viem";
 import {
   TerminalEventTokenError,
   terminalEventToken,
@@ -341,42 +341,42 @@ const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance
 }
 
 {
-  // A buyback Mint takes the amount forwarded to it from the first matching
-  // HookAfterRecordPay after it: a nested payment's comes before the Mint.
+  // A buyback Mint takes the forwarded amount from the afterPayRecordedWith
+  // call that emitted it. Nested payments, before or after the Mint (a custom
+  // token's mint callback paying the project again), cannot stand in.
   const hook = "0x00000000000000000000000000000000000000cc" as const;
-  const other = "0x00000000000000000000000000000000000000dd" as const;
-  const hookAfter = (logIndex: number, hookAddress: `0x${string}`, projectId: bigint, token: `0x${string}`, currency: number) => {
-    const abiItem = getAbiItem({ abi: JBMultiTerminalAbi, name: "HookAfterRecordPay" });
-    const amount = (t: `0x${string}`, c: number) => ({ token: t, decimals: 18, currency: c, value: 1n });
-    const args = {
-      hook: hookAddress,
-      context: {
-        payer: holder, projectId, rulesetId: 1n,
+  const amount = (token: `0x${string}`, currency: number) => ({ token, decimals: 18, currency, value: 1n });
+  const hookCall = (token: `0x${string}`, currency: number, calls: CallFrame[], logs: TraceLog[], extra: Partial<CallFrame> = {}): CallFrame => ({
+    from: terminal,
+    to: hook,
+    type: "CALL",
+    input: encodeFunctionData({
+      abi: JBBuybackHookV6Abi,
+      functionName: "afterPayRecordedWith",
+      args: [{
+        payer: holder, projectId: 12n, rulesetId: 1n,
         amount: amount(token, currency), forwardedAmount: amount(token, currency),
         weight: 1n, newlyIssuedTokenCount: 0n, beneficiary: holder, hookMetadata: "0x", payerMetadata: "0x",
-      },
-      specificationAmount: 1n,
-      caller: holder,
-    };
-    const indexed = abiItem.inputs.filter((i) => i.indexed);
-    const plain = abiItem.inputs.filter((i) => !i.indexed);
-    return {
-      address: ADDRESS.jbMultiTerminal6,
-      topics: encodeEventTopics({ abi: [abiItem], eventName: "HookAfterRecordPay", args: Object.fromEntries(indexed.map((i) => [i.name, (args as any)[i.name]])) as any }),
-      data: encodeAbiParameters(plain, plain.map((i) => (args as any)[i.name])),
-      logIndex,
-      blockHash: "0x00", blockNumber: 1n, transactionHash: "0x00", transactionIndex: 0, removed: false,
-    } as any;
-  };
-  const logs = [
-    hookAfter(4, hook, 12n, USDC, 2), // a nested payment's, before the Mint
-    hookAfter(7, other, 12n, USDC, 2), // another hook
-    hookAfter(8, hook, 13n, USDC, 2), // another project
-    hookAfter(9, hook, 12n, ETH, 61166), // the enclosing call
-  ];
-  const forwarded = buybackMintForwardedAmount({ logs, mintLogIndex: 6, hook, projectId: 12n });
-  assert.equal(forwarded?.currency, 61166);
-  assert.equal(buybackMintForwardedAmount({ logs: logs.slice(0, 3), mintLogIndex: 6, hook, projectId: 12n }), undefined);
+      }] as any,
+    }),
+    calls,
+    logs,
+    ...extra,
+  });
+  const mintLog = (data: Hex): TraceLog => ({ address: hook, topics: ["0x02"], data, position: "0x0" });
+  const mint = { address: hook, topics: ["0x02"] as Hex[], data: "0xaa" as Hex };
+  const nested = (token: `0x${string}`, currency: number, data: Hex) =>
+    ({ from: hook, to: terminal, type: "CALL", input: "0x", calls: [hookCall(token, currency, [], [mintLog(data)])] }) as CallFrame;
+  // ETH call: a nested USDC pay before its Mint, its Mint, then a nested USDC pay after it.
+  const outer = frame([hookCall(ETH, 61166, [nested(USDC, 2, "0xbb"), nested(USDC, 2, "0xcc")], [mintLog("0xaa")])], []);
+  assert.equal(buybackMintForwardedAmount({ trace: outer, hook, mint })?.currency, 61166);
+  // The Mint emitted through a delegatecall (a proxied hook) still belongs to its call.
+  const proxied = frame([hookCall(ETH, 61166, [{ from: hook, to: holder, type: "DELEGATECALL", input: "0x", logs: [mintLog("0xaa")] }], [])], []);
+  assert.equal(buybackMintForwardedAmount({ trace: proxied, hook, mint })?.currency, 61166);
+  // A reverted call does not count; two calls holding an identical Mint are ambiguous.
+  assert.equal(buybackMintForwardedAmount({ trace: frame([hookCall(ETH, 61166, [], [mintLog("0xaa")], { error: "reverted" })], []), hook, mint }), null);
+  const twice = frame([hookCall(ETH, 61166, [], [mintLog("0xaa")]), hookCall(USDC, 2, [], [mintLog("0xaa")])], []);
+  assert.equal(buybackMintForwardedAmount({ trace: twice, hook, mint }), null);
 }
 
 console.log("terminal event token checks passed");

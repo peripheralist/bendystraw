@@ -89,7 +89,7 @@ function decodeRecord(kind: TerminalEventKind, input: Hex): Record_ | null {
   }
 }
 
-const sameLog = (a: { address: string; topics: readonly Hex[]; data: Hex }, b: TargetLog) =>
+export const sameLog = (a: { address: string; topics: readonly Hex[]; data: Hex }, b: TargetLog) =>
   isAddressEqual(a.address as `0x${string}`, b.address) &&
   a.data.toLowerCase() === b.data.toLowerCase() &&
   a.topics.length === b.topics.length &&
