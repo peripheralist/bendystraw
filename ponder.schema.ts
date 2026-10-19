@@ -1284,6 +1284,40 @@ export const projectTokenBalance = onchainTable(
   })
 );
 
+// A projectTokenBalance row after each block that moved it: one token's
+// balance and volume over time, with the USD rate in force at that block.
+export const projectTokenBalanceMoment = onchainTable(
+  "project_token_balance_moment",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...version(t),
+    token: t.hex().notNull(),
+    decimals: t.integer().notNull(),
+    block: t.integer().notNull(),
+    timestamp: t.integer().notNull(),
+    balance: t.bigint().notNull(),
+    volume: t.bigint().notNull(),
+    // USD per ONE whole token at this block, 18-dec. Null where no feed bridges the pair.
+    tokenUsdRate: t.bigint(),
+  }),
+  (t) => ({
+    projectIdx: index().on(t.projectId),
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.version, t.token, t.block] }),
+  })
+);
+
+export const projectTokenBalanceMomentRelations = relations(projectTokenBalanceMoment, ({ one }) => ({
+  project: one(project, {
+    fields: [
+      projectTokenBalanceMoment.projectId,
+      projectTokenBalanceMoment.chainId,
+      projectTokenBalanceMoment.version,
+    ],
+    references: [project.projectId, project.chainId, project.version],
+  }),
+}));
+
 export const projectTokenBalanceRelations = relations(projectTokenBalance, ({ one }) => ({
   project: one(project, {
     fields: [projectTokenBalance.projectId, projectTokenBalance.chainId, projectTokenBalance.version],
@@ -1455,6 +1489,7 @@ export const projectRelations = relations(project, ({ many, one }) => ({
   projectMoments: many(projectMoment),
   projectPayers: many(projectPayer),
   projectTokenBalances: many(projectTokenBalance),
+  projectTokenBalanceMoments: many(projectTokenBalanceMoment),
   permissionHolders: many(permissionHolder),
 
   // events

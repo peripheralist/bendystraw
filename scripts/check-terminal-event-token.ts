@@ -241,7 +241,13 @@ runInNewContext(
     exports: tokenBalanceModule,
     BigInt,
     require(name: string) {
-      if (name === "ponder:schema") return { projectTokenBalance: "projectTokenBalance" };
+      if (name === "ponder:schema") {
+        return { projectTokenBalance: "projectTokenBalance", projectTokenBalanceMoment: "projectTokenBalanceMoment" };
+      }
+      // Stand-in rate: $1 per whole token.
+      if (name === "./usdPrice") {
+        return { currencyOfToken, usdPerAccountingTokenAtBlock: async () => 10n ** 18n };
+      }
       throw new Error(`Unexpected import ${name}`);
     },
   }
@@ -249,15 +255,20 @@ runInNewContext(
 const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
 
 {
-  // Per-token balances: one row per token, deltas accrue; pre-V6 and unresolved events write nothing.
-  const rows = new Map<string, { balance: bigint; volume: bigint; tokenSymbol: string | null }>();
+  // Per-token balances: one row per token, deltas accrue, and each block keeps
+  // its last balance as a moment. Pre-V6 and unresolved events write nothing.
+  const rows = new Map<string, any>();
+  const moments = new Map<string, any>();
   const db = {
-    insert: () => ({
+    insert: (table: string) => ({
       values: (v: any) => ({
-        onConflictDoUpdate: async (f: (row: any) => any) => {
-          const key = `${v.chainId}:${v.projectId}:${v.version}:${v.token}`;
-          const row = rows.get(key);
-          rows.set(key, row ? { ...row, ...f(row) } : { balance: v.balance, volume: v.volume, tokenSymbol: v.tokenSymbol });
+        onConflictDoUpdate: async (update: any) => {
+          const target = table === "projectTokenBalance" ? rows : moments;
+          const key = `${v.chainId}:${v.projectId}:${v.version}:${v.token}${v.block === undefined ? "" : `@${v.block}`}`;
+          const row = target.get(key);
+          const next = row ? { ...row, ...(typeof update === "function" ? update(row) : update) } : v;
+          target.set(key, next);
+          return next;
         },
       }),
     }),
@@ -265,15 +276,24 @@ const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
   const ctx = { chain: { id: 1 }, db } as any;
   const eth = { token: ETH, decimals: 18, symbol: "ETH" };
   const usdc = { token: USDC, decimals: 6, symbol: "USDC" };
-  await updateProjectTokenBalance({ context: ctx, version: 6, projectId: 12, tokenContext: eth, balanceDelta: 100n, volumeDelta: 100n });
-  await updateProjectTokenBalance({ context: ctx, version: 6, projectId: 12, tokenContext: usdc, balanceDelta: 5n, volumeDelta: 5n });
-  await updateProjectTokenBalance({ context: ctx, version: 6, projectId: 12, tokenContext: eth, balanceDelta: -40n });
-  await updateProjectTokenBalance({ context: ctx, version: 5, projectId: 12, tokenContext: eth, balanceDelta: 1n });
-  await updateProjectTokenBalance({ context: ctx, version: 6, projectId: 12, tokenContext: null, balanceDelta: 1n });
-  assert.deepEqual(Object.fromEntries(rows), {
-    [`1:12:6:${ETH}`]: { balance: 60n, volume: 100n, tokenSymbol: "ETH" },
-    [`1:12:6:${USDC}`]: { balance: 5n, volume: 5n, tokenSymbol: "USDC" },
+  const at = (n: number) => ({ number: BigInt(n), timestamp: BigInt(n * 12) });
+  const move = (version: number, tokenContext: { token: `0x${string}`; decimals: number; symbol: string } | null, balanceDelta: bigint, block: number, volumeDelta?: bigint) =>
+    updateProjectTokenBalance({ context: ctx, version, projectId: 12, tokenContext, balanceDelta, volumeDelta, block: at(block) });
+  await move(6, eth, 100n, 1, 100n);
+  await move(6, usdc, 5n, 1, 5n);
+  await move(6, eth, -40n, 2);
+  await move(6, eth, -10n, 2);
+  await move(5, eth, 1n, 3);
+  await move(6, null, 1n, 3);
+  const pick = (m: Map<string, any>) =>
+    Object.fromEntries([...m].map(([k, v]) => [k, [v.balance, v.volume]]));
+  assert.deepEqual(pick(rows), { [`1:12:6:${ETH}`]: [50n, 100n], [`1:12:6:${USDC}`]: [5n, 5n] });
+  assert.deepEqual(pick(moments), {
+    [`1:12:6:${ETH}@1`]: [100n, 100n],
+    [`1:12:6:${USDC}@1`]: [5n, 5n],
+    [`1:12:6:${ETH}@2`]: [50n, 100n],
   });
+  assert.equal(moments.get(`1:12:6:${USDC}@1`).tokenUsdRate, 10n ** 18n);
 }
 
 console.log("terminal event token checks passed");

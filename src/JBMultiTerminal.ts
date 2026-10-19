@@ -151,6 +151,7 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
       projectId: projectId,
       tokenContext,
       balanceDelta: amount,
+      block: event.block,
     });
 
     const projectPayerAddress = await findProjectPayerAddress({
@@ -283,6 +284,7 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
       projectId: projectId,
       tokenContext,
       balanceDelta: -amountPaidOut,
+      block: event.block,
     });
 
     const { suckerGroupId } = updatedProject;
@@ -497,6 +499,7 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
       projectId: projectId,
       tokenContext,
       balanceDelta: -reclaimAmount,
+      block: event.block,
     });
 
     const { suckerGroupId } = updatedProject;
@@ -609,6 +612,7 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
       projectId: projectId,
       tokenContext,
       balanceDelta: -event.args.amountPaidOut,
+      block: event.block,
     });
 
     const { suckerGroupId } = updatedProject;
@@ -752,6 +756,7 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
       tokenContext,
       balanceDelta: amount,
       volumeDelta: amount,
+      block: event.block,
     });
 
     const { suckerGroupId, isRevnet, isHomerun, isSticky } = updatedProject;
@@ -916,6 +921,7 @@ ponder.on("JBMultiTerminal:HookAfterRecordPay", async ({ event, context }) => {
             }
           : null,
       balanceDelta: -amount,
+      block: event.block,
     });
 
     await onProjectStatsUpdated({
