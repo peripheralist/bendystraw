@@ -344,6 +344,7 @@ const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance
   const quietError = console.error;
   const logged: unknown[] = [];
   console.error = (...args: unknown[]) => void logged.push(args);
+  const readStore = client.readContract;
   try {
     ctx.client.readContract = async () => {
       throw new Error("RPC timeout");
@@ -356,7 +357,15 @@ const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance
     console.error = quietError;
   }
   assert.equal(logged.length, 2);
-  assert.deepEqual(pick(rows), { [`1:12:6:${ETH}`]: [50n, 100n], [`1:12:6:${USDC}`]: [7n, 5n] });
+  // The failed pay's volume (1) is kept; the balance keeps its last value.
+  assert.deepEqual(pick(rows), { [`1:12:6:${ETH}`]: [50n, 101n], [`1:12:6:${USDC}`]: [7n, 5n] });
+  assert.equal(moments.has(`1:12:6:${ETH}@6`), false);
+  // The next successful read repairs the balance; volume stays complete.
+  ctx.client.readContract = readStore;
+  store[`${ETH}@7`] = 53n;
+  await move(6, eth, 7, 2n);
+  assert.deepEqual(pick(rows)[`1:12:6:${ETH}`], [53n, 103n]);
+  assert.deepEqual(pick(moments)[`1:12:6:${ETH}@7`], [53n, 103n]);
 }
 
 {

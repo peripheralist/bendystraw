@@ -24,8 +24,9 @@ const storeAbi = parseAbi([
 // Volume is payments only, so it accrues from Pay amounts.
 //
 // Never throws: a failed read must not cost the calling handler the rest of
-// its event, and indexing never halts. The row keeps its last values (logged),
-// and the next event's read, an absolute balance, repairs it.
+// its event, and indexing never halts. The payment volume, known from the
+// event, is still recorded; the balance keeps its last value (logged) and
+// the next event's read, an absolute balance, repairs it.
 export async function updateProjectTokenBalance(input: Parameters<typeof writeProjectTokenBalance>[0]) {
   try {
     await writeProjectTokenBalance(input);
@@ -53,12 +54,20 @@ async function writeProjectTokenBalance({
   block: { number: bigint; timestamp: bigint };
 }) {
   if (version !== 6 || !tokenContext) return;
-  const balance = await context.client.readContract({
-    abi: storeAbi,
-    address: ADDRESS.jbTerminalStore6,
-    functionName: "balanceOf",
-    args: [ADDRESS.jbMultiTerminal6, BigInt(projectId), tokenContext.token],
-  });
+  let balance: bigint | undefined;
+  try {
+    balance = await context.client.readContract({
+      abi: storeAbi,
+      address: ADDRESS.jbTerminalStore6,
+      functionName: "balanceOf",
+      args: [ADDRESS.jbMultiTerminal6, BigInt(projectId), tokenContext.token],
+    });
+  } catch (e) {
+    console.error(
+      `projectTokenBalance: balance not read, kept its last value: chain ${context.chain.id} project ${projectId} token ${tokenContext.token}`,
+      e
+    );
+  }
   const key = {
     chainId: context.chain.id,
     version,
@@ -71,10 +80,13 @@ async function writeProjectTokenBalance({
       ...key,
       decimals: tokenContext.decimals,
       tokenSymbol: tokenContext.symbol,
-      balance,
+      // ponytail: a first row whose read failed starts at 0 until the next read.
+      balance: balance ?? BigInt(0),
       volume: volumeDelta,
     })
-    .onConflictDoUpdate((r) => ({ balance, volume: r.volume + volumeDelta }));
+    .onConflictDoUpdate((r) => ({ balance: balance ?? r.balance, volume: r.volume + volumeDelta }));
+  // No moment without a read: the next one carries this volume.
+  if (balance === undefined) return;
 
   const moment = { balance: row.balance, volume: row.volume };
   await context.db
