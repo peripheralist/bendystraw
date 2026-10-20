@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ADDRESS } from "../src/constants/address";
+import { acceptedTokenCurrency } from "../src/util/usdPrice";
 import { abandonBuybackMint, parkBuybackMint, priceBuybackMint } from "../src/util/buybackMintAmount";
 import { pendingBuybackMint, projectTokenBalance as tokenBalanceTable, swapEvent } from "ponder:schema";
 import { runInNewContext } from "node:vm";
@@ -530,6 +531,19 @@ const projectBalanceDelta = (...a: any[]) => plain(tokenBalanceModule.projectBal
   } finally {
     console.error = quietMint;
   }
+}
+
+{
+  // A pool's terminal token not yet accepted reads as currency 0: null, so the
+  // pool caches nothing and a later swap reads it again.
+  const at = (currency: number) =>
+    acceptedTokenCurrency({
+      context: { client: { readContract: async () => ({ token: ETH, decimals: 18, currency }) } } as any,
+      projectId: 12,
+      token: ETH,
+    });
+  assert.equal(await at(0), null);
+  assert.equal(await at(61166), 61166n);
 }
 
 console.log("terminal event token checks passed");

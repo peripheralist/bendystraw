@@ -34,7 +34,8 @@ export async function acceptedTokenCurrency({
       functionName: "accountingContextForTokenOf",
       args: [BigInt(projectId), token === zeroAddress ? NATIVE_TOKEN : token],
     });
-    return BigInt(accounting.currency);
+    // A token the project does not accept (yet) reads as currency 0: unknown, not a currency.
+    return accounting.currency ? BigInt(accounting.currency) : null;
   } catch {
     return null;
   }
