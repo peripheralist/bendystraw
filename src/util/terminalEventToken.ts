@@ -1,6 +1,7 @@
 import type { Context } from "ponder:registry";
 import { decodeFunctionData, isAddressEqual, parseAbi, type Hex } from "viem";
 import { JBMultiTerminalAbi } from "../../abis/JBMultiTerminalAbi";
+import { tokenSymbol } from "./tokenSymbol";
 
 // V6 terminal events (Pay, AddToBalance, CashOutTokens, SendPayouts,
 // SendPayoutToSplit, UseAllowance) carry no token. A project can accept
@@ -19,6 +20,8 @@ export type TokenContext = {
   token: `0x${string}`;
   decimals: number;
   currency: bigint;
+  // Null when the token does not answer `symbol()`.
+  symbol: string | null;
 };
 
 export type TraceLog = {
@@ -86,7 +89,7 @@ function decodeRecord(kind: TerminalEventKind, input: Hex): Record_ | null {
   }
 }
 
-const sameLog = (a: { address: string; topics: readonly Hex[]; data: Hex }, b: TargetLog) =>
+export const sameLog = (a: { address: string; topics: readonly Hex[]; data: Hex }, b: TargetLog) =>
   isAddressEqual(a.address as `0x${string}`, b.address) &&
   a.data.toLowerCase() === b.data.toLowerCase() &&
   a.topics.length === b.topics.length &&
@@ -183,10 +186,11 @@ export async function terminalEventToken({
       functionName: "accountingContextsOf",
       args: [projectId],
     });
-    const toContext = (c: (typeof contexts)[number]): TokenContext => ({
+    const toContext = async (c: (typeof contexts)[number]): Promise<TokenContext> => ({
       token: c.token,
       decimals: c.decimals,
       currency: BigInt(c.currency),
+      symbol: await tokenSymbol(context, c.token),
     });
 
     if (contexts.length === 1) return toContext(contexts[0]!);

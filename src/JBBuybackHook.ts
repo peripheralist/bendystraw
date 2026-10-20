@@ -20,6 +20,8 @@ import {
   POOL_MANAGER_BY_CHAIN,
 } from "./constants/uniswapV4";
 import { insertActivityEvent } from "./util/activityEvent";
+import { buybackMintForwardedAmount } from "./util/buybackMintAmount";
+import type { CallFrame } from "./util/terminalEventToken";
 import { getEventParams } from "./util/getEventParams";
 import { usdPerAccountingTokenAtBlock } from "./util/usdPrice";
 
@@ -48,6 +50,18 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
     const projectId = Number(_projectId);
 
     const _project = await findProject(context, projectId);
+    // The leftover is in the amount the terminal forwarded to this hook call,
+    // read from the call itself (the trace token resolution already fetched).
+    let forwarded: ReturnType<typeof buybackMintForwardedAmount> = null;
+    try {
+      const trace = (await context.client.request({
+        method: "debug_traceTransaction",
+        params: [event.transaction.hash, { tracer: "callTracer", tracerConfig: { withLog: true } }],
+      } as any)) as CallFrame;
+      forwarded = buybackMintForwardedAmount({ trace, hook: event.log.address, mint: event.log });
+    } catch (e) {
+      console.error("JBBuybackHook6:Mint: no trace, rate left null", e);
+    }
 
     const { id } = await context.db.insert(swapEvent).values({
       ...getEventParams({ event, context }),
@@ -64,7 +78,7 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
         context,
         version: VERSION,
         projectId,
-        currency: _project.currency,
+        currency: forwarded ? BigInt(forwarded.currency) : null,
       }),
     });
 

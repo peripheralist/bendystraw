@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Context } from "ponder:registry";
 import { Address, zeroAddress } from "viem";
+import { JBMultiTerminalAbi } from "../../abis/JBMultiTerminalAbi";
 import { JBPricesAbi } from "../../abis/JBPricesAbi";
 import { addressForVersion, Version } from "./getVersion";
 
@@ -9,6 +10,35 @@ const priceIndexUrl = process.env.PRICES_API_URL;
 const CURRENCY_NATIVE = BigInt(61166);
 // const CURRENCY_ETH = BigInt(1);
 const CURRENCY_USD = BigInt(2);
+const NATIVE_TOKEN = "0x000000000000000000000000000000000000EEEe";
+
+/**
+ * The JB currency a V6 project's terminal accounts `token` in, from its
+ * accounting context: usually the token address's low 32 bits, but a project
+ * may set another (USDC as USD, 2). Null when the terminal does not accept the
+ * token. A buyback pool stores the native token as the zero address.
+ */
+export async function acceptedTokenCurrency({
+  context,
+  projectId,
+  token,
+}: {
+  context: Context;
+  projectId: bigint | number;
+  token: Address;
+}): Promise<bigint | null> {
+  try {
+    const accounting = await context.client.readContract({
+      abi: JBMultiTerminalAbi,
+      address: addressForVersion("jbMultiTerminal", 6),
+      functionName: "accountingContextForTokenOf",
+      args: [BigInt(projectId), token === zeroAddress ? NATIVE_TOKEN : token],
+    });
+    return BigInt(accounting.currency);
+  } catch {
+    return null;
+  }
+}
 
 // const STABLES = new Set(
 //   [

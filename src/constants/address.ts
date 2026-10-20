@@ -15,6 +15,7 @@ export const ADDRESS = {
   jbMultiTerminal: "0xdb9644369c79c3633cde70d2df50d827d7dc7dbc",
   jbMultiTerminal5: "0x2db6d704058e552defe415753465df8df0361846",
   jbMultiTerminal6: "0x130f5dd2bd8805443cf41755253d778a75a67f53",
+  jbTerminalStore6: "0x7497ae014a60561925b51c0a3b4ade7460b9927c",
   jbPermissions: "0xf5ca295dc286a176e35ebb7833031fd95550eb14",
   jbPermissions5: "0x04fd6913d6c32d8c216e153a43c04b1857a7793d",
   jbPermissions6: "0xf92ac1ab5a00033e35a3975739124f61928c36b0",
