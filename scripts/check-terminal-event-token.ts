@@ -274,9 +274,11 @@ runInNewContext(
       // Stand-in rates: the context's currency in whole dollars, so the test sees
       // which currency was used, times a price the test can move.
       if (name === "./usdPrice") {
+        // price 0 stands for a missing feed; `indexRate` is the external index.
         return {
-          usdPerAccountingTokenAtBlock: async ({ currency }: { currency: bigint }) => currency * 10n ** 18n,
-          usdRate18ForToken: async ({ currency }: { currency: bigint }) => currency * 10n ** 18n * price,
+          usdPerAccountingTokenAtBlock: async ({ currency }: { currency: bigint }) =>
+            price ? currency * 10n ** 18n * price : null,
+          indexUsdRate: async () => indexRate,
         };
       }
       throw new Error(`Unexpected import ${name}`);
@@ -284,6 +286,7 @@ runInNewContext(
   }
 );
 let price = 1n;
+let indexRate: bigint | null = null;
 const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
 const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance!;
 // Results built in the vm realm compare by value once copied into this one.
@@ -434,9 +437,11 @@ const projectBalanceDelta = (...a: any[]) => plain(tokenBalanceModule.projectBal
   store[`${ETH}@10`] = 10n;
   assert.deepEqual(await move(6, eth, 10), change(10n, 10n * 61166n * 3n));
 
-  // A refresh (fee revert, migration) values with the on-chain feed only, never
-  // the external index: the stand-in index price (5x) does not reach it.
-  price = 5n;
+  // With no on-chain feed, an amount event's update uses the external index
+  // (the same memoized request as the event's own valuation); a refresh (fee
+  // revert, migration) does not ask it and keeps the last known rate.
+  price = 0n;
+  indexRate = 4n * 10n ** 18n;
   store[`${USDC}@11`] = 7n;
   block = 11;
   assert.deepEqual(
@@ -445,10 +450,14 @@ const projectBalanceDelta = (...a: any[]) => plain(tokenBalanceModule.projectBal
     })),
     change(0n, 0n)
   );
-  // A price-only change still moves USD with no raw change, so callers apply
-  // the change unless both parts are 0.
+  // A price-only change moves USD with no raw change, so callers apply the
+  // change unless both parts are 0.
   store[`${USDC}@12`] = 7n;
-  assert.deepEqual(await move(6, usdc, 12), change(0n, usdUsdc(7n) - (7n * 2n * 10n ** 18n) / 10n ** 6n));
+  assert.deepEqual(
+    await move(6, usdc, 12),
+    change(0n, (7n * 4n * 10n ** 18n) / 10n ** 6n - (7n * 2n * 10n ** 18n) / 10n ** 6n)
+  );
+  indexRate = null;
   price = 1n;
 }
 

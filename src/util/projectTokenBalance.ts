@@ -6,7 +6,7 @@ import { ADDRESS } from "../constants/address";
 import type { Version } from "./getVersion";
 import type { TokenContext } from "./terminalEventToken";
 import { knownTokenSymbol } from "./tokenSymbol";
-import { usdPerAccountingTokenAtBlock, usdRate18ForToken } from "./usdPrice";
+import { indexUsdRate, usdPerAccountingTokenAtBlock } from "./usdPrice";
 
 const storeAbi = parseAbi([
   "function balanceOf(address terminal, uint256 projectId, address token) view returns (uint256)",
@@ -108,23 +108,25 @@ async function writeProjectTokenBalance({
     token: tokenContext.token,
   };
   const before = await context.db.find(projectTokenBalance, key);
-  // The balance valued at this block's rate, the same one the event was valued
-  // at (memoized, so no second lookup), or the token's last known rate.
+  // The balance valued at this block's on-chain rate (the moment's rate too,
+  // one lookup), else the external index the event's valuation already asked
+  // (memoized; refreshes skip it), else the token's last known rate.
   let usdRate = before?.usdRate ?? null;
   let balanceUsd = before?.balanceUsd ?? BigInt(0);
+  let tokenUsdRate: bigint | null = null;
   if (balance !== undefined) {
-    // A refresh (no amount event) takes the on-chain feed only, as before.
-    const rate = refresh
-      ? (await usdPerAccountingTokenAtBlock({ context, version, projectId, currency: tokenContext.currency })) ?? BigInt(0)
-      : await usdRate18ForToken({
-          context,
-          version,
-          projectId: BigInt(projectId),
-          currency: tokenContext.currency,
-          token: tokenContext.token,
-          timestamp: block.timestamp,
-        });
-    if (rate > BigInt(0)) usdRate = rate;
+    tokenUsdRate = await usdPerAccountingTokenAtBlock({
+      context,
+      version,
+      projectId,
+      currency: tokenContext.currency,
+    });
+    const rate =
+      tokenUsdRate ??
+      (refresh
+        ? null
+        : await indexUsdRate({ context, version, projectId, token: tokenContext.token, timestamp: block.timestamp }));
+    if (rate) usdRate = rate;
     balanceUsd = (balance * (usdRate ?? BigInt(0))) / BigInt(10) ** BigInt(tokenContext.decimals);
   }
   const row = await context.db
@@ -148,12 +150,6 @@ async function writeProjectTokenBalance({
   // No moment without a read: the next one carries this volume.
   if (balance === undefined) return NO_CHANGE;
 
-  const tokenUsdRate = await usdPerAccountingTokenAtBlock({
-    context,
-    version,
-    projectId,
-    currency: tokenContext.currency,
-  });
   const moment = { balance: row.balance, volume: row.volume };
   await context.db
     .insert(projectTokenBalanceMoment)

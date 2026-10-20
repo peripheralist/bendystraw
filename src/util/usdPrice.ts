@@ -88,7 +88,28 @@ export async function usdRate18ForToken({
   });
   if (onchain !== null) return onchain;
 
-  if (priceIndexUrl && token && token !== zeroAddress) {
+  return (token && (await indexUsdRate({ context, version, projectId, token, timestamp }))) || BigInt(0);
+}
+
+/**
+ * The external price index's USD rate (18-dec) for a token at a block, or null.
+ * Memoized per token and block, failures included: an event and its balance
+ * update share one request, and the next block retries.
+ */
+export async function indexUsdRate({
+  context,
+  version,
+  projectId,
+  token,
+  timestamp,
+}: {
+  context: Context;
+  version: Version;
+  projectId: bigint | number;
+  token: Address;
+  timestamp: number | bigint;
+}): Promise<bigint | null> {
+  if (priceIndexUrl && token !== zeroAddress) {
     try {
       const url = `${priceIndexUrl}?token=${token}&timestamp=${timestamp}&chainId=${context.chain.id}`;
       // An event and its balance update value the same token at the same
@@ -118,7 +139,7 @@ export async function usdRate18ForToken({
     }
   }
 
-  return BigInt(0);
+  return null;
 }
 
 /**
