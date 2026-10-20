@@ -124,6 +124,7 @@ const contexts12 = [
   { token: ETH, decimals: 18, currency: 61166 },
   { token: USDC, decimals: 6, currency: 906423112 },
 ];
+const NUL_SYMBOL_TOKEN = "0x00000000000000000000000000000000000000ee";
 const fakeContext = (
   contexts: { token: `0x${string}`; decimals: number; currency: number }[],
   trace: CallFrame | Error,
@@ -139,6 +140,7 @@ const fakeContext = (
           if (functionName !== "symbol") return calls.push("readContract"), contexts;
           calls.push(`symbol ${address}`);
           if (address === USDC) return "USDC";
+          if (address === NUL_SYMBOL_TOKEN) return "USD\u0000C";
           throw new Error("execution reverted");
         },
         request: async () => {
@@ -180,6 +182,20 @@ const event = (l: { topics: Hex[]; data: Hex }, logIndex = 132) => ({
   const again = await terminalEventToken({ event: event(payLog12), context, kind: "pay", projectId: 12n });
   assert.equal(again?.symbol, "USDC");
   assert.deepEqual(calls, ["readContract", `symbol ${USDC}`]);
+}
+{
+  // A symbol PostgreSQL text cannot store (NUL) is logged and stored as null; the event keeps its token.
+  const { context } = fakeContext([{ token: NUL_SYMBOL_TOKEN, decimals: 6, currency: 2 }], trace12);
+  const quiet = console.error;
+  console.error = () => {};
+  try {
+    assert.deepEqual(
+      await terminalEventToken({ event: event(payLog12), context, kind: "pay", projectId: 12n }),
+      { token: NUL_SYMBOL_TOKEN, decimals: 6, currency: 2n, symbol: null }
+    );
+  } finally {
+    console.error = quiet;
+  }
 }
 {
   // A token that does not answer symbol() keeps its token, with a null symbol.
