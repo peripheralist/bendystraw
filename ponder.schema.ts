@@ -381,6 +381,23 @@ export const swapEvent = onchainTable(
   })
 );
 
+// A buyback leftover Mint waiting for its hook call's HookAfterRecordPay,
+// which carries the currency that prices it. See util/buybackMintAmount.
+export const pendingBuybackMint = onchainTable(
+  "pending_buyback_mint",
+  (t) => ({
+    ...chainId(t),
+    ...txHash(t),
+    terminal: t.hex().notNull(),
+    ...projectId(t),
+    hook: t.hex().notNull(),
+    swapEventId: t.text().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.txHash, t.terminal, t.projectId] }),
+  })
+);
+
 export const swapEventRelations = relations(swapEvent, ({ one }) => ({
   project: one(project, {
     fields: [swapEvent.chainId, swapEvent.projectId, swapEvent.version],
@@ -404,6 +421,10 @@ export const buybackPool = onchainTable(
     currency1: t.hex().notNull(),
     projectTokenIsCurrency0: t.boolean().notNull(),
     initialSqrtPriceX96: t.bigint(),
+    // The terminal token's accounting currency for the project, read on the
+    // pool's first swap once the project accepts it (a project's currency for
+    // a token never changes), so later swaps price without a read.
+    terminalTokenCurrency: t.bigint(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.poolId] }),
@@ -1276,6 +1297,10 @@ export const projectTokenBalance = onchainTable(
     // Null when the token does not answer `symbol()`.
     tokenSymbol: t.text(),
     balance: t.bigint().notNull().default(BigInt(0)),
+    // The balance in USD (18-dec) at usdRate, the latest rate seen for this
+    // token when its balance was read. A V6 project's balanceUsd is their sum.
+    balanceUsd: t.bigint().notNull().default(BigInt(0)),
+    usdRate: t.bigint(),
     volume: t.bigint().notNull().default(BigInt(0)),
   }),
   (t) => ({
@@ -1428,10 +1453,10 @@ export const project = onchainTable(
     redeemVolumeUsd: t.bigint().notNull().default(BigInt(0)),
     nftsMintedCount: t.integer().notNull().default(0),
     balance: t.bigint().notNull().default(BigInt(0)),
-    // Flow-accrued USD balance: every inflow adds and every outflow subtracts
-    // ITS OWN at-the-block USD value (18-dec). Exact for stable-denominated
-    // contexts and immune to context switches; for volatile accounting tokens
-    // it is a cost-basis figure, not a mark-to-market of the raw balance.
+    // V6: the sum of the project's projectTokenBalance.balanceUsd, each token's
+    // store balance at its latest rate (18-dec). V4/V5: flow-accrued, every
+    // inflow adds and every outflow subtracts its own at-the-block USD value,
+    // a cost-basis figure for volatile tokens.
     balanceUsd: t.bigint().notNull().default(BigInt(0)),
     tokenSupply: t.bigint().notNull().default(BigInt(0)),
     reservedTokenSupply: t.bigint().notNull().default(BigInt(0)),
@@ -1897,7 +1922,7 @@ export const suckerGroup = onchainTable("sucker_group", (t) => ({
   redeemVolumeUsd: t.bigint().notNull().default(BigInt(0)),
   nftsMintedCount: t.integer().notNull().default(0),
   balance: t.bigint().notNull().default(BigInt(0)),
-  // Sum of the member projects' flow-accrued USD balances; see project.balanceUsd.
+  // Sum of the member projects' USD balances; see project.balanceUsd.
   balanceUsd: t.bigint().notNull().default(BigInt(0)),
   tokenSupply: t.bigint().notNull().default(BigInt(0)),
   reservedTokenSupply: t.bigint().notNull().default(BigInt(0)),
@@ -1926,7 +1951,7 @@ export const suckerGroupMoment = onchainTable(
     redeemVolumeUsd: t.bigint().notNull().default(BigInt(0)),
     nftsMintedCount: t.integer().notNull().default(0),
     balance: t.bigint().notNull().default(BigInt(0)),
-    // Flow-accrued USD balance at this moment; see project.balanceUsd. Unlike
+    // USD balance at this moment; see project.balanceUsd. Unlike
     // the raw `balance`, this stays meaningful across accounting-context
     // switches and mixed-context groups, so it is the series to chart.
     balanceUsd: t.bigint().notNull().default(BigInt(0)),

@@ -10,6 +10,7 @@ import {
   suckerGroup,
 } from "ponder:schema";
 import { getVersion } from "./util/getVersion";
+import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { idForSuckerGroup } from "./util/id";
 
 type SuckerDeployedForEvent = {
@@ -18,6 +19,7 @@ type SuckerDeployedForEvent = {
     sucker: `0x${string}`;
   };
   block: {
+    number: bigint;
     timestamp: bigint;
   };
   log: {
@@ -176,6 +178,18 @@ async function handleSuckerDeployedFor({
           .update(activityEvent)
           .set({ suckerGroupId: newSuckerGroup.id })
           .where(inArray(activityEvent.suckerGroupId, staleSuckerGroupIds));
+      }
+
+      // The consolidated group's totals and history start from its members'
+      // stats now, not at its next balance change.
+      if (version === 6) {
+        await onProjectStatsUpdated({
+          projectId,
+          version,
+          context,
+          event,
+          _project: { ...thisProject, suckerGroupId: newSuckerGroup.id },
+        });
       }
     }
 

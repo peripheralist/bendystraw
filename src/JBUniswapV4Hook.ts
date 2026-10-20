@@ -66,6 +66,20 @@ ponder.on("JBUniswapV4Hook6:RouteSelected", async ({ event, context }) => {
     });
     if (!_project) throw new Error("Missing project");
 
+    let currency = pool.terminalTokenCurrency;
+    if (currency === null) {
+      currency = await acceptedTokenCurrency({
+        context,
+        projectId: pool.projectId,
+        token: pool.terminalToken,
+      });
+      if (currency !== null) {
+        await context.db
+          .update(buybackPool, { chainId: context.chain.id, poolId })
+          .set({ terminalTokenCurrency: currency });
+      }
+    }
+
     const { id } = await context.db.insert(swapEvent).values({
       ...getEventParams({ event, context }),
       projectId: pool.projectId,
@@ -81,11 +95,7 @@ ponder.on("JBUniswapV4Hook6:RouteSelected", async ({ event, context }) => {
         context,
         version: VERSION,
         projectId: pool.projectId,
-        currency: await acceptedTokenCurrency({
-          context,
-          projectId: pool.projectId,
-          token: pool.terminalToken,
-        }),
+        currency,
       }),
     });
 

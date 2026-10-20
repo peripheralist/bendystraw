@@ -34,7 +34,8 @@ export async function acceptedTokenCurrency({
       functionName: "accountingContextForTokenOf",
       args: [BigInt(projectId), token === zeroAddress ? NATIVE_TOKEN : token],
     });
-    return BigInt(accounting.currency);
+    // A token the project does not accept (yet) reads as currency 0: unknown, not a currency.
+    return accounting.currency ? BigInt(accounting.currency) : null;
   } catch {
     return null;
   }
@@ -48,6 +49,8 @@ export async function acceptedTokenCurrency({
 //     "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC BASE
 //   ].map((c) => c.toLowerCase()) as Address[]
 // );
+
+const indexPrices = new Map<string, Promise<number>>();
 
 /**
  * USD per ONE WHOLE accounting token as an 18-decimal fixed point, for valuing
@@ -86,13 +89,41 @@ export async function usdRate18ForToken({
   });
   if (onchain !== null) return onchain;
 
-  if (priceIndexUrl && token && token !== zeroAddress) {
-    try {
-      const res = await axios.get<{ priceUsd: number }>(
-        `${priceIndexUrl}?token=${token}&timestamp=${timestamp}&chainId=${context.chain.id}`
-      );
+  return (token && (await indexUsdRate({ context, version, projectId, token, timestamp }))) || BigInt(0);
+}
 
-      const _price = res.data.priceUsd;
+/**
+ * The external price index's USD rate (18-dec) for a token at a block, or null.
+ * Memoized per token and block, failures included: an event and its balance
+ * update share one request, and the next block retries.
+ */
+export async function indexUsdRate({
+  context,
+  version,
+  projectId,
+  token,
+  timestamp,
+}: {
+  context: Context;
+  version: Version;
+  projectId: bigint | number;
+  token: Address;
+  timestamp: number | bigint;
+}): Promise<bigint | null> {
+  if (priceIndexUrl && token !== zeroAddress) {
+    try {
+      const url = `${priceIndexUrl}?token=${token}&timestamp=${timestamp}&chainId=${context.chain.id}`;
+      // An event and its balance update value the same token at the same
+      // block: one request between them.
+      let pending = indexPrices.get(url);
+      if (!pending) {
+        // ponytail: forget everything once it grows; only same-block reuse matters.
+        if (indexPrices.size > 1000) indexPrices.clear();
+        // A failure is kept too: the next block (a new URL) retries.
+        pending = axios.get<{ priceUsd: number }>(url).then((res) => res.data.priceUsd);
+        indexPrices.set(url, pending);
+      }
+      const _price = await pending;
 
       if (!isNaN(_price) && _price > 0) {
         // Keep 8 decimals of price precision. The previous integer math
@@ -109,7 +140,7 @@ export async function usdRate18ForToken({
     }
   }
 
-  return BigInt(0);
+  return null;
 }
 
 /**

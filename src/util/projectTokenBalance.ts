@@ -5,8 +5,8 @@ import { JBMultiTerminalAbi } from "../../abis/JBMultiTerminalAbi";
 import { ADDRESS } from "../constants/address";
 import type { Version } from "./getVersion";
 import type { TokenContext } from "./terminalEventToken";
-import { tokenSymbol } from "./tokenSymbol";
-import { usdPerAccountingTokenAtBlock } from "./usdPrice";
+import { knownTokenSymbol } from "./tokenSymbol";
+import { indexUsdRate, usdPerAccountingTokenAtBlock } from "./usdPrice";
 
 const storeAbi = parseAbi([
   "function balanceOf(address terminal, uint256 projectId, address token) view returns (uint256)",
@@ -23,19 +23,50 @@ const storeAbi = parseAbi([
 // reverts, migrations), which a running sum would turn into phantom balances.
 // Volume is payments only, so it accrues from Pay amounts.
 //
+// The change it read is returned so the project's own balance moves by the
+// same amount (see projectBalanceDelta): a V6 project's raw balance is then
+// always the sum of its token rows, with no extra read.
+//
+// Reads are pinned to the block, so they see its end state: the block's
+// first event for a token carries the whole block's change, later ones 0.
+//
 // Never throws: a failed read must not cost the calling handler the rest of
 // its event, and indexing never halts. The payment volume, known from the
-// event, is still recorded; the balance keeps its last value (logged) and
-// the next event's read, an absolute balance, repairs it.
-export async function updateProjectTokenBalance(input: Parameters<typeof writeProjectTokenBalance>[0]) {
+// event, is still recorded; the balance keeps its last value (logged), the
+// change is 0, and the next event's read, an absolute balance, repairs both.
+export async function updateProjectTokenBalance(
+  input: Parameters<typeof writeProjectTokenBalance>[0]
+): Promise<BalanceChange | null> {
+  if (input.version !== 6) return null;
   try {
-    await writeProjectTokenBalance(input);
+    return await writeProjectTokenBalance(input);
   } catch (e) {
     console.error(
       `projectTokenBalance: not updated, kept its last values: chain ${input.context.chain.id} project ${input.projectId} token ${input.tokenContext?.token}`,
       e
     );
+    return NO_CHANGE;
   }
+}
+
+/**
+ * A V6 token balance change: raw, and in USD as the change in the row's
+ * `balanceUsd` (the balance at its latest rate), so a project's USD balance is
+ * always the sum of its tokens' current values, never a residue of past rates.
+ */
+export type BalanceChange = { delta: bigint; deltaUsd: bigint };
+const NO_CHANGE: BalanceChange = { delta: BigInt(0), deltaUsd: BigInt(0) };
+
+/**
+ * How much the project's `balance`/`balanceUsd` move for an event: the store
+ * change for V6 (`change`), else the event's own signed amount, as before.
+ */
+export function projectBalanceDelta(
+  change: BalanceChange | null,
+  amount: bigint,
+  amountUsd: bigint
+): BalanceChange {
+  return change ?? { delta: amount, deltaUsd: amountUsd };
 }
 
 async function writeProjectTokenBalance({
@@ -44,6 +75,7 @@ async function writeProjectTokenBalance({
   projectId,
   tokenContext,
   volumeDelta = BigInt(0),
+  refresh = false,
   block,
 }: {
   context: Context;
@@ -51,9 +83,10 @@ async function writeProjectTokenBalance({
   projectId: number | bigint;
   tokenContext: TokenContext | null;
   volumeDelta?: bigint;
+  refresh?: boolean;
   block: { number: bigint; timestamp: bigint };
-}) {
-  if (version !== 6 || !tokenContext) return;
+}): Promise<BalanceChange> {
+  if (!tokenContext) return NO_CHANGE;
   let balance: bigint | undefined;
   try {
     balance = await context.client.readContract({
@@ -74,6 +107,28 @@ async function writeProjectTokenBalance({
     projectId: Number(projectId),
     token: tokenContext.token,
   };
+  const before = await context.db.find(projectTokenBalance, key);
+  // The balance valued at this block's on-chain rate (the moment's rate too,
+  // one lookup), else the external index the event's valuation already asked
+  // (memoized; refreshes skip it), else the token's last known rate.
+  let usdRate = before?.usdRate ?? null;
+  let balanceUsd = before?.balanceUsd ?? BigInt(0);
+  let tokenUsdRate: bigint | null = null;
+  if (balance !== undefined) {
+    tokenUsdRate = await usdPerAccountingTokenAtBlock({
+      context,
+      version,
+      projectId,
+      currency: tokenContext.currency,
+    });
+    const rate =
+      tokenUsdRate ??
+      (refresh
+        ? null
+        : await indexUsdRate({ context, version, projectId, token: tokenContext.token, timestamp: block.timestamp }));
+    if (rate) usdRate = rate;
+    balanceUsd = (balance * (usdRate ?? BigInt(0))) / BigInt(10) ** BigInt(tokenContext.decimals);
+  }
   const row = await context.db
     .insert(projectTokenBalance)
     .values({
@@ -82,11 +137,18 @@ async function writeProjectTokenBalance({
       tokenSymbol: tokenContext.symbol,
       // ponytail: a first row whose read failed starts at 0 until the next read.
       balance: balance ?? BigInt(0),
+      balanceUsd,
+      usdRate,
       volume: volumeDelta,
     })
-    .onConflictDoUpdate((r) => ({ balance: balance ?? r.balance, volume: r.volume + volumeDelta }));
+    .onConflictDoUpdate((r) => ({
+      balance: balance ?? r.balance,
+      balanceUsd,
+      usdRate,
+      volume: r.volume + volumeDelta,
+    }));
   // No moment without a read: the next one carries this volume.
-  if (balance === undefined) return;
+  if (balance === undefined) return NO_CHANGE;
 
   const moment = { balance: row.balance, volume: row.volume };
   await context.db
@@ -97,15 +159,15 @@ async function writeProjectTokenBalance({
       decimals: tokenContext.decimals,
       block: Number(block.number),
       timestamp: Number(block.timestamp),
-      tokenUsdRate: await usdPerAccountingTokenAtBlock({
-        context,
-        version,
-        projectId,
-        currency: tokenContext.currency,
-      }),
+      tokenUsdRate,
     })
     // Several events in one block keep the block's last balance.
     .onConflictDoUpdate(moment);
+
+  return {
+    delta: balance - (before?.balance ?? BigInt(0)),
+    deltaUsd: balanceUsd - (before?.balanceUsd ?? BigInt(0)),
+  };
 }
 
 /** Refresh one token's row for an event that names a token but no amount we track. Never throws. */
@@ -115,14 +177,15 @@ export async function refreshProjectTokenBalance(input: {
   projectId: bigint;
   token: Address;
   block: { number: bigint; timestamp: bigint };
-}) {
+}): Promise<BalanceChange> {
   try {
-    await refreshTokenRow(input);
+    return await refreshTokenRow(input);
   } catch (e) {
     console.error(
       `projectTokenBalance: not refreshed: chain ${input.context.chain.id} project ${input.projectId} token ${input.token}`,
       e
     );
+    return NO_CHANGE;
   }
 }
 
@@ -139,23 +202,24 @@ async function refreshTokenRow({
   token: Address;
   block: { number: bigint; timestamp: bigint };
 }) {
-  if (version !== 6) return;
+  if (version !== 6) return NO_CHANGE;
   const accounting = await context.client.readContract({
     abi: JBMultiTerminalAbi,
     address: ADDRESS.jbMultiTerminal6,
     functionName: "accountingContextForTokenOf",
     args: [projectId, token],
   });
-  await writeProjectTokenBalance({
+  return writeProjectTokenBalance({
     context,
     version,
     projectId,
+    refresh: true,
     block,
     tokenContext: {
       token,
       decimals: accounting.decimals,
       currency: BigInt(accounting.currency),
-      symbol: await tokenSymbol(context, token),
+      symbol: await knownTokenSymbol(context, projectId, token),
     },
   });
 }
