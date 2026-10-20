@@ -1,7 +1,7 @@
 import type { Context } from "ponder:registry";
 import { decodeFunctionData, isAddressEqual, parseAbi, type Hex } from "viem";
 import { JBMultiTerminalAbi } from "../../abis/JBMultiTerminalAbi";
-import { tokenSymbol } from "./tokenSymbol";
+import { knownTokenSymbol } from "./tokenSymbol";
 
 // V6 terminal events (Pay, AddToBalance, CashOutTokens, SendPayouts,
 // SendPayoutToSplit, UseAllowance) carry no token. A project can accept
@@ -190,7 +190,7 @@ export async function terminalEventToken({
       token: c.token,
       decimals: c.decimals,
       currency: BigInt(c.currency),
-      symbol: await tokenSymbol(context, c.token),
+      symbol: await knownTokenSymbol(context, projectId, c.token),
     });
 
     if (contexts.length === 1) return toContext(contexts[0]!);

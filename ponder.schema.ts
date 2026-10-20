@@ -381,6 +381,23 @@ export const swapEvent = onchainTable(
   })
 );
 
+// A buyback leftover Mint waiting for its hook call's HookAfterRecordPay,
+// which carries the currency that prices it. See util/buybackMintAmount.
+export const pendingBuybackMint = onchainTable(
+  "pending_buyback_mint",
+  (t) => ({
+    ...chainId(t),
+    ...txHash(t),
+    terminal: t.hex().notNull(),
+    ...projectId(t),
+    hook: t.hex().notNull(),
+    swapEventId: t.text().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.txHash, t.terminal, t.projectId] }),
+  })
+);
+
 export const swapEventRelations = relations(swapEvent, ({ one }) => ({
   project: one(project, {
     fields: [swapEvent.chainId, swapEvent.projectId, swapEvent.version],
@@ -404,6 +421,10 @@ export const buybackPool = onchainTable(
     currency1: t.hex().notNull(),
     projectTokenIsCurrency0: t.boolean().notNull(),
     initialSqrtPriceX96: t.bigint(),
+    // The terminal token's accounting currency for the project, read on the
+    // pool's first swap once the project accepts it (a project's currency for
+    // a token never changes), so later swaps price without a read.
+    terminalTokenCurrency: t.bigint(),
   }),
   (t) => ({
     pk: primaryKey({ columns: [t.chainId, t.poolId] }),

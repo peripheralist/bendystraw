@@ -1,12 +1,12 @@
 // V6 terminal events must be priced in the token they moved, not the project's
 // last-set accounting context. Mainnet V6 project 12 accepts ETH then USDC; its
 // 0.0001 ETH payment was indexed as 100,000,000 USDC.
-// Run: node --import tsx scripts/check-terminal-event-token.ts
+// Run: node --import tsx --import ./scripts/ponder-schema-loader.mjs scripts/check-terminal-event-token.ts
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { JBBuybackHookV6Abi } from "../abis/JBBuybackHookV6Abi";
 import { ADDRESS } from "../src/constants/address";
-import { buybackMintForwardedAmount } from "../src/util/buybackMintAmount";
+import { parkBuybackMint, priceBuybackMint } from "../src/util/buybackMintAmount";
+import { pendingBuybackMint, projectTokenBalance as tokenBalanceTable, swapEvent } from "ponder:schema";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { encodeFunctionData, parseAbi, toEventSelector, type Hex } from "viem";
@@ -128,13 +128,20 @@ const NUL_SYMBOL_TOKEN = "0x00000000000000000000000000000000000000ee";
 const fakeContext = (
   contexts: { token: `0x${string}`; decimals: number; currency: number }[],
   trace: CallFrame | Error,
-  receiptLogs: { address: string; topics: Hex[]; data: Hex; logIndex: number }[] = []
+  receiptLogs: { address: string; topics: Hex[]; data: Hex; logIndex: number }[] = [],
+  storedSymbols: Record<string, string> = {}
 ) => {
   const calls: string[] = [];
   return {
     calls,
     context: {
       chain: { id: 1 },
+      db: {
+        find: async (table: unknown, key: { token: string }) => {
+          assert.equal(table, tokenBalanceTable);
+          return key.token in storedSymbols ? { tokenSymbol: storedSymbols[key.token] } : undefined;
+        },
+      },
       client: {
         readContract: async ({ functionName, address }: { functionName: string; address: string }) => {
           if (functionName !== "symbol") return calls.push("readContract"), contexts;
@@ -176,12 +183,12 @@ const event = (l: { topics: Hex[]; data: Hex }, logIndex = 132) => ({
   assert.deepEqual(calls, ["readContract", `symbol ${USDC}`]);
 }
 {
-  // No process-wide cache: every event reads its symbol at its own block, so a
-  // re-index stores the same values.
-  const { context, calls } = fakeContext([contexts12[1]!], trace12);
+  // A symbol already on the project's token row is reused: one read per
+  // project token, not per event, and the same on every re-index.
+  const { context, calls } = fakeContext([contexts12[1]!], trace12, [], { [USDC]: "USDC" });
   const again = await terminalEventToken({ event: event(payLog12), context, kind: "pay", projectId: 12n });
   assert.equal(again?.symbol, "USDC");
-  assert.deepEqual(calls, ["readContract", `symbol ${USDC}`]);
+  assert.deepEqual(calls, ["readContract"]);
 }
 {
   // A symbol PostgreSQL text cannot store (NUL) is logged and stored as null; the event keeps its token.
@@ -246,7 +253,7 @@ try {
 }
 
 // projectTokenBalance imports ponder's virtual schema module, so it runs with a stand-in.
-const tokenBalanceModule: Record<string, (input: any) => Promise<void>> = {};
+const tokenBalanceModule: Record<string, (...input: any[]) => any> = {};
 runInNewContext(
   ts.transpileModule(readFileSync(new URL("../src/util/projectTokenBalance.ts", import.meta.url), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -263,7 +270,7 @@ runInNewContext(
       if (name === "viem") return { parseAbi };
       if (name === "../../abis/JBMultiTerminalAbi") return { JBMultiTerminalAbi: [] };
       if (name === "../constants/address") return { ADDRESS };
-      if (name === "./tokenSymbol") return { tokenSymbol: async () => "USDC" };
+      if (name === "./tokenSymbol") return { knownTokenSymbol: async () => "USDC" };
       // Stand-in rate: the context's currency in whole dollars, so the test sees which currency was used.
       if (name === "./usdPrice") {
         return { usdPerAccountingTokenAtBlock: async ({ currency }: { currency: bigint }) => currency * 10n ** 18n };
@@ -274,6 +281,9 @@ runInNewContext(
 );
 const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
 const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance!;
+// Results built in the vm realm compare by value once copied into this one.
+const plain = (x: any) => (x && typeof x === "object" ? { ...x } : x);
+const projectBalanceDelta = (...a: any[]) => plain(tokenBalanceModule.projectBalanceDelta!(...a));
 
 {
   // Per-token balances are the store's own balanceOf at each event's block,
@@ -287,6 +297,10 @@ const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance
   const reads: string[] = [];
   let block = 0;
   const db = {
+    find: async (table: string, k: any) => {
+      assert.equal(table, "projectTokenBalance");
+      return rows.get(`${k.chainId}:${k.projectId}:${k.version}:${k.token}`);
+    },
     insert: (table: string) => ({
       values: (v: any) => ({
         onConflictDoUpdate: async (update: any) => {
@@ -313,35 +327,46 @@ const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance
   const eth = { token: ETH, decimals: 18, currency: 61166n, symbol: "ETH" };
   // USDC accounted as USD (currency 2), not its address-derived currency.
   const usdc = { token: USDC, decimals: 6, currency: 2n, symbol: "USDC" };
-  const move = async (version: number, tokenContext: any, at: number, volumeDelta?: bigint) => {
+  const move = (version: number, tokenContext: any, at: number, volumeDelta?: bigint, usdPerToken?: any) => {
     block = at;
-    await updateProjectTokenBalance({
-      context: ctx, version, projectId: 12, tokenContext, volumeDelta,
+    return updateProjectTokenBalance({
+      context: ctx, version, projectId: 12, tokenContext, volumeDelta, usdPerToken,
       block: { number: BigInt(at), timestamp: BigInt(at * 12) },
-    });
+    }).then(plain);
   };
-  // Block 1: pays of 100 ETH-wei and 5 USDC-units.
+  const change = (delta: bigint, deltaUsd: bigint) => ({ delta, deltaUsd });
+  // Block 1: pays of 100 ETH-wei and 5 USDC-units. The event's own valuation
+  // (2 USD per wei here) prices the change without a lookup of its own.
   store[`${ETH}@1`] = 100n;
   store[`${USDC}@1`] = 5n;
-  await move(6, eth, 1, 100n);
-  await move(6, usdc, 1, 5n);
+  assert.deepEqual(await move(6, eth, 1, 100n, { amount: 100n, amountUsd: 200n }), change(100n, 200n));
+  // No event valuation: the change is priced at the block's rate ($2 per whole USDC).
+  assert.deepEqual(await move(6, usdc, 1, 5n), change(5n, 10n ** 13n));
   // Block 2: a cash-out whose event reclaims 39 net, while fees and a hook took
-  // the store's balance down by 50 — the row follows the store, not the event.
+  // the store's balance down by 50 — the row and the project's change follow
+  // the store, not the event.
   store[`${ETH}@2`] = 50n;
-  await move(6, eth, 2);
+  assert.deepEqual(await move(6, eth, 2, undefined, { amount: 39n, amountUsd: 78n }), change(-50n, -100n));
   // Block 3: a payout of 50 whose transfer reverted and was refunded leaves the store at 50.
   store[`${ETH}@3`] = 50n;
-  await move(6, eth, 3);
+  assert.deepEqual(await move(6, eth, 3, undefined, { amount: 50n, amountUsd: 100n }), change(0n, 0n));
   // Block 4: a fee revert credits USDC with no amount event; the refresh reads it.
+  // With no event amount, the change is priced at the block's rate: 2 units at $2 per 1e6.
   store[`${USDC}@4`] = 7n;
   block = 4;
-  await refreshProjectTokenBalance({
-    context: ctx, version: 6, projectId: 12n, token: USDC, block: { number: 4n, timestamp: 48n },
-  });
+  assert.deepEqual(
+    plain(await refreshProjectTokenBalance({
+      context: ctx, version: 6, projectId: 12n, token: USDC, block: { number: 4n, timestamp: 48n },
+    })),
+    change(2n, 4n * 10n ** 12n)
+  );
   const readsBefore = reads.length;
-  await move(5, eth, 5);
-  await move(6, null, 5);
+  // Pre-V6 keeps event arithmetic (null); an unresolved V6 token moves nothing.
+  assert.equal(await move(5, eth, 5), null);
+  assert.deepEqual(await move(6, null, 5), change(0n, 0n));
   assert.equal(reads.length, readsBefore, "pre-V6 and unresolved events read nothing");
+  assert.deepEqual(projectBalanceDelta(null, -39n, -78n), change(-39n, -78n));
+  assert.deepEqual(projectBalanceDelta(change(-50n, -100n), -39n, -78n), change(-50n, -100n));
 
   const pick = (m: Map<string, any>) =>
     Object.fromEntries([...m].map(([k, v]) => [k, [v.balance, v.volume]]));
@@ -365,10 +390,14 @@ const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance
     ctx.client.readContract = async () => {
       throw new Error("RPC timeout");
     };
-    await move(6, eth, 6, 1n);
-    await refreshProjectTokenBalance({
-      context: ctx, version: 6, projectId: 12n, token: USDC, block: { number: 6n, timestamp: 72n },
-    });
+    // The project moves by nothing, so it stays the sum of its token rows.
+    assert.deepEqual(await move(6, eth, 6, 1n), change(0n, 0n));
+    assert.deepEqual(
+      plain(await refreshProjectTokenBalance({
+        context: ctx, version: 6, projectId: 12n, token: USDC, block: { number: 6n, timestamp: 72n },
+      })),
+      change(0n, 0n)
+    );
   } finally {
     console.error = quietError;
   }
@@ -379,48 +408,58 @@ const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance
   // The next successful read repairs the balance; volume stays complete.
   ctx.client.readContract = readStore;
   store[`${ETH}@7`] = 53n;
-  await move(6, eth, 7, 2n);
+  // The repairing read's change covers the missed movement too.
+  assert.equal((await move(6, eth, 7, 2n)).delta, 3n);
   assert.deepEqual(pick(rows)[`1:12:6:${ETH}`], [53n, 103n]);
   assert.deepEqual(pick(moments)[`1:12:6:${ETH}@7`], [53n, 103n]);
 }
 
 {
-  // A buyback Mint takes the forwarded amount from the afterPayRecordedWith
-  // call that emitted it. Nested payments, before or after the Mint (a custom
-  // token's mint callback paying the project again), cannot stand in.
+  // A buyback Mint is priced by its own hook call's HookAfterRecordPay, which
+  // names the currency, with no trace. Payments nested in the hook call before
+  // its Mint finish (Mint, HookAfterRecordPay) before the outer Mint parks.
+  const pending = new Map<string, any>();
+  const rates = new Map<string, bigint | null>();
+  const pk = (k: any) => `${k.chainId}:${k.txHash}:${k.terminal}:${k.projectId}`;
+  const ctx = {
+    chain: { id: 1 },
+    db: {
+      find: async (table: unknown, k: any) => (assert.equal(table, pendingBuybackMint), pending.get(pk(k))),
+      delete: async (table: unknown, k: any) => (assert.equal(table, pendingBuybackMint), pending.delete(pk(k))),
+      insert: (table: unknown) => ({
+        values: (v: any) => ({
+          onConflictDoUpdate: async (u: any) => {
+            assert.equal(table, pendingBuybackMint);
+            pending.set(pk(v), { ...(pending.get(pk(v)) ?? v), ...u });
+          },
+        }),
+      }),
+      update: (table: unknown, k: { id: string }) => ({
+        set: async (v: any) => (assert.equal(table, swapEvent), rates.set(k.id, v.accountingTokenUsdRate)),
+      }),
+    },
+    // Stand-in feed: the currency in whole dollars, so the test sees which currency priced it.
+    client: {
+      readContract: async ({ args }: any) => BigInt(args[2]) * 10n ** 18n,
+    },
+  } as any;
   const hook = "0x00000000000000000000000000000000000000cc" as const;
-  const amount = (token: `0x${string}`, currency: number) => ({ token, decimals: 18, currency, value: 1n });
-  const hookCall = (token: `0x${string}`, currency: number, calls: CallFrame[], logs: TraceLog[], extra: Partial<CallFrame> = {}): CallFrame => ({
-    from: terminal,
-    to: hook,
-    type: "CALL",
-    input: encodeFunctionData({
-      abi: JBBuybackHookV6Abi,
-      functionName: "afterPayRecordedWith",
-      args: [{
-        payer: holder, projectId: 12n, rulesetId: 1n,
-        amount: amount(token, currency), forwardedAmount: amount(token, currency),
-        weight: 1n, newlyIssuedTokenCount: 0n, beneficiary: holder, hookMetadata: "0x", payerMetadata: "0x",
-      }] as any,
-    }),
-    calls,
-    logs,
-    ...extra,
-  });
-  const mintLog = (data: Hex): TraceLog => ({ address: hook, topics: ["0x02"], data, position: "0x0" });
-  const mint = { address: hook, topics: ["0x02"] as Hex[], data: "0xaa" as Hex };
-  const nested = (token: `0x${string}`, currency: number, data: Hex) =>
-    ({ from: hook, to: terminal, type: "CALL", input: "0x", calls: [hookCall(token, currency, [], [mintLog(data)])] }) as CallFrame;
-  // ETH call: a nested USDC pay before its Mint, its Mint, then a nested USDC pay after it.
-  const outer = frame([hookCall(ETH, 61166, [nested(USDC, 2, "0xbb"), nested(USDC, 2, "0xcc")], [mintLog("0xaa")])], []);
-  assert.equal(buybackMintForwardedAmount({ trace: outer, hook, mint })?.currency, 61166);
-  // The Mint emitted through a delegatecall (a proxied hook) still belongs to its call.
-  const proxied = frame([hookCall(ETH, 61166, [{ from: hook, to: holder, type: "DELEGATECALL", input: "0x", logs: [mintLog("0xaa")] }], [])], []);
-  assert.equal(buybackMintForwardedAmount({ trace: proxied, hook, mint })?.currency, 61166);
-  // A reverted call does not count; two calls holding an identical Mint are ambiguous.
-  assert.equal(buybackMintForwardedAmount({ trace: frame([hookCall(ETH, 61166, [], [mintLog("0xaa")], { error: "reverted" })], []), hook, mint }), null);
-  const twice = frame([hookCall(ETH, 61166, [], [mintLog("0xaa")]), hookCall(USDC, 2, [], [mintLog("0xaa")])], []);
-  assert.equal(buybackMintForwardedAmount({ trace: twice, hook, mint }), null);
+  const call = { txHash: "0x01" as Hex, terminal, projectId: 12 };
+  const mintOf = (swapEventId: string) => parkBuybackMint(ctx, { ...call, hook, swapEventId });
+  const after = (currency: bigint, by: `0x${string}` = hook) => priceBuybackMint(ctx, { ...call, hook: by, currency });
+  // Outer ETH call: a nested USDC pay (Mint, HookAfterRecordPay) runs first, then the outer Mint.
+  await mintOf("nested");
+  await after(2n);
+  await mintOf("outer");
+  // Another hook's HookAfterRecordPay in between does not take it.
+  await after(2n, holder);
+  await after(61166n);
+  // Currency 2 is USD, so the nested USDC Mint is $1 with no read.
+  assert.deepEqual(Object.fromEntries(rates), { nested: 10n ** 18n, outer: 61166n * 10n ** 18n });
+  // Every Mint was claimed; a HookAfterRecordPay with no Mint (all swapped) prices nothing.
+  assert.equal(pending.size, 0);
+  await after(61166n);
+  assert.equal(rates.size, 2);
 }
 
 console.log("terminal event token checks passed");

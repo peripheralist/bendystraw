@@ -1,4 +1,5 @@
 import type { Context } from "ponder:registry";
+import { projectTokenBalance } from "ponder:schema";
 import { erc20Abi, isAddressEqual, zeroAddress } from "viem";
 
 const NATIVE_TOKEN = "0x000000000000000000000000000000000000EEEe";
@@ -20,4 +21,23 @@ export async function tokenSymbol(context: Context, token: `0x${string}`): Promi
     return null;
   }
   return symbol;
+}
+
+/**
+ * The symbol already stored on the project's row for this token, else a read.
+ * Deterministic across re-indexes (the row is written in event order), and one
+ * RPC call per project token instead of one per event.
+ */
+export async function knownTokenSymbol(
+  context: Context,
+  projectId: number | bigint,
+  token: `0x${string}`
+): Promise<string | null> {
+  const row = await context.db.find(projectTokenBalance, {
+    chainId: context.chain.id,
+    projectId: Number(projectId),
+    version: 6,
+    token,
+  });
+  return row?.tokenSymbol ?? tokenSymbol(context, token);
 }
