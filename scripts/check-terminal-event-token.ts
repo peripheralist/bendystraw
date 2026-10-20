@@ -5,7 +5,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ADDRESS } from "../src/constants/address";
-import { parkBuybackMint, priceBuybackMint } from "../src/util/buybackMintAmount";
+import { abandonBuybackMint, parkBuybackMint, priceBuybackMint } from "../src/util/buybackMintAmount";
 import { pendingBuybackMint, projectTokenBalance as tokenBalanceTable, swapEvent } from "ponder:schema";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
@@ -271,14 +271,19 @@ runInNewContext(
       if (name === "../../abis/JBMultiTerminalAbi") return { JBMultiTerminalAbi: [] };
       if (name === "../constants/address") return { ADDRESS };
       if (name === "./tokenSymbol") return { knownTokenSymbol: async () => "USDC" };
-      // Stand-in rate: the context's currency in whole dollars, so the test sees which currency was used.
+      // Stand-in rates: the context's currency in whole dollars, so the test sees
+      // which currency was used, times a price the test can move.
       if (name === "./usdPrice") {
-        return { usdPerAccountingTokenAtBlock: async ({ currency }: { currency: bigint }) => currency * 10n ** 18n };
+        return {
+          usdPerAccountingTokenAtBlock: async ({ currency }: { currency: bigint }) => currency * 10n ** 18n,
+          usdRate18ForToken: async ({ currency }: { currency: bigint }) => currency * 10n ** 18n * price,
+        };
       }
       throw new Error(`Unexpected import ${name}`);
     },
   }
 );
+let price = 1n;
 const updateProjectTokenBalance = tokenBalanceModule.updateProjectTokenBalance!;
 const refreshProjectTokenBalance = tokenBalanceModule.refreshProjectTokenBalance!;
 // Results built in the vm realm compare by value once copied into this one.
@@ -327,38 +332,38 @@ const projectBalanceDelta = (...a: any[]) => plain(tokenBalanceModule.projectBal
   const eth = { token: ETH, decimals: 18, currency: 61166n, symbol: "ETH" };
   // USDC accounted as USD (currency 2), not its address-derived currency.
   const usdc = { token: USDC, decimals: 6, currency: 2n, symbol: "USDC" };
-  const move = (version: number, tokenContext: any, at: number, volumeDelta?: bigint, usdPerToken?: any) => {
+  const move = (version: number, tokenContext: any, at: number, volumeDelta?: bigint) => {
     block = at;
     return updateProjectTokenBalance({
-      context: ctx, version, projectId: 12, tokenContext, volumeDelta, usdPerToken,
+      context: ctx, version, projectId: 12, tokenContext, volumeDelta,
       block: { number: BigInt(at), timestamp: BigInt(at * 12) },
     }).then(plain);
   };
   const change = (delta: bigint, deltaUsd: bigint) => ({ delta, deltaUsd });
-  // Block 1: pays of 100 ETH-wei and 5 USDC-units. The event's own valuation
-  // (2 USD per wei here) prices the change without a lookup of its own.
+  // USD at the stand-in rates: ETH (currency 61166, 18 decimals), USDC as USD (2, 6 decimals).
+  const usdEth = (wei: bigint) => wei * 61166n * price;
+  const usdUsdc = (units: bigint) => (units * 2n * 10n ** 18n * price) / 10n ** 6n;
+  // Block 1: pays of 100 ETH-wei and 5 USDC-units.
   store[`${ETH}@1`] = 100n;
   store[`${USDC}@1`] = 5n;
-  assert.deepEqual(await move(6, eth, 1, 100n, { amount: 100n, amountUsd: 200n }), change(100n, 200n));
-  // No event valuation: the change is priced at the block's rate ($2 per whole USDC).
-  assert.deepEqual(await move(6, usdc, 1, 5n), change(5n, 10n ** 13n));
+  assert.deepEqual(await move(6, eth, 1, 100n), change(100n, usdEth(100n)));
+  assert.deepEqual(await move(6, usdc, 1, 5n), change(5n, usdUsdc(5n)));
   // Block 2: a cash-out whose event reclaims 39 net, while fees and a hook took
   // the store's balance down by 50 — the row and the project's change follow
   // the store, not the event.
   store[`${ETH}@2`] = 50n;
-  assert.deepEqual(await move(6, eth, 2, undefined, { amount: 39n, amountUsd: 78n }), change(-50n, -100n));
+  assert.deepEqual(await move(6, eth, 2), change(-50n, usdEth(50n) - usdEth(100n)));
   // Block 3: a payout of 50 whose transfer reverted and was refunded leaves the store at 50.
   store[`${ETH}@3`] = 50n;
-  assert.deepEqual(await move(6, eth, 3, undefined, { amount: 50n, amountUsd: 100n }), change(0n, 0n));
+  assert.deepEqual(await move(6, eth, 3), change(0n, 0n));
   // Block 4: a fee revert credits USDC with no amount event; the refresh reads it.
-  // With no event amount, the change is priced at the block's rate: 2 units at $2 per 1e6.
   store[`${USDC}@4`] = 7n;
   block = 4;
   assert.deepEqual(
     plain(await refreshProjectTokenBalance({
       context: ctx, version: 6, projectId: 12n, token: USDC, block: { number: 4n, timestamp: 48n },
     })),
-    change(2n, 4n * 10n ** 12n)
+    change(2n, usdUsdc(7n) - usdUsdc(5n))
   );
   const readsBefore = reads.length;
   // Pre-V6 keeps event arithmetic (null); an unresolved V6 token moves nothing.
@@ -412,6 +417,23 @@ const projectBalanceDelta = (...a: any[]) => plain(tokenBalanceModule.projectBal
   assert.equal((await move(6, eth, 7, 2n)).delta, 3n);
   assert.deepEqual(pick(rows)[`1:12:6:${ETH}`], [53n, 103n]);
   assert.deepEqual(pick(moments)[`1:12:6:${ETH}@7`], [53n, 103n]);
+
+  // USD tracks the balance at its latest rate, never a residue of past rates:
+  // the token's USD changes always sum to its current value, and an emptied
+  // balance is worth exactly 0 even after the price moved.
+  const ethRow = () => rows.get(`1:12:6:${ETH}`);
+  assert.equal(ethRow().balanceUsd, usdEth(53n));
+  price = 3n;
+  store[`${ETH}@8`] = 53n;
+  assert.deepEqual(await move(6, eth, 8), change(0n, usdEth(53n) - 53n * 61166n));
+  store[`${ETH}@9`] = 0n;
+  assert.deepEqual(await move(6, eth, 9), change(-53n, -usdEth(53n)));
+  assert.equal(ethRow().balanceUsd, 0n);
+  // With no rate at a block, the token keeps its last known one.
+  price = 0n;
+  store[`${ETH}@10`] = 10n;
+  assert.deepEqual(await move(6, eth, 10), change(10n, 10n * 61166n * 3n));
+  price = 1n;
 }
 
 {
@@ -460,6 +482,29 @@ const projectBalanceDelta = (...a: any[]) => plain(tokenBalanceModule.projectBal
   assert.equal(pending.size, 0);
   await after(61166n);
   assert.equal(rates.size, 2);
+
+  // A payment nested AFTER the outer Mint (a project token calling back) emits
+  // its Pay while the Mint is parked: the Mint is abandoned, never mispriced,
+  // whether the nested call mints or not.
+  const quietMint = console.error;
+  console.error = () => {};
+  try {
+    await mintOf("outer2");
+    await abandonBuybackMint(ctx, call);
+    await after(2n); // nested call, no Mint of its own
+    await after(61166n); // outer call
+    assert.equal(rates.has("outer2"), false);
+    await mintOf("outer3");
+    await abandonBuybackMint(ctx, call);
+    await mintOf("nested3");
+    await after(2n);
+    await after(61166n);
+    assert.equal(rates.has("outer3"), false);
+    assert.equal(rates.get("nested3"), 10n ** 18n);
+    assert.equal(pending.size, 0);
+  } finally {
+    console.error = quietMint;
+  }
 }
 
 console.log("terminal event token checks passed");

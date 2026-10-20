@@ -21,6 +21,7 @@ import {
 } from "./constants/uniswapV4";
 import { insertActivityEvent } from "./util/activityEvent";
 import { parkBuybackMint } from "./util/buybackMintAmount";
+import { ADDRESS } from "./constants/address";
 import { getEventParams } from "./util/getEventParams";
 
 // JBBuybackHook is a V6-only singleton (events carry `projectId`), so version
@@ -63,13 +64,17 @@ ponder.on("JBBuybackHook6:Mint", async ({ event, context }) => {
       // Set by the hook call's HookAfterRecordPay, which names the currency.
       accountingTokenUsdRate: null,
     });
-    await parkBuybackMint(context, {
-      txHash: event.transaction.hash,
-      terminal: event.args.caller,
-      projectId,
-      hook: event.log.address,
-      swapEventId: id,
-    });
+    // Only the indexed terminal emits the HookAfterRecordPay that prices it;
+    // another terminal's Mint keeps a null rate rather than a row that never clears.
+    if (isAddressEqual(event.args.caller, ADDRESS.jbMultiTerminal6)) {
+      await parkBuybackMint(context, {
+        txHash: event.transaction.hash,
+        terminal: event.args.caller,
+        projectId,
+        hook: event.log.address,
+        swapEventId: id,
+      });
+    }
 
     await insertActivityEvent("swapEvent", {
       id,

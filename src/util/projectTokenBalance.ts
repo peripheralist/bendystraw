@@ -6,7 +6,7 @@ import { ADDRESS } from "../constants/address";
 import type { Version } from "./getVersion";
 import type { TokenContext } from "./terminalEventToken";
 import { knownTokenSymbol } from "./tokenSymbol";
-import { usdPerAccountingTokenAtBlock } from "./usdPrice";
+import { usdPerAccountingTokenAtBlock, usdRate18ForToken } from "./usdPrice";
 
 const storeAbi = parseAbi([
   "function balanceOf(address terminal, uint256 projectId, address token) view returns (uint256)",
@@ -49,7 +49,11 @@ export async function updateProjectTokenBalance(
   }
 }
 
-/** A V6 token balance change: raw, and in USD at the event's rate. */
+/**
+ * A V6 token balance change: raw, and in USD as the change in the row's
+ * `balanceUsd` (the balance at its latest rate), so a project's USD balance is
+ * always the sum of its tokens' current values, never a residue of past rates.
+ */
 export type BalanceChange = { delta: bigint; deltaUsd: bigint };
 const NO_CHANGE: BalanceChange = { delta: BigInt(0), deltaUsd: BigInt(0) };
 
@@ -71,7 +75,6 @@ async function writeProjectTokenBalance({
   projectId,
   tokenContext,
   volumeDelta = BigInt(0),
-  usdPerToken,
   block,
 }: {
   context: Context;
@@ -79,9 +82,6 @@ async function writeProjectTokenBalance({
   projectId: number | bigint;
   tokenContext: TokenContext | null;
   volumeDelta?: bigint;
-  // The event's own USD valuation of an amount of this token, reused to value
-  // the change so it costs no price lookup of its own.
-  usdPerToken?: { amount: bigint; amountUsd: bigint };
   block: { number: bigint; timestamp: bigint };
 }): Promise<BalanceChange> {
   if (!tokenContext) return NO_CHANGE;
@@ -106,6 +106,22 @@ async function writeProjectTokenBalance({
     token: tokenContext.token,
   };
   const before = await context.db.find(projectTokenBalance, key);
+  // The balance valued at this block's rate, the same one the event was valued
+  // at (memoized, so no second lookup), or the token's last known rate.
+  let usdRate = before?.usdRate ?? null;
+  let balanceUsd = before?.balanceUsd ?? BigInt(0);
+  if (balance !== undefined) {
+    const rate = await usdRate18ForToken({
+      context,
+      version,
+      projectId: BigInt(projectId),
+      currency: tokenContext.currency,
+      token: tokenContext.token,
+      timestamp: block.timestamp,
+    });
+    if (rate > BigInt(0)) usdRate = rate;
+    balanceUsd = (balance * (usdRate ?? BigInt(0))) / BigInt(10) ** BigInt(tokenContext.decimals);
+  }
   const row = await context.db
     .insert(projectTokenBalance)
     .values({
@@ -114,9 +130,16 @@ async function writeProjectTokenBalance({
       tokenSymbol: tokenContext.symbol,
       // ponytail: a first row whose read failed starts at 0 until the next read.
       balance: balance ?? BigInt(0),
+      balanceUsd,
+      usdRate,
       volume: volumeDelta,
     })
-    .onConflictDoUpdate((r) => ({ balance: balance ?? r.balance, volume: r.volume + volumeDelta }));
+    .onConflictDoUpdate((r) => ({
+      balance: balance ?? r.balance,
+      balanceUsd,
+      usdRate,
+      volume: r.volume + volumeDelta,
+    }));
   // No moment without a read: the next one carries this volume.
   if (balance === undefined) return NO_CHANGE;
 
@@ -140,12 +163,10 @@ async function writeProjectTokenBalance({
     // Several events in one block keep the block's last balance.
     .onConflictDoUpdate(moment);
 
-  const delta = balance - (before?.balance ?? BigInt(0));
-  const deltaUsd =
-    usdPerToken && usdPerToken.amount > BigInt(0)
-      ? (delta * usdPerToken.amountUsd) / usdPerToken.amount
-      : (delta * (tokenUsdRate ?? BigInt(0))) / BigInt(10) ** BigInt(tokenContext.decimals);
-  return { delta, deltaUsd };
+  return {
+    delta: balance - (before?.balance ?? BigInt(0)),
+    deltaUsd: balanceUsd - (before?.balanceUsd ?? BigInt(0)),
+  };
 }
 
 /** Refresh one token's row for an event that names a token but no amount we track. Never throws. */

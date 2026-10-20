@@ -27,7 +27,7 @@ import {
   refreshProjectTokenBalance,
   updateProjectTokenBalance,
 } from "./util/projectTokenBalance";
-import { priceBuybackMint } from "./util/buybackMintAmount";
+import { abandonBuybackMint, priceBuybackMint } from "./util/buybackMintAmount";
 import type { Context } from "ponder:registry";
 
 async function updateProjectPayerStats({
@@ -144,7 +144,6 @@ ponder.on("JBMultiTerminal:AddToBalance", async ({ event, context }) => {
         version,
         projectId: projectId,
         tokenContext,
-        usdPerToken: { amount, amountUsd },
         block: event.block,
       }),
       amount,
@@ -281,7 +280,6 @@ ponder.on("JBMultiTerminal:SendPayouts", async ({ event, context }) => {
         version,
         projectId: projectId,
         tokenContext,
-        usdPerToken: { amount, amountUsd },
         block: event.block,
       }),
       -amountPaidOut,
@@ -497,7 +495,6 @@ ponder.on("JBMultiTerminal:CashOutTokens", async ({ event, context }) => {
         version,
         projectId: projectId,
         tokenContext,
-        usdPerToken: { amount: reclaimAmount, amountUsd: reclaimAmountUsd },
         block: event.block,
       }),
       -reclaimAmount,
@@ -617,7 +614,6 @@ ponder.on("JBMultiTerminal:UseAllowance", async ({ event, context }) => {
         version,
         projectId: projectId,
         tokenContext,
-        usdPerToken: { amount: amountPaidOut, amountUsd: amountPaidOutUsd },
         block: event.block,
       }),
       -amountPaidOut,
@@ -693,6 +689,14 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
 
     const version = getVersion(event, "jbMultiTerminal");
 
+    if (version === 6) {
+      await abandonBuybackMint(context, {
+        txHash: event.transaction.hash,
+        terminal: event.log.address,
+        projectId,
+      });
+    }
+
     const _project = await context.db.find(project, {
       projectId,
       chainId: context.chain.id,
@@ -761,7 +765,6 @@ ponder.on("JBMultiTerminal:Pay", async ({ event, context }) => {
         projectId: projectId,
         tokenContext,
         volumeDelta: amount,
-        usdPerToken: { amount, amountUsd },
         block: event.block,
       }),
       amount,
@@ -946,7 +949,6 @@ ponder.on("JBMultiTerminal:HookAfterRecordPay", async ({ event, context }) => {
                 symbol: await knownTokenSymbol(context, projectId, paid.token),
               }
             : null,
-        usdPerToken: { amount, amountUsd },
         block: event.block,
       }),
       -amount,

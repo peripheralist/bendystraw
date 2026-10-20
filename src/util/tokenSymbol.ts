@@ -39,5 +39,6 @@ export async function knownTokenSymbol(
     version: 6,
     token,
   });
-  return row?.tokenSymbol ?? tokenSymbol(context, token);
+  // A stored null is a known answer too: an unreadable token is read once.
+  return row ? row.tokenSymbol : tokenSymbol(context, token);
 }

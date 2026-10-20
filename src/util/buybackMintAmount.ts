@@ -5,14 +5,13 @@ import { usdPerAccountingTokenAtBlock } from "./usdPrice";
 // The buyback hook's Mint names no token. The terminal emits HookAfterRecordPay
 // for the same hook call as soon as it returns, carrying the forwarded token's
 // currency, so a Mint parks its row under that call and the HookAfterRecordPay
-// prices it: no trace. Payments nested in the hook call run before its Mint
-// (swap, then leftover), so each finishes Mint then HookAfterRecordPay before
-// the outer Mint parks under the same key.
-// ponytail: a payment nested AFTER the outer Mint (only a custom project
-// token's mint callback can make one) re-parks or claims under the same key:
-// the outer rate is left null, or, if that nested call had no leftover Mint,
-// priced in the nested payment's currency. Trace those transactions if one
-// ever appears.
+// prices it: no trace.
+//
+// Pay is emitted before a payment's hooks run, so a payment nested in the hook
+// call before its Mint (the swap) finishes before the outer Mint parks. One
+// nested after the Mint (a project token's mint, transfer or burn calling back)
+// emits its Pay while the Mint is parked; that Mint is then abandoned with a
+// null rate, since the next HookAfterRecordPay may be the nested one.
 
 type MintKey = { txHash: `0x${string}`; terminal: `0x${string}`; projectId: number };
 
@@ -25,6 +24,18 @@ export async function parkBuybackMint(
     .insert(pendingBuybackMint)
     .values({ chainId: context.chain.id, ...key })
     .onConflictDoUpdate({ hook, swapEventId });
+}
+
+/** A Pay to the parked key means a nested payment: leave the parked Mint unpriced. Never throws. */
+export async function abandonBuybackMint(context: Context, key: MintKey) {
+  try {
+    const id = { chainId: context.chain.id, ...key };
+    if (!(await context.db.find(pendingBuybackMint, id))) return;
+    await context.db.delete(pendingBuybackMint, id);
+    console.error(`buyback mint: nested payment after it, rate left null: chain ${context.chain.id} tx ${key.txHash}`);
+  } catch (e) {
+    console.error(`buyback mint: not abandoned: chain ${context.chain.id} tx ${key.txHash}`, e);
+  }
 }
 
 /** Prices the Mint this hook call parked, if any. Never throws. */

@@ -49,6 +49,8 @@ export async function acceptedTokenCurrency({
 //   ].map((c) => c.toLowerCase()) as Address[]
 // );
 
+const indexPrices = new Map<string, Promise<number>>();
+
 /**
  * USD per ONE WHOLE accounting token as an 18-decimal fixed point, for valuing
  * an amount. 0n when the token cannot be valued (never null: amount valuation
@@ -88,11 +90,18 @@ export async function usdRate18ForToken({
 
   if (priceIndexUrl && token && token !== zeroAddress) {
     try {
-      const res = await axios.get<{ priceUsd: number }>(
-        `${priceIndexUrl}?token=${token}&timestamp=${timestamp}&chainId=${context.chain.id}`
-      );
-
-      const _price = res.data.priceUsd;
+      const url = `${priceIndexUrl}?token=${token}&timestamp=${timestamp}&chainId=${context.chain.id}`;
+      // An event and its balance update value the same token at the same
+      // block: one request between them.
+      let pending = indexPrices.get(url);
+      if (!pending) {
+        // ponytail: forget everything once it grows; only same-block reuse matters.
+        if (indexPrices.size > 1000) indexPrices.clear();
+        pending = axios.get<{ priceUsd: number }>(url).then((res) => res.data.priceUsd);
+        indexPrices.set(url, pending);
+        pending.catch(() => indexPrices.delete(url));
+      }
+      const _price = await pending;
 
       if (!isNaN(_price) && _price > 0) {
         // Keep 8 decimals of price precision. The previous integer math
