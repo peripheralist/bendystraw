@@ -1048,7 +1048,7 @@ async function onTokenBalanceMoved(
       token: event.args.token,
       block: event.block,
     });
-    if (delta === BigInt(0)) return;
+    if (delta === BigInt(0) && deltaUsd === BigInt(0)) return;
     const updatedProject = await context.db
       .update(project, { chainId: context.chain.id, projectId: Number(projectId), version })
       .set((p) => ({ balance: p.balance + delta, balanceUsd: p.balanceUsd + deltaUsd }));

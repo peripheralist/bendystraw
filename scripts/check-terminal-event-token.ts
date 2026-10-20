@@ -433,6 +433,22 @@ const projectBalanceDelta = (...a: any[]) => plain(tokenBalanceModule.projectBal
   price = 0n;
   store[`${ETH}@10`] = 10n;
   assert.deepEqual(await move(6, eth, 10), change(10n, 10n * 61166n * 3n));
+
+  // A refresh (fee revert, migration) values with the on-chain feed only, never
+  // the external index: the stand-in index price (5x) does not reach it.
+  price = 5n;
+  store[`${USDC}@11`] = 7n;
+  block = 11;
+  assert.deepEqual(
+    plain(await refreshProjectTokenBalance({
+      context: ctx, version: 6, projectId: 12n, token: USDC, block: { number: 11n, timestamp: 132n },
+    })),
+    change(0n, 0n)
+  );
+  // A price-only change still moves USD with no raw change, so callers apply
+  // the change unless both parts are 0.
+  store[`${USDC}@12`] = 7n;
+  assert.deepEqual(await move(6, usdc, 12), change(0n, usdUsdc(7n) - (7n * 2n * 10n ** 18n) / 10n ** 6n));
   price = 1n;
 }
 

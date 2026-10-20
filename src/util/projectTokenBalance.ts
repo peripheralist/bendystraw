@@ -75,6 +75,7 @@ async function writeProjectTokenBalance({
   projectId,
   tokenContext,
   volumeDelta = BigInt(0),
+  refresh = false,
   block,
 }: {
   context: Context;
@@ -82,6 +83,7 @@ async function writeProjectTokenBalance({
   projectId: number | bigint;
   tokenContext: TokenContext | null;
   volumeDelta?: bigint;
+  refresh?: boolean;
   block: { number: bigint; timestamp: bigint };
 }): Promise<BalanceChange> {
   if (!tokenContext) return NO_CHANGE;
@@ -111,14 +113,17 @@ async function writeProjectTokenBalance({
   let usdRate = before?.usdRate ?? null;
   let balanceUsd = before?.balanceUsd ?? BigInt(0);
   if (balance !== undefined) {
-    const rate = await usdRate18ForToken({
-      context,
-      version,
-      projectId: BigInt(projectId),
-      currency: tokenContext.currency,
-      token: tokenContext.token,
-      timestamp: block.timestamp,
-    });
+    // A refresh (no amount event) takes the on-chain feed only, as before.
+    const rate = refresh
+      ? (await usdPerAccountingTokenAtBlock({ context, version, projectId, currency: tokenContext.currency })) ?? BigInt(0)
+      : await usdRate18ForToken({
+          context,
+          version,
+          projectId: BigInt(projectId),
+          currency: tokenContext.currency,
+          token: tokenContext.token,
+          timestamp: block.timestamp,
+        });
     if (rate > BigInt(0)) usdRate = rate;
     balanceUsd = (balance * (usdRate ?? BigInt(0))) / BigInt(10) ** BigInt(tokenContext.decimals);
   }
@@ -212,6 +217,7 @@ async function refreshTokenRow({
     context,
     version,
     projectId,
+    refresh: true,
     block,
     tokenContext: {
       token,

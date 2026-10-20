@@ -97,9 +97,9 @@ export async function usdRate18ForToken({
       if (!pending) {
         // ponytail: forget everything once it grows; only same-block reuse matters.
         if (indexPrices.size > 1000) indexPrices.clear();
+        // A failure is kept too: the next block (a new URL) retries.
         pending = axios.get<{ priceUsd: number }>(url).then((res) => res.data.priceUsd);
         indexPrices.set(url, pending);
-        pending.catch(() => indexPrices.delete(url));
       }
       const _price = await pending;
 
