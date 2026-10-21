@@ -7,6 +7,14 @@ type TierWeights = readonly { id: bigint; cashOutWeight: bigint }[];
 const toTierWeights = (weights: TierWeights) =>
   weights.map(({ id, cashOutWeight }) => ({ tierId: Number(id), cashOutWeight: cashOutWeight.toString() }));
 
+/**
+ * Whether a game was launched by a 2.0 deployer. Anyone can initialize the shared voting referee for a game of
+ * their own, so its events can name games this index does not track.
+ */
+async function isTrackedGame(context: Context, projectId: number) {
+  return !!await context.db.find(defifaGame, { chainId: context.chain.id, projectId });
+}
+
 /** Create a scorecard row the first time any contract reports it, and count it on its game. */
 async function ensureScorecard({
   context, projectId, scorecardId, tierWeights, proposer, timestamp, txHash, quorum, attestationsBegin, gracePeriodEnds,
@@ -55,6 +63,7 @@ ponder.on("DefifaGovernorV2:ScorecardRatified", async ({ event, context }) => {
 ponder.on("DefifaVotingReferee:ScorecardSubmitted", async ({ event, context }) => {
   const { gameId, scorecardId, tierWeights, caller } = event.args;
   const projectId = Number(gameId);
+  if (!await isTrackedGame(context, projectId)) return;
   // The quorum each scorecard needs is frozen at its proposal.
   const quorum = await context.client.readContract({
     abi: DefifaVotingRefereeAbi, address: event.log.address, functionName: "quorumOf", args: [gameId, scorecardId],
@@ -79,6 +88,7 @@ ponder.on("DefifaVotingReferee:ScorecardSubmitted", async ({ event, context }) =
 ponder.on("DefifaVotingReferee:ScorecardAttested", async ({ event, context }) => {
   const { gameId, scorecardId, weight, caller } = event.args;
   const projectId = Number(gameId);
+  if (!await isTrackedGame(context, projectId)) return;
   const chainId = context.chain.id;
   const timestamp = Number(event.block.timestamp);
   const key = { chainId, projectId, scorecardId, account: caller };
@@ -97,6 +107,7 @@ ponder.on("DefifaVotingReferee:ScorecardAttested", async ({ event, context }) =>
 ponder.on("DefifaVotingReferee:AttestationRevoked", async ({ event, context }) => {
   const { gameId, scorecardId, account, weight } = event.args;
   const projectId = Number(gameId);
+  if (!await isTrackedGame(context, projectId)) return;
   const chainId = context.chain.id;
   await context.db.update(defifaAttestation, { chainId, projectId, scorecardId, account })
     .set({ weight: 0n, revokedAt: Number(event.block.timestamp) });
@@ -110,6 +121,7 @@ ponder.on("DefifaVotingReferee:AttestationRevoked", async ({ event, context }) =
 ponder.on("DefifaVotingReferee:ScorecardForwarded", async ({ event, context }) => {
   const { gameId, scorecardId, caller } = event.args;
   const projectId = Number(gameId);
+  if (!await isTrackedGame(context, projectId)) return;
   await context.db.update(defifaScorecard, { chainId: context.chain.id, projectId, scorecardId })
     .set({ forwardedAt: Number(event.block.timestamp) });
   await insertDefifaEvent({ event, context, projectId, type: "scorecardForwarded", account: caller, scorecardId });

@@ -280,6 +280,14 @@ if (existsSync("src/DefifaGovernor.ts")) {
   assert.equal(card(g, 7n).ratifiedAt, 100);
   assert.deepEqual(normalize(game(g).cashOutWeights), [{ tierId: 1, cashOutWeight: String(10n ** 18n) }]);
   assert.equal(game(g).pot, 1000n);
+  // Games the 2.0 deployers did not launch can still use the shared voting referee; they are ignored.
+  for (const [name, args] of [
+    ["ScorecardSubmitted", { gameId: 99n, scorecardId: 1n, tierWeights: weights, caller: carol }],
+    ["ScorecardAttested", { gameId: 99n, scorecardId: 1n, weight: 1n, caller: carol }],
+    ["AttestationRevoked", { gameId: 99n, scorecardId: 1n, account: carol, weight: 1n, caller: carol }],
+    ["ScorecardForwarded", { gameId: 99n, scorecardId: 1n, caller: carol }],
+  ] as const) await g.emit(`DefifaVotingReferee:${name}`, args, d.votingReferee);
+  assert.equal(g.rows.defifaScorecard.size, 1);
   // A custom referee's submission creates its scorecard without a quorum.
   await g.emit("DefifaGovernorV2:ScorecardSubmitted", { gameId: 27n, scorecardId: 9n, tierWeights: weights, caller: carol }, d.governor);
   assert.equal(card(g, 9n).quorum, undefined);
@@ -313,7 +321,8 @@ if (existsSync("src/DefifaGovernor.ts")) {
   await m.emit("Defifa1155Hook:TransferSingle", { operator: carol, from: zeroAddress, to: bob, id: 65538n, value: 1n });
   // Supply is the store's value at the block, so a launch-block mint is not subtracted twice.
   assert.equal(tier2().remainingSupply, chainState.tierSupply);
-  assert.equal(one(m, "project")[0].nftsMintedCount, 4);
+  // ERC-1155 positions stay out of the project's int NFT counter.
+  assert.equal(one(m, "project")[0].nftsMintedCount, 0);
   assert.equal(game(m).totalMintCost, 400n);
   assert.deepEqual([holding(m, alice, 2).count, holding(m, alice, 2).reserveCount], [3, 0]);
   assert.deepEqual([holding(m, bob, 2).count, holding(m, bob, 2).reserveCount], [1, 1]);

@@ -1,14 +1,15 @@
 import { Context, Event, ponder } from "ponder:registry";
-import { nftTier, project, suckerGroup } from "ponder:schema";
+import { nftTier } from "ponder:schema";
 import { DEFIFA_V2_DEPLOYMENTS } from "./constants/defifa";
 import { tierOf } from "./util/tierOf";
 import { zeroAddress } from "viem";
 import { registerDefifaHookEvents } from "./util/defifaHookEvents";
 import { DEFIFA_VERSION, gameIdOfHook, insertDefifaEvent, moveDefifaHolding, syncDefifaTotalMintCost, tierOf1155TokenId } from "./util/defifa";
-import { onProjectStatsUpdated } from "./util/onProjectStatsUpdated";
 import { recordNftRecipient } from "./util/v6Nft";
 
 // ERC-1155 games mint fungible positions per tier: `count` positions per Mint, one balance per token ID.
+// Positions stay out of project.nftsMintedCount, an int column a cheap tier could overflow (up to 999,999,999
+// positions per tier); tier supply and holdings carry the counts, each below 1e9.
 async function recordMint({
   event, context, tierId, beneficiary, count, amount, reserved,
 }: {
@@ -27,16 +28,10 @@ async function recordMint({
     const tier = await tierOf({ context, hook, tierId, version: DEFIFA_VERSION, includeResolvedUri: false, store: DEFIFA_V2_DEPLOYMENTS.mainnet.store });
     await context.db.update(nftTier, tierKey).set({ remainingSupply: tier.remainingSupply });
   }
-  const _project = await context.db.update(project, { projectId, chainId, version: DEFIFA_VERSION })
-    .set((p) => ({ nftsMintedCount: p.nftsMintedCount + minted }));
   await insertDefifaEvent({
     event, context, projectId, type: reserved ? "reserveMinted" : "minted", account: beneficiary,
     tierId: Number(tierId), count: minted, amount,
   });
-  // Reserved mints have no terminal Pay event to refresh group aggregates; paid mints refresh on Pay.
-  if (reserved && await context.db.find(suckerGroup, { id: _project.suckerGroupId })) {
-    await onProjectStatsUpdated({ projectId, version: DEFIFA_VERSION, context, event, _project });
-  }
 }
 
 ponder.on("Defifa1155Hook:Mint", ({ event, context }) => {

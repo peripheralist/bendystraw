@@ -21,7 +21,7 @@ deploy executed.
 | `DefifaHookV2` | factory on the 721 deployer's `LaunchGame.hook` | `Transfer`, `Mint`, `MintReservedToken`, delegation, `ClaimedTokens`, `TierCashOutWeightsSet` |
 | `Defifa1155Hook` | factory on the 1155 deployer's `LaunchGame.hook` | `Mint`/`MintReservedToken` (count-based), `TransferSingle`, `TransferBatch`, delegation, claims, weights |
 | `DefifaGovernorV2` | `0xd8de…7b78` (721), `0x53EE…2879` (1155) | `ScorecardSubmitted`, `ScorecardRatified` |
-| `DefifaVotingReferee` | `0xf655…4640` | `ScorecardSubmitted` (proposal), `ScorecardAttested`, `AttestationRevoked`, `ScorecardForwarded` |
+| `DefifaVotingReferee` | `0xf655…4640` | `ScorecardSubmitted` (proposal), `ScorecardAttested`, `AttestationRevoked`, `ScorecardForwarded`; games the 2.0 deployers did not launch are ignored |
 
 2.0 hooks keep tiers in `DefifaTiersHookStore` (`0xF65d…Db7D`), so 2.0 tier reads (`maxTierIdOf`, `tierOf`,
 `tierOfTokenId`) go there. Governor and referee settings are read at the `LaunchGame` block: their
@@ -55,7 +55,8 @@ value rather than incremented, so launch-block events are never counted twice.
   transaction hash and timestamp. Mint rows repeat the transaction's total contribution per tier; never sum
   `amount` as revenue.
 
-ERC-1155 positions also update `nftTier.remainingSupply`, `project.nftsMintedCount` and participants; 721
+ERC-1155 positions update `nftTier.remainingSupply`, holdings and participants, but not
+`project.nftsMintedCount` (an int a cheap tier could overflow); 721
 positions keep using `nft`, `nftTier` and `mintNftEvent`. A game's entry count is the sum over its tiers of
 `initialSupply - remainingSupply` (paid and reserve mints; burns do not restore supply).
 
