@@ -8,6 +8,22 @@ event ABI come from the package's `deployments/defifa/*/DefifaDeployer.json` art
 and `src/interfaces/IDefifaDeployer.sol` (source revision
 `d3c46dd4fe9a093cc46ed5eb2106395d2a19b860`).
 
+## Defifa 2.0
+
+`@ballkidz/defifa@2.0.0` adds a second 721 game deployer at
+`0x32cD7d0C378a45A27cd7E361BCe0ba882efE87A9` on all eight chains (deploy-all-v6
+PR #250), indexed as `DefifaDeployerV2` / `DefifaHookV2`. Its `LaunchGame`, `Mint`,
+`MintReservedToken` and `Transfer` events match 1.0.2, so the same handlers run. 2.0
+hooks keep tiers in their own `DefifaTiersHookStore`
+(`0xF65dd3aDBaC3D776cfA025458Cac730Aa52ADb7D`), not the canonical
+`JB721TiersHookStore`, so the V2 handlers read `maxTierIdOf`, `tierOf` and
+`tierOfTokenId` from that store. Start blocks are chain heads read before the
+deploy executed, so they precede every 2.0 launch. 1.0.2 games are unchanged.
+
+The 2.0 ERC-1155 game type (`Defifa1155Deployer`) is not indexed: its positions are
+fungible per tier (`TransferSingle`/`TransferBatch`, count-based `Mint`), which the
+token-ID-keyed `nft` table does not model.
+
 `LaunchGame` seeds the existing `nftHook` and `nftTier` tables. Defifa's
 `tierNameOf` populates `nftTier.metadata.name`, including when `encodedIPFSUri`
 is zero. Inventory seeding does not resolve every tier's native SVG/font payload;

@@ -20,3 +20,30 @@ export const DEFIFA_DEPLOYMENTS = {
     },
   },
 } as const;
+
+// @ballkidz/defifa@2.0.0 721 game deployer, from deploy-all-v6's v6-deployment Safe (deploy-all-v6 PR #250).
+// CREATE2 places it, and the tier store its hooks use, at the same addresses on every chain. Start blocks are
+// chain heads read before the deploy executed, so they precede every 2.0 launch. 2.0 hooks keep their tiers in
+// DefifaTiersHookStore, not the canonical JB721TiersHookStore, so tier reads go to `store`.
+export const DEFIFA_V2_DEPLOYMENTS = {
+  mainnet: {
+    address: "0x32cd7d0c378a45a27cd7e361bce0ba882efe87a9",
+    store: "0xf65dd3adbac3d776cfa025458cac730aa52adb7d",
+    chain: {
+      ethereum: { startBlock: 26238310 },
+      arbitrum: { startBlock: 516797195 },
+      base: { startBlock: 52882160 },
+      optimism: { startBlock: 158477445 },
+    },
+  },
+  testnet: {
+    address: "0x32cd7d0c378a45a27cd7e361bce0ba882efe87a9",
+    store: "0xf65dd3adbac3d776cfa025458cac730aa52adb7d",
+    chain: {
+      ethereumSepolia: { startBlock: 11959773 },
+      arbitrumSepolia: { startBlock: 321268705 },
+      baseSepolia: { startBlock: 48392690 },
+      optimismSepolia: { startBlock: 50375565 },
+    },
+  },
+} as const;

@@ -8,7 +8,7 @@ import { JB721TiersHookStoreV6Abi } from "../abis/JB721TiersHookStoreV6Abi";
 import { zeroAddress, getAbiItem, toEventSelector } from "viem";
 import { DefifaHookAbi } from "../abis/DefifaHookAbi";
 import { DefifaDeployerAbi } from "../abis/DefifaDeployerAbi";
-import { DEFIFA_DEPLOYMENTS } from "../src/constants/defifa";
+import { DEFIFA_DEPLOYMENTS, DEFIFA_V2_DEPLOYMENTS } from "../src/constants/defifa";
 
 type Row = Record<string, any>;
 const hook = "0x1111111111111111111111111111111111111111";
@@ -30,6 +30,8 @@ function fixture(source: string, metadataAvailable = true, tierCount = 1) {
   const failedReads = new Set<string>();
   const snapshots: Row[] = [];
   const activities: Row[] = [];
+  const tierCalls: Row[] = [];
+  const reads: Row[] = [];
   const rowKey = (table: string, row: Row) => JSON.stringify(keys[table].map((key: string) => typeof row[key] === "bigint" ? String(row[key]) : row[key]));
   const db = {
     async find(table: string, key: Row) { return rows[table].get(rowKey(table, key)) ?? null; },
@@ -66,7 +68,8 @@ function fixture(source: string, metadataAvailable = true, tierCount = 1) {
         if (name.endsWith("/activityEvent")) return { insertActivityEvent: async (kind: string, args: Row) => activities.push({ kind, ...args }) };
         if (name.endsWith("/participantSnapshot")) return { setParticipantSnapshot: async (args: Row) => snapshots.push(args.participant) };
         if (name.endsWith("/getEventParams")) return { getEventParams: ({ event }: Row) => ({ logIndex: event.log.logIndex }) };
-        if (name.endsWith("/getAllTiers")) return { getAllTiers: async ({ includeResolvedUri }: Row) => Array.from({ length: tierCount }, (_, index) => ({ ...tier, id: index + 1, remainingSupply: tier.initialSupply, resolvedUri: includeResolvedUri === false ? "" : tier.resolvedUri })) };
+        if (name.endsWith("/constants/defifa")) return { DEFIFA_V2_DEPLOYMENTS };
+        if (name.endsWith("/getAllTiers")) return { getAllTiers: async ({ includeResolvedUri, store }: Row) => tierCalls.push({ store }) && Array.from({ length: tierCount }, (_, index) => ({ ...tier, id: index + 1, remainingSupply: tier.initialSupply, resolvedUri: includeResolvedUri === false ? "" : tier.resolvedUri })) };
         if (name.endsWith("/tokenUri")) return { parseTokenUri: (uri: string) => JSON.parse(Buffer.from(uri.split(",")[1]!, "base64").toString()), parseTierMetadata: async ({ resolvedUri }: Row) => metadataAvailable && resolvedUri ? ({ name: "resolver name", image: "test" }) : undefined };
         if (name === "viem") return { isAddressEqual: (a: string, b: string) => a === b, zeroAddress };
         return {};
@@ -75,7 +78,8 @@ function fixture(source: string, metadataAvailable = true, tierCount = 1) {
     return exports;
   };
   load(source);
-  const context = { db, chain: { id: 8453 }, client: { readContract: async ({ functionName, args }: Row) => {
+  const context = { db, chain: { id: 8453 }, client: { readContract: async ({ functionName, args, address }: Row) => {
+    reads.push({ functionName, address });
     if (failedReads.has(functionName)) throw new Error("fixture RPC unavailable");
     if (functionName === "projectId") return 27n;
     if (functionName === "tierOfTokenId") return tier;
@@ -90,7 +94,7 @@ function fixture(source: string, metadataAvailable = true, tierCount = 1) {
     const handler = handlers.get(name); assert.ok(handler, `registered ${name}`);
     await handler({ context, event: { args, log: { address: hook, logIndex: logIndex++ }, block: { number: 10n, timestamp: 100n }, transaction: { hash: hook, from: alice } } });
   }
-  return { emit, rows, errors, snapshots, activities, load, failedReads };
+  return { emit, rows, errors, snapshots, activities, load, failedReads, tierCalls, reads };
 }
 async function replay(source: string) {
   const f = fixture(source);
@@ -160,6 +164,30 @@ if (existsSync("src/DefifaDeployer.ts")) {
   assert.equal(noMetadata.rows.nftTier.size, 21);
   assert.equal([...noMetadata.rows.nftTier.values()][0].metadata.name, "Rekt");
 }
+if (existsSync("src/DefifaDeployer.ts")) {
+  // 1.0.2 games read tiers from the canonical store; 2.0 games from their DefifaTiersHookStore.
+  const v1 = fixture(readFileSync("src/DefifaDeployer.ts", "utf8"), true, 2);
+  v1.rows.nftTier.clear();
+  await v1.emit("DefifaDeployer:LaunchGame", { gameId: 27n, hook });
+  assert.deepEqual(v1.tierCalls, [{ store: undefined }]);
+  const v2 = fixture(readFileSync("src/DefifaDeployer.ts", "utf8"), true, 3);
+  v2.rows.nftTier.clear();
+  await v2.emit("DefifaDeployerV2:LaunchGame", { gameId: 27n, hook });
+  assert.equal(v2.errors.length, 0);
+  assert.equal(v2.rows.nftTier.size, 3);
+  assert.deepEqual(v2.tierCalls, [{ store: DEFIFA_V2_DEPLOYMENTS.mainnet.store }]);
+  v2.load(readFileSync("src/DefifaHook.ts", "utf8"));
+  await v2.emit("DefifaHookV2:Transfer", { from: zeroAddress, to: alice, tokenId: 1n });
+  await v2.emit("DefifaHookV2:Mint", { beneficiary: alice, tierId: 1n, tokenId: 1n, totalAmountPaid: 100n });
+  await v2.emit("DefifaHookV2:MintReservedToken", { beneficiary: alice, tierId: 1n, tokenId: 2n, caller: alice });
+  assert.equal(v2.errors.length, 0);
+  assert.equal([...v2.rows.nft.values()][0].owner, alice);
+  assert.equal([...v2.rows.project.values()][0].nftsMintedCount, 2);
+  assert.deepEqual(v2.reads.filter(({ functionName }) => functionName === "tierOfTokenId").map(({ address }) => address), [DEFIFA_V2_DEPLOYMENTS.mainnet.store]);
+  v1.load(readFileSync("src/DefifaHook.ts", "utf8"));
+  await v1.emit("DefifaHook:Transfer", { from: zeroAddress, to: alice, tokenId: 1n });
+  assert.deepEqual(v1.reads.filter(({ functionName }) => functionName === "tierOfTokenId").map(({ address }) => address), [zeroAddress]);
+}
 console.log("V6 NFT handler parity and Defifa replay passed");
 
 assert.equal(toEventSelector(getAbiItem({ abi: DefifaHookAbi, name: "Mint" })), toEventSelector("Mint(uint256,uint256,address,uint256,address)"));
@@ -173,4 +201,11 @@ for (const network of ["mainnet", "testnet"]) {
   assert.ok(config.includes(`DefifaDeployer: { abi: DefifaDeployerAbi, ...DEFIFA_DEPLOYMENTS.${network} }`));
   assert.ok(config.includes(`address: DEFIFA_DEPLOYMENTS.${network}.address`));
   assert.ok(config.includes(`chain: DEFIFA_DEPLOYMENTS.${network}.chain`));
+}
+for (const network of ["mainnet", "testnet"] as const) {
+  assert.equal(DEFIFA_V2_DEPLOYMENTS[network].address, "0x32cd7d0c378a45a27cd7e361bce0ba882efe87a9");
+  assert.equal(DEFIFA_V2_DEPLOYMENTS[network].store, "0xf65dd3adbac3d776cfa025458cac730aa52adb7d");
+  assert.ok(config.includes(`DefifaDeployerV2: { abi: DefifaDeployerAbi, address: DEFIFA_V2_DEPLOYMENTS.${network}.address, chain: DEFIFA_V2_DEPLOYMENTS.${network}.chain }`));
+  assert.ok(config.includes(`address: DEFIFA_V2_DEPLOYMENTS.${network}.address,\n        event`));
+  assert.ok(config.includes(`chain: DEFIFA_V2_DEPLOYMENTS.${network}.chain,\n    },`));
 }

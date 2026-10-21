@@ -18,7 +18,8 @@ import { parseTokenUri } from "./tokenUri";
 const version = 6;
 const hookStore = addressForVersion("jb721TiersHookStore", version);
 
-export async function recordV6NftTransfer({ event, context, strict = false }: { event: Event<"JB721TiersHook6:Transfer">; context: Context; strict?: boolean }) {
+// `store` overrides the canonical tier store for hooks that keep tiers elsewhere (Defifa 2.0).
+export async function recordV6NftTransfer({ event, context, strict = false, store = hookStore }: { event: Event<"JB721TiersHook6:Transfer">; context: Context; strict?: boolean; store?: `0x${string}` }) {
     const { tokenId, to } = event.args;
     const hook = event.log.address;
     const chainId = context.chain.id;
@@ -26,7 +27,7 @@ export async function recordV6NftTransfer({ event, context, strict = false }: { 
     try {
       const tier = await context.client.readContract({
         abi: JB721TiersHookStoreV6Abi,
-        address: hookStore,
+        address: store,
         functionName: "tierOfTokenId",
         args: [hook, tokenId, true],
       });

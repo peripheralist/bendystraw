@@ -1,13 +1,15 @@
-import { ponder } from "ponder:registry";
+import { Context, Event, ponder } from "ponder:registry";
 import { nftHook, nftTier } from "ponder:schema";
 import { JB721TiersHookV6Abi } from "../abis/JB721TiersHookV6Abi";
 import { DefifaHookAbi } from "../abis/DefifaHookAbi";
+import { DEFIFA_V2_DEPLOYMENTS } from "./constants/defifa";
 import { getAllTiers } from "./util/getAllTiers";
 import { parseTierMetadata } from "./util/tokenUri";
 
 // Defifa does not emit JB721 AddTier/HookDeployed. LaunchGame is its canonical
 // discovery event; native names remain authoritative even without IPFS metadata.
-ponder.on("DefifaDeployer:LaunchGame", async ({ event, context }) => {
+// 1.0.2 hooks keep tiers in the canonical store; 2.0 hooks pass their DefifaTiersHookStore.
+async function seedGame({ event, context, store }: { event: Event<"DefifaDeployer:LaunchGame">; context: Context; store?: `0x${string}` }) {
   const { hook, gameId } = event.args;
   const version = 6;
   const [name, symbol] = await Promise.all([
@@ -18,7 +20,7 @@ ponder.on("DefifaDeployer:LaunchGame", async ({ event, context }) => {
     chainId: context.chain.id, address: hook, projectId: Number(gameId),
     createdAt: Number(event.block.timestamp), name, symbol, version,
   });
-  const tiers = await getAllTiers({ context, hook, version, includeResolvedUri: false });
+  const tiers = await getAllTiers({ context, hook, version, includeResolvedUri: false, store });
   // Keep Ponder DB writes sequential; parallel writes share its transaction/savepoints.
   for (const tier of tiers) {
     if (!("flags" in tier)) throw new Error("Expected the V6 tier format for Defifa");
@@ -34,4 +36,8 @@ ponder.on("DefifaDeployer:LaunchGame", async ({ event, context }) => {
       resolvedUri: tier.resolvedUri, metadata: { ...metadata, name }, version,
     });
   }
-});
+}
+
+ponder.on("DefifaDeployer:LaunchGame", (args) => seedGame(args));
+// Both networks share the 2.0 store address (CREATE2), so the mainnet entry serves every chain.
+ponder.on("DefifaDeployerV2:LaunchGame", (args) => seedGame({ ...args, store: DEFIFA_V2_DEPLOYMENTS.mainnet.store }));
