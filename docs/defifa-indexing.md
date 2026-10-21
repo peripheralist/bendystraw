@@ -8,6 +8,94 @@ event ABI come from the package's `deployments/defifa/*/DefifaDeployer.json` art
 and `src/interfaces/IDefifaDeployer.sol` (source revision
 `d3c46dd4fe9a093cc46ed5eb2106395d2a19b860`).
 
+## Defifa 2.0
+
+`@ballkidz/defifa@2.0.0` (deploy-all-v6 PR #250) is indexed end to end so a client can render every 2.0 game,
+721 and ERC-1155, without per-game RPC fan-out. 1.0.2 keeps only the NFT indexing below. All 2.0 contracts sit
+at the same address on every chain (`src/constants/defifa.ts`); start blocks are chain heads read before the
+deploy executed.
+
+| Source | Address | Events |
+|---|---|---|
+| `DefifaDeployerV2` | 721 deployer `0x32cD…87A9`, 1155 deployer `0x7A62…ba80` | `LaunchGame`, `FulfilledCommitments`, `QueuedNoContest` |
+| `DefifaHookV2` | factory on the 721 deployer's `LaunchGame.hook` | `Transfer`, `Mint`, `MintReservedToken`, delegation, `ClaimedTokens`, `TierCashOutWeightsSet` |
+| `Defifa1155Hook` | factory on the 1155 deployer's `LaunchGame.hook` | `Mint`/`MintReservedToken` (count-based), `TransferSingle`, `TransferBatch`, delegation, claims, weights |
+| `DefifaGovernorV2` | `0xd8de…7b78` (721), `0x53EE…2879` (1155) | `ScorecardSubmitted`, `ScorecardRatified` |
+| `DefifaVotingReferee` | `0xf655…4640` | `ScorecardSubmitted` (proposal), `ScorecardAttested`, `AttestationRevoked`, `ScorecardForwarded`; games the 2.0 deployers did not launch are ignored |
+
+2.0 hooks keep tiers in `DefifaTiersHookStore` (`0xF65d…Db7D`), so 2.0 tier reads (`maxTierIdOf`, `tierOf`,
+`tierOfTokenId`) go there. Governor and referee settings are read at the `LaunchGame` block: their
+`GameInitialized` events fire before `LaunchGame` in the same transaction. A referee's `initializeGameFor`
+callback also runs before `LaunchGame`, so hook events can precede the seed: they resolve their game through the
+hook's `projectId`, and anything the seed reads (tier supply, `totalMintCost`) is stored as the block's final
+value rather than incremented, so launch-block events are never counted twice.
+
+### Tables
+
+- `defifaGame` (`chainId`, `projectId` = gameId): game type, deployer, hook, governor, referee, resolver, name,
+  symbol, tier count; `mintStartsAt`, `refundStartsAt` (null without a refund period) and `scoringStartsAt`,
+  the starts JBRulesets derived for the game's rulesets (a late launch shifts them from the scheduled `start`);
+  `mintPeriodDuration`, `refundPeriodDuration`; `minParticipation`, `scorecardTimeout`, `timelockDuration`;
+  voting-referee `attestationStartTime` and `attestationGracePeriod` (null for other referees); `totalMintCost`
+  (refreshed on every mint and burn), `scorecardsCount`; `pendingScorecardId` and
+  `pendingSubmittedAt`; `ratifiedScorecardId`/`ratifiedAt`; `cashOutWeights`/`cashOutWeightsSetAt`; `pot` and
+  `commitmentsFulfilledAt`; `noContestQueuedAt`. Relations: `project` (balance, payments, cash-outs), `nftHook`
+  (tiers, 721 tokens), `scorecards`, `holdings`, `tierDelegates`, `events`.
+- `defifaScorecard`: `tierWeights`, `proposer`, `proposedAt`, `quorum` (the voting referee's `quorumOf`, frozen at
+  proposal; null for other referees), `attestationsBegin` and `gracePeriodEnds` (voting referee), `attestationWeight`, `attestationsCount`, `forwardedAt`, `submittedAt`
+  (to the governor), `ratifiedAt`. Relation: `attestations`.
+- `defifaAttestation`: one row per (scorecard, account): current `weight` (0 once revoked), `attestedAt`,
+  `revokedAt`.
+- `defifaHolding`: positions per (hook, owner, tier) for both game types; `reserveCount` (ERC-1155 only) counts
+  reserve-minted positions, which cannot be refunded. Rows stay at 0 after a full exit.
+- `defifaTierDelegate`: attestation units delegated to each account per tier.
+- `defifaEvent`: append-only feed (`launched`, `minted`, `reserveMinted`, `scorecardProposed`,
+  `scorecardAttested`, `attestationRevoked`, `scorecardForwarded`, `scorecardSubmitted`, `scorecardRatified`,
+  `cashOutWeightsSet`, `commitmentsFulfilled`, `noContestQueued`, `feeTokensClaimed`, `delegateChanged`) with
+  transaction hash and timestamp. Mint rows repeat the transaction's total contribution per tier; never sum
+  `amount` as revenue.
+
+ERC-1155 positions update `nftTier.remainingSupply`, holdings and participants, but not
+`project.nftsMintedCount` (an int a cheap tier could overflow); 721
+positions keep using `nft`, `nftTier` and `mintNftEvent`. A game's entry count is the sum over its tiers of
+`initialSupply - remainingSupply` (paid and reserve mints; burns do not restore supply).
+
+### Values clients derive
+
+Phase and scorecard state depend on the current time, so they are not stored. These mirror
+`DefifaDeployer.currentGamePhaseOf` and `DefifaGovernor.stateOf`; they belong in the SDK, not in each client.
+
+- Phase: before `mintStartsAt` COUNTDOWN; before `refundStartsAt` (or `scoringStartsAt` without a refund
+  period) MINT; before `scoringStartsAt` REFUND; then COMPLETE if `cashOutWeightsSetAt` is set; else NO_CONTEST
+  if `noContestQueuedAt` is set, or `minParticipation > 0 && totalMintCost < minParticipation`, or
+  `scorecardTimeout > 0 && now > scoringStartsAt + scorecardTimeout`; else SCORING.
+- Scorecard state: RATIFIED if it is `ratifiedScorecardId`, DEFEATED if another one is; DEFEATED if it is not
+  `pendingScorecardId`; QUEUED until `pendingSubmittedAt + timelockDuration`; then SUCCEEDED (anyone can ratify).
+  Before submission, a voting-referee proposal is PENDING before `attestationsBegin`, ACTIVE before
+  `gracePeriodEnds`, then SUCCEEDED (anyone can forward it; the first forwarded wins) once
+  `attestationWeight >= quorum`, else ACTIVE.
+
+### Query recipes (GraphQL)
+
+- Game list: `defifaGames(orderBy: "createdAt", orderDirection: "desc")`. This replaces the project-ID probe.
+- Game page: `defifaGame(chainId, projectId) { …, project { balance }, nftHook { nftTiers { items { tierId price
+  initialSupply remainingSupply metadata } } } }`. This replaces the 5 to 12 summary reads and the per-tier
+  reads.
+- Holders and picks: `defifaHoldings(where: { chainId, projectId, count_gt: 0 })`. This replaces the ownerOf
+  brute force.
+- A wallet's positions: `defifaHoldings(where: { owner, count_gt: 0 })`.
+- Scorecards: `defifaScorecards(where: { chainId, projectId }) { items { …, attestations { items { account
+  weight } } } }`. This replaces the `ScorecardSubmitted` getLogs and the per-scorecard reads.
+- Voters: `defifaTierDelegates(where: { chainId, projectId })`.
+- Activity: `defifaEvents(where: { chainId, projectId }, orderBy: "timestamp")`. This replaces the per-mint
+  receipt fetches.
+
+Values that still need a live read: `tokensClaimableFor` and the cash-out reclaim simulation (both
+time-dependent and per account), and a wallet's chosen delegate per tier (`DelegateChanged` carries no tier ID,
+so `getTierDelegateOf` stays the source).
+
+## Defifa 1.0.2 NFT indexing
+
 `LaunchGame` seeds the existing `nftHook` and `nftTier` tables. Defifa's
 `tierNameOf` populates `nftTier.metadata.name`, including when `encodedIPFSUri`
 is zero. Inventory seeding does not resolve every tier's native SVG/font payload;

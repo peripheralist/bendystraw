@@ -18,7 +18,8 @@ import { parseTokenUri } from "./tokenUri";
 const version = 6;
 const hookStore = addressForVersion("jb721TiersHookStore", version);
 
-export async function recordV6NftTransfer({ event, context, strict = false }: { event: Event<"JB721TiersHook6:Transfer">; context: Context; strict?: boolean }) {
+// `store` overrides the canonical tier store for hooks that keep tiers elsewhere (Defifa 2.0).
+export async function recordV6NftTransfer({ event, context, strict = false, store = hookStore }: { event: Event<"JB721TiersHook6:Transfer">; context: Context; strict?: boolean; store?: `0x${string}` }) {
     const { tokenId, to } = event.args;
     const hook = event.log.address;
     const chainId = context.chain.id;
@@ -26,7 +27,7 @@ export async function recordV6NftTransfer({ event, context, strict = false }: { 
     try {
       const tier = await context.client.readContract({
         abi: JB721TiersHookStoreV6Abi,
-        address: hookStore,
+        address: store,
         functionName: "tierOfTokenId",
         args: [hook, tokenId, true],
       });
@@ -43,45 +44,7 @@ export async function recordV6NftTransfer({ event, context, strict = false }: { 
 
       const projectId = Number(_projectId);
 
-      const _project = await context.db.find(project, {
-        projectId,
-        chainId,
-        version,
-      });
-
-      if (!_project) {
-        throw new Error("Missing project");
-      }
-
-      await context.db
-        .insert(wallet)
-        .values({ address: to })
-        .onConflictDoNothing();
-
-      const _participant = await context.db
-        .insert(participant)
-        .values({
-          address: to,
-          chainId,
-          projectId,
-          createdAt: Number(event.block.timestamp),
-          suckerGroupId: _project.suckerGroupId,
-          isRevnet: _project.isRevnet,
-          isHomerun: _project.isHomerun,
-          isSticky: _project.isSticky,
-          version,
-        })
-        .onConflictDoUpdate({
-          suckerGroupId: _project.suckerGroupId,
-          isRevnet: _project.isRevnet,
-          isHomerun: _project.isHomerun,
-          isSticky: _project.isSticky,
-        });
-      await setParticipantSnapshot({
-        participant: _participant,
-        context,
-        event,
-      });
+      await recordNftRecipient({ context, event, projectId, to });
 
       const existingNft = await context.db.find(nft, {
         chainId,
@@ -124,16 +87,12 @@ export async function recordV6NftTransfer({ event, context, strict = false }: { 
         });
       }
 
-      await context.db
-        .update(nftTier, {
-          chainId,
-          hook,
-          tierId: tier.id,
-          version,
-        })
-        .set({
-          remainingSupply: tier.remainingSupply,
-        });
+      // A Defifa hook can transfer before its LaunchGame seeds the tiers in the same block; the seed then reads
+      // the block's final supply.
+      const tierKey = { chainId, hook, tierId: tier.id, version };
+      if (await context.db.find(nftTier, tierKey)) {
+        await context.db.update(nftTier, tierKey).set({ remainingSupply: tier.remainingSupply });
+      }
     } catch (e) {
       if (strict) throw e;
       console.error("JB721TiersHook6:Transfer", e);
@@ -184,4 +143,58 @@ export async function recordV6NftMint({ event, context, strict = false }: { even
       if (strict) throw e;
       console.error("JB721TiersHook6:Mint", e);
     }
+}
+
+/** Record `to` as a wallet and a participant of the project they received an NFT in. */
+export async function recordNftRecipient({
+  context,
+  event,
+  projectId,
+  to,
+}: {
+  context: Context;
+  event: Parameters<typeof setParticipantSnapshot>[0]["event"];
+  projectId: number;
+  to: `0x${string}`;
+}) {
+  const chainId = context.chain.id;
+  const _project = await context.db.find(project, {
+    projectId,
+    chainId,
+    version,
+  });
+
+  if (!_project) {
+    throw new Error("Missing project");
+  }
+
+  await context.db
+    .insert(wallet)
+    .values({ address: to })
+    .onConflictDoNothing();
+
+  const _participant = await context.db
+    .insert(participant)
+    .values({
+      address: to,
+      chainId,
+      projectId,
+      createdAt: Number(event.block.timestamp),
+      suckerGroupId: _project.suckerGroupId,
+      isRevnet: _project.isRevnet,
+      isHomerun: _project.isHomerun,
+      isSticky: _project.isSticky,
+      version,
+    })
+    .onConflictDoUpdate({
+      suckerGroupId: _project.suckerGroupId,
+      isRevnet: _project.isRevnet,
+      isHomerun: _project.isHomerun,
+      isSticky: _project.isSticky,
+    });
+  await setParticipantSnapshot({
+    participant: _participant,
+    context,
+    event,
+  });
 }
