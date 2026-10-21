@@ -25,14 +25,19 @@ deploy executed.
 
 2.0 hooks keep tiers in `DefifaTiersHookStore` (`0xF65d…Db7D`), so 2.0 tier reads (`maxTierIdOf`, `tierOf`,
 `tierOfTokenId`) go there. Governor and referee settings are read at the `LaunchGame` block: their
-`GameInitialized` events fire before `LaunchGame` in the same transaction.
+`GameInitialized` events fire before `LaunchGame` in the same transaction. A referee's `initializeGameFor`
+callback also runs before `LaunchGame`, so hook events can precede the seed: they resolve their game through the
+hook's `projectId`, and anything the seed reads (tier supply, `totalMintCost`) is stored as the block's final
+value rather than incremented, so launch-block events are never counted twice.
 
 ### Tables
 
 - `defifaGame` (`chainId`, `projectId` = gameId): game type, deployer, hook, governor, referee, resolver, name,
-  symbol, tier count; `start`, `mintPeriodDuration`, `refundPeriodDuration`; `minParticipation`,
-  `scorecardTimeout`, `timelockDuration`; voting-referee `attestationStartTime` and `attestationGracePeriod`
-  (null for other referees); `entriesCount`, `totalMintCost`, `scorecardsCount`; `pendingScorecardId` and
+  symbol, tier count; `mintStartsAt`, `refundStartsAt` (null without a refund period) and `scoringStartsAt`,
+  the starts JBRulesets derived for the game's rulesets (a late launch shifts them from the scheduled `start`);
+  `mintPeriodDuration`, `refundPeriodDuration`; `minParticipation`, `scorecardTimeout`, `timelockDuration`;
+  voting-referee `attestationStartTime` and `attestationGracePeriod` (null for other referees); `totalMintCost`
+  (refreshed on every mint and burn), `scorecardsCount`; `pendingScorecardId` and
   `pendingSubmittedAt`; `ratifiedScorecardId`/`ratifiedAt`; `cashOutWeights`/`cashOutWeightsSetAt`; `pot` and
   `commitmentsFulfilledAt`; `noContestQueuedAt`. Relations: `project` (balance, payments, cash-outs), `nftHook`
   (tiers, 721 tokens), `scorecards`, `holdings`, `tierDelegates`, `events`.
@@ -51,18 +56,18 @@ deploy executed.
   `amount` as revenue.
 
 ERC-1155 positions also update `nftTier.remainingSupply`, `project.nftsMintedCount` and participants; 721
-positions keep using `nft`, `nftTier` and `mintNftEvent`.
+positions keep using `nft`, `nftTier` and `mintNftEvent`. A game's entry count is the sum over its tiers of
+`initialSupply - remainingSupply` (paid and reserve mints; burns do not restore supply).
 
 ### Values clients derive
 
 Phase and scorecard state depend on the current time, so they are not stored. These mirror
 `DefifaDeployer.currentGamePhaseOf` and `DefifaGovernor.stateOf`; they belong in the SDK, not in each client.
 
-- Phase: before `start` COUNTDOWN; before `start + mintPeriodDuration` MINT; before
-  `start + mintPeriodDuration + refundPeriodDuration` REFUND (only when the refund period is non-zero); then
-  COMPLETE if `cashOutWeightsSetAt` is set; else NO_CONTEST if `noContestQueuedAt` is set, or
-  `minParticipation > 0 && totalMintCost < minParticipation`, or `scorecardTimeout > 0 && now > scoringStart +
-  scorecardTimeout` where scoringStart is the end of the refund period; else SCORING.
+- Phase: before `mintStartsAt` COUNTDOWN; before `refundStartsAt` (or `scoringStartsAt` without a refund
+  period) MINT; before `scoringStartsAt` REFUND; then COMPLETE if `cashOutWeightsSetAt` is set; else NO_CONTEST
+  if `noContestQueuedAt` is set, or `minParticipation > 0 && totalMintCost < minParticipation`, or
+  `scorecardTimeout > 0 && now > scoringStartsAt + scorecardTimeout`; else SCORING.
 - Scorecard state: RATIFIED if it is `ratifiedScorecardId`, DEFEATED if another one is; DEFEATED if it is not
   `pendingScorecardId`; QUEUED until `pendingSubmittedAt + timelockDuration`; then SUCCEEDED (anyone can ratify).
   Before submission, a voting-referee proposal is PENDING before `attestationsBegin`, ACTIVE before

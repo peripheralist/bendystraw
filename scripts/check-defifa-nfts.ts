@@ -15,6 +15,8 @@ const hook = "0x1111111111111111111111111111111111111111";
 const alice = "0x2222222222222222222222222222222222222222";
 const bob = "0x3333333333333333333333333333333333333333";
 let referee: string = "0x4444444444444444444444444444444444444444";
+// Mutable chain state the 2.0 fixtures read.
+const chainState = { totalMintCost: 0n, tierSupply: 999999990, rulesetStarts: [5000n, 4000n, 1000n] };
 const tier = { id: 1, price: 100n, initialSupply: 999999999, remainingSupply: 999999998, category: 0,
   flags: { allowOwnerMint: false, transfersPausable: false, cantBeRemoved: true, cantIncreaseDiscountPercent: false, cantBuyWithCredits: false },
   reserveBeneficiary: zeroAddress,
@@ -64,6 +66,8 @@ function fixture(source: string, metadataAvailable = true, tierCount = 1) {
         if (name === "ponder:registry") return { ponder: { on: (event: string, handler: (input: Row) => Promise<void>) => handlers.set(event, handler) } };
         if (name === "ponder:schema") return Object.fromEntries([...tables, ...defifaTables, "suckerGroup", "suckerGroupMoment"].map((name) => [name, name]));
         if (name.endsWith("/util/defifa") || name === "./defifa") return load(readFileSync("src/util/defifa.ts", "utf8"));
+        if (name.endsWith("/tierOf")) return { tierOf: async ({ tierId }: Row) => ({ ...tier, id: Number(tierId), remainingSupply: chainState.tierSupply }) };
+        if (name.endsWith("/getVersion")) return { addressForVersion: () => zeroAddress };
         if (name.endsWith("/defifaHookEvents")) return load(readFileSync("src/util/defifaHookEvents.ts", "utf8"));
         if (name.endsWith("/onProjectStatsUpdated")) return load(readFileSync("src/util/onProjectStatsUpdated.ts", "utf8"));
         if (name.endsWith("/usdPrice")) return { usdPerAccountingTokenAtBlock: async () => 1000000000000000000n };
@@ -94,14 +98,15 @@ function fixture(source: string, metadataAvailable = true, tierCount = 1) {
     if (functionName === "name") return "Market";
     if (functionName === "symbol") return "METALOG";
     if (functionName === "tierNameOf") return args[0] === 1n ? "Rekt" : `Range ${args[0]}`;
-    if (functionName === "timesFor") return [1000n, 86400, 3600];
+    if (functionName === "timesFor") return [1000n, 86400, chainState.rulesetStarts.length === 3 ? 3600 : 0];
     if (functionName === "safetyParamsOf") return [2n, 604800];
     if (functionName === "refereeOf") return referee;
     if (functionName === "timelockDurationOf") return 3600n;
     if (functionName === "attestationStartTimeOf") return 2000n;
     if (functionName === "attestationGracePeriodOf") return 86400n;
     if (functionName === "quorumOf") return 5_000_000_000n;
-    if (functionName === "totalMintCost") return 777n;
+    if (functionName === "totalMintCost") return chainState.totalMintCost;
+    if (functionName === "allOf") return chainState.rulesetStarts.map((start) => ({ start }));
     throw new Error(`Unexpected read ${functionName}`);
   } } };
   let logIndex = 0;
@@ -223,12 +228,19 @@ if (existsSync("src/DefifaGovernor.ts")) {
     redeemVolume: 0n, redeemVolumeUsd: 0n, balance: 0n, balanceUsd: 0n, tokenSupply: 0n, reservedTokenSupply: 0n,
     trendingScore: 0n, trendingVolume: 0n, trendingPaymentsCount: 0, contributorsCount: 0 });
   await g.emit("DefifaDeployerV2:LaunchGame", launch, d.deployer);
-  assert.deepEqual(
-    (({ gameType, referee, governor, tiersCount, start, mintPeriodDuration, refundPeriodDuration, minParticipation, scorecardTimeout, timelockDuration, attestationStartTime, attestationGracePeriod, entriesCount, scorecardsCount }) =>
-      ({ gameType, referee, governor, tiersCount, start, mintPeriodDuration, refundPeriodDuration, minParticipation, scorecardTimeout, timelockDuration, attestationStartTime, attestationGracePeriod, entriesCount, scorecardsCount }))(game(g)),
-    { gameType: "erc721", referee: d.votingReferee, governor: d.governor, tiersCount: 3, start: 1000, mintPeriodDuration: 86400,
-      refundPeriodDuration: 3600, minParticipation: 2n, scorecardTimeout: 604800, timelockDuration: 3600,
-      attestationStartTime: 2000, attestationGracePeriod: 86400, entriesCount: 0, scorecardsCount: 0 });
+  const settings = game(g);
+  assert.deepEqual(normalize({ gameType: settings.gameType, referee: settings.referee, governor: settings.governor,
+    tiersCount: settings.tiersCount, mintStartsAt: settings.mintStartsAt, refundStartsAt: settings.refundStartsAt,
+    scoringStartsAt: settings.scoringStartsAt, mintPeriodDuration: settings.mintPeriodDuration,
+    refundPeriodDuration: settings.refundPeriodDuration, minParticipation: settings.minParticipation,
+    scorecardTimeout: settings.scorecardTimeout, timelockDuration: settings.timelockDuration,
+    attestationStartTime: settings.attestationStartTime, attestationGracePeriod: settings.attestationGracePeriod,
+    totalMintCost: settings.totalMintCost, scorecardsCount: settings.scorecardsCount }),
+  normalize({ gameType: "erc721", referee: d.votingReferee, governor: d.governor, tiersCount: 3, mintStartsAt: 1000n,
+    refundStartsAt: 4000n, scoringStartsAt: 5000n, mintPeriodDuration: 86400, refundPeriodDuration: 3600,
+    minParticipation: 2n, scorecardTimeout: 604800n, timelockDuration: 3600n, attestationStartTime: 2000n,
+    attestationGracePeriod: 86400n, totalMintCost: 0n, scorecardsCount: 0 }));
+  chainState.totalMintCost = 777n;
   const tokenId = 1_000_000_001n;
   await g.emit("DefifaHookV2:Transfer", { from: zeroAddress, to: alice, tokenId });
   await g.emit("DefifaHookV2:Mint", { beneficiary: alice, tierId: 1n, tokenId, totalAmountPaid: 100n, caller: alice });
@@ -236,14 +248,13 @@ if (existsSync("src/DefifaGovernor.ts")) {
   assert.equal(holding(g, alice, 1).count, 0);
   assert.equal(holding(g, bob, 1).count, 1);
   assert.equal(holding(g, bob, 1).reserveCount, undefined);
-  assert.equal(game(g).entriesCount, 1);
   assert.equal(game(g).totalMintCost, 777n);
   await assert.rejects(g.emit("DefifaHookV2:Transfer", { from: carol, to: bob, tokenId: 1_000_000_002n }), /underflow/);
   // Voting referee: propose, attest, revoke, re-attest, forward.
   const weights = [{ id: 1n, cashOutWeight: 10n ** 18n }];
   await g.emit("DefifaVotingReferee:ScorecardSubmitted", { gameId: 27n, scorecardId: 7n, tierWeights: weights, caller: alice }, d.votingReferee);
   assert.equal(card(g, 7n).quorum, 5_000_000_000n);
-  assert.deepEqual([card(g, 7n).attestationsBegin, card(g, 7n).gracePeriodEnds], [2000, 2000 + 86400]);
+  assert.deepEqual([card(g, 7n).attestationsBegin, card(g, 7n).gracePeriodEnds], [2000n, 2000n + 86400n]);
   assert.deepEqual(normalize(card(g, 7n).tierWeights), [{ tierId: 1, cashOutWeight: String(10n ** 18n) }]);
   await g.emit("DefifaVotingReferee:ScorecardAttested", { gameId: 27n, scorecardId: 7n, weight: 3_000_000_000n, caller: bob }, d.votingReferee);
   await g.emit("DefifaVotingReferee:ScorecardAttested", { gameId: 27n, scorecardId: 7n, weight: 2_000_000_000n, caller: alice }, d.votingReferee);
@@ -295,15 +306,15 @@ if (existsSync("src/DefifaGovernor.ts")) {
   await m.emit("DefifaDeployerV2:LaunchGame", { ...launch, governor: d.governor1155 }, d.deployer1155);
   assert.equal(game(m).gameType, "erc1155");
   const tier2 = () => m.rows.nftTier.get(JSON.stringify([8453, hook, 2, 6]));
-  const supply = tier2().remainingSupply;
+  chainState.totalMintCost = 400n;
   await m.emit("Defifa1155Hook:Mint", { tierId: 2n, beneficiary: alice, count: 3n, totalAmountContributed: 300n, caller: alice });
   await m.emit("Defifa1155Hook:TransferSingle", { operator: alice, from: zeroAddress, to: alice, id: 2n, value: 3n });
   await m.emit("Defifa1155Hook:MintReservedToken", { tierId: 2n, beneficiary: bob, count: 1n, caller: carol });
   await m.emit("Defifa1155Hook:TransferSingle", { operator: carol, from: zeroAddress, to: bob, id: 65538n, value: 1n });
-  assert.equal(tier2().remainingSupply, supply - 4);
+  // Supply is the store's value at the block, so a launch-block mint is not subtracted twice.
+  assert.equal(tier2().remainingSupply, chainState.tierSupply);
   assert.equal(one(m, "project")[0].nftsMintedCount, 4);
-  assert.equal(game(m).entriesCount, 4);
-  assert.equal(game(m).totalMintCost, 777n);
+  assert.equal(game(m).totalMintCost, 400n);
   assert.deepEqual([holding(m, alice, 2).count, holding(m, alice, 2).reserveCount], [3, 0]);
   assert.deepEqual([holding(m, bob, 2).count, holding(m, bob, 2).reserveCount], [1, 1]);
   await m.emit("Defifa1155Hook:TransferBatch", { operator: alice, from: alice, to: bob, ids: [2n], values: [2n] });
@@ -313,6 +324,29 @@ if (existsSync("src/DefifaGovernor.ts")) {
   assert.deepEqual(one(m, "defifaEvent").filter(({ type }) => type !== "launched").map(({ type, count, amount }) => [type, count, amount]),
     [["minted", 3, 300n], ["reserveMinted", 1, undefined]]);
   assert.equal(m.errors.length, 0);
+
+  // A referee's initializeGameFor callback runs before LaunchGame, so hook events can precede the seed: they
+  // resolve the game from the hook, skip rows the seed will write, and leave counters to the launch's reads.
+  const early = fixture(readFileSync("src/DefifaDeployer.ts", "utf8"), true, 3);
+  early.rows.nftTier.clear();
+  early.load(readFileSync("src/Defifa1155Hook.ts", "utf8"));
+  chainState.totalMintCost = 300n;
+  await early.emit("Defifa1155Hook:DelegateChanged", { delegator: alice, fromDelegate: zeroAddress, toDelegate: bob, caller: alice });
+  await early.emit("Defifa1155Hook:TierDelegateAttestationsChanged", { delegate: bob, tierId: 1n, previousBalance: 0n, newBalance: 2n, caller: alice });
+  await early.emit("Defifa1155Hook:Mint", { tierId: 1n, beneficiary: alice, count: 3n, totalAmountContributed: 300n, caller: alice });
+  await early.emit("Defifa1155Hook:TransferSingle", { operator: alice, from: zeroAddress, to: alice, id: 1n, value: 3n });
+  // No refund period: two rulesets.
+  chainState.rulesetStarts = [5000n, 1000n];
+  await early.emit("DefifaDeployerV2:LaunchGame", { ...launch, governor: d.governor1155 }, d.deployer1155);
+  assert.equal(early.errors.length, 0);
+  assert.equal(early.rows.defifaTierDelegate.get(JSON.stringify([8453, hook, 1, bob])).projectId, 27);
+  assert.equal(holding(early, alice, 1).count, 3);
+  assert.deepEqual(normalize([game(early).totalMintCost, game(early).refundStartsAt, game(early).scoringStartsAt]), normalize([300n, undefined, 5000n]));
+  assert.equal(early.rows.nftTier.size, 3);
+  chainState.rulesetStarts = [5000n];
+  const broken = fixture(readFileSync("src/DefifaDeployer.ts", "utf8"), true, 3);
+  broken.rows.nftTier.clear();
+  await assert.rejects(broken.emit("DefifaDeployerV2:LaunchGame", launch, d.deployer), /rulesets/);
 }
 console.log("V6 NFT handler parity and Defifa replay passed");
 

@@ -5,6 +5,8 @@ import { JB721TiersHookV6Abi } from "../abis/JB721TiersHookV6Abi";
 import { DefifaHookAbi } from "../abis/DefifaHookAbi";
 import { DefifaDeployerAbi } from "../abis/DefifaDeployerAbi";
 import { DefifaGovernorAbi, DefifaVotingRefereeAbi } from "../abis/DefifaGovernorAbi";
+import { JBRulesetsAbi } from "../abis/JBRulesetsAbi";
+import { addressForVersion } from "./util/getVersion";
 import { DEFIFA_V2_DEPLOYMENTS } from "./constants/defifa";
 import { getAllTiers } from "./util/getAllTiers";
 import { parseTierMetadata } from "./util/tokenUri";
@@ -56,13 +58,23 @@ ponder.on("DefifaDeployerV2:LaunchGame", async ({ event, context }) => {
   const deployments = DEFIFA_V2_DEPLOYMENTS.mainnet;
   const { name, symbol, tiersCount } = await seedGame({ event, context, store: deployments.store });
   const blockNumber = event.block.number;
-  const [[start, mintPeriodDuration, refundPeriodDuration], [minParticipation, scorecardTimeout], referee, timelockDuration] =
+  const [[, mintPeriodDuration, refundPeriodDuration], [minParticipation, scorecardTimeout], referee, timelockDuration, totalMintCost, rulesets] =
     await Promise.all([
       context.client.readContract({ abi: DefifaDeployerAbi, address: deployer, functionName: "timesFor", args: [gameId], blockNumber }),
       context.client.readContract({ abi: DefifaDeployerAbi, address: deployer, functionName: "safetyParamsOf", args: [gameId], blockNumber }),
       context.client.readContract({ abi: DefifaGovernorAbi, address: governor, functionName: "refereeOf", args: [gameId], blockNumber }),
       context.client.readContract({ abi: DefifaGovernorAbi, address: governor, functionName: "timelockDurationOf", args: [gameId], blockNumber }),
+      context.client.readContract({ abi: DefifaHookAbi, address: hook, functionName: "totalMintCost", blockNumber }),
+      // The launch queues MINT, REFUND (when its duration is non-zero) and SCORING; JBRulesets stores each one's
+      // derived start. allOf walks back from the latest, so sort by start.
+      context.client.readContract({
+        abi: JBRulesetsAbi, address: addressForVersion("jbRulesets", DEFIFA_VERSION), functionName: "allOf",
+        args: [gameId, 0n, 3n], blockNumber,
+      }),
     ]);
+  const starts = rulesets.map(({ start }) => BigInt(start)).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  const hasRefund = refundPeriodDuration !== 0;
+  if (starts.length !== (hasRefund ? 3 : 2)) throw new Error(`Defifa game ${gameId} has ${starts.length} rulesets`);
   // Attestation timing exists only on the sample voting referee.
   const isVotingReferee = isAddressEqual(referee, deployments.votingReferee);
   const [attestationStartTime, attestationGracePeriod] = isVotingReferee
@@ -75,11 +87,10 @@ ponder.on("DefifaDeployerV2:LaunchGame", async ({ event, context }) => {
   await context.db.insert(defifaGame).values({
     chainId: context.chain.id, projectId, version: DEFIFA_VERSION,
     gameType: isAddressEqual(deployer, deployments.deployer1155) ? "erc1155" : "erc721",
-    deployer, hook, governor, referee, tokenUriResolver, name, symbol, tiersCount, entriesCount: 0, totalMintCost: 0n, scorecardsCount: 0,
-    start: Number(start), mintPeriodDuration: Number(mintPeriodDuration), refundPeriodDuration: Number(refundPeriodDuration),
-    minParticipation, scorecardTimeout: Number(scorecardTimeout), timelockDuration: Number(timelockDuration),
-    attestationStartTime: attestationStartTime === undefined ? undefined : Number(attestationStartTime),
-    attestationGracePeriod: attestationGracePeriod === undefined ? undefined : Number(attestationGracePeriod),
+    deployer, hook, governor, referee, tokenUriResolver, name, symbol, tiersCount, totalMintCost, scorecardsCount: 0,
+    mintStartsAt: starts[0]!, refundStartsAt: hasRefund ? starts[1] : undefined, scoringStartsAt: starts[starts.length - 1]!,
+    mintPeriodDuration: Number(mintPeriodDuration), refundPeriodDuration: Number(refundPeriodDuration),
+    minParticipation, scorecardTimeout: BigInt(scorecardTimeout), timelockDuration, attestationStartTime, attestationGracePeriod,
     launchedBy: caller, launchTxHash: event.transaction.hash, createdAt: Number(event.block.timestamp),
   });
   await insertDefifaEvent({ event, context, projectId, type: "launched", account: caller });

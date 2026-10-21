@@ -1,5 +1,5 @@
 import { Context, Event, ponder } from "ponder:registry";
-import { defifaGame, project, suckerGroup } from "ponder:schema";
+import { project, suckerGroup } from "ponder:schema";
 import { JB721TiersHookV6Abi } from "../abis/JB721TiersHookV6Abi";
 import { DEFIFA_V2_DEPLOYMENTS } from "./constants/defifa";
 import { registerDefifaHookEvents } from "./util/defifaHookEvents";
@@ -41,7 +41,6 @@ ponder.on("DefifaHookV2:Transfer", async (args) => {
 async function recordV2Mint({ event, context, reserved }: { event: Event<"DefifaHookV2:Mint">; context: Context; reserved: boolean }) {
   const { beneficiary, tierId, totalAmountPaid } = event.args;
   const projectId = await gameIdOfHook(context, event.log.address);
-  await context.db.update(defifaGame, { chainId: context.chain.id, projectId }).set((game) => ({ entriesCount: game.entriesCount + 1 }));
   await insertDefifaEvent({
     event, context, projectId, type: reserved ? "reserveMinted" : "minted", account: beneficiary,
     tierId: Number(tierId), count: 1, amount: reserved ? undefined : totalAmountPaid,

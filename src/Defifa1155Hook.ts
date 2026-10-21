@@ -1,5 +1,7 @@
 import { Context, Event, ponder } from "ponder:registry";
-import { defifaGame, nftTier, project, suckerGroup } from "ponder:schema";
+import { nftTier, project, suckerGroup } from "ponder:schema";
+import { DEFIFA_V2_DEPLOYMENTS } from "./constants/defifa";
+import { tierOf } from "./util/tierOf";
 import { zeroAddress } from "viem";
 import { registerDefifaHookEvents } from "./util/defifaHookEvents";
 import { DEFIFA_VERSION, gameIdOfHook, insertDefifaEvent, moveDefifaHolding, syncDefifaTotalMintCost, tierOf1155TokenId } from "./util/defifa";
@@ -18,11 +20,15 @@ async function recordMint({
   const chainId = context.chain.id;
   const projectId = await gameIdOfHook(context, hook);
   const minted = Number(count);
-  await context.db.update(nftTier, { chainId, hook, tierId: Number(tierId), version: DEFIFA_VERSION })
-    .set((tier) => ({ remainingSupply: tier.remainingSupply - minted }));
+  // The store's remaining supply at this block, not a decrement: the launch seed already read the launch
+  // block's final supply, so a decrement would count a launch-block mint twice. Before the seed there is no row.
+  const tierKey = { chainId, hook, tierId: Number(tierId), version: DEFIFA_VERSION };
+  if (await context.db.find(nftTier, tierKey)) {
+    const tier = await tierOf({ context, hook, tierId, version: DEFIFA_VERSION, includeResolvedUri: false, store: DEFIFA_V2_DEPLOYMENTS.mainnet.store });
+    await context.db.update(nftTier, tierKey).set({ remainingSupply: tier.remainingSupply });
+  }
   const _project = await context.db.update(project, { projectId, chainId, version: DEFIFA_VERSION })
     .set((p) => ({ nftsMintedCount: p.nftsMintedCount + minted }));
-  await context.db.update(defifaGame, { chainId, projectId }).set((game) => ({ entriesCount: game.entriesCount + minted }));
   await insertDefifaEvent({
     event, context, projectId, type: reserved ? "reserveMinted" : "minted", account: beneficiary,
     tierId: Number(tierId), count: minted, amount,

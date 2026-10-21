@@ -2603,19 +2603,21 @@ export const defifaGame = onchainTable(
     name: t.text().notNull(),
     symbol: t.text().notNull(),
     tiersCount: t.integer().notNull(),
-    // DefifaDeployer.timesFor: mint opens at `start`; refund follows mint; scoring follows refund.
-    start: t.integer().notNull(),
+    // When each phase's ruleset starts, read from JBRulesets at launch. `start` (DefifaDeployer.timesFor) is
+    // when scoring is scheduled; every ruleset is must-start-at-or-after, so a late launch shifts them.
+    mintStartsAt: t.bigint().notNull(),
+    // Null when the game has no refund period.
+    refundStartsAt: t.bigint(),
+    scoringStartsAt: t.bigint().notNull(),
     mintPeriodDuration: t.integer().notNull(),
     refundPeriodDuration: t.integer().notNull(),
     // DefifaDeployer.safetyParamsOf: NO_CONTEST when participation or ratification falls short.
     minParticipation: t.bigint().notNull(),
-    scorecardTimeout: t.integer().notNull(),
-    timelockDuration: t.integer().notNull(),
+    scorecardTimeout: t.bigint().notNull(),
+    timelockDuration: t.bigint().notNull(),
     // Set only when the referee is the DefifaVotingReferee.
-    attestationStartTime: t.integer(),
-    attestationGracePeriod: t.integer(),
-    // Positions minted, paid and reserved (an ERC-1155 mint of `count` adds `count`).
-    entriesCount: t.integer().notNull().default(0),
+    attestationStartTime: t.bigint(),
+    attestationGracePeriod: t.bigint(),
     // The hook's totalMintCost: paid and reserve mint value net of cash-out burns. Below minParticipation the
     // game is NO_CONTEST once scoring begins. Refreshed on every mint and burn.
     totalMintCost: t.bigint().notNull().default(BigInt(0)),
@@ -2657,8 +2659,8 @@ export const defifaScorecard = onchainTable(
     // DefifaVotingReferee.quorumOf, frozen at proposal. Null for scorecards submitted by other referees.
     quorum: t.bigint(),
     // Voting referee only: attestations open at attestationsBegin and the grace period ends at gracePeriodEnds.
-    attestationsBegin: t.integer(),
-    gracePeriodEnds: t.integer(),
+    attestationsBegin: t.bigint(),
+    gracePeriodEnds: t.bigint(),
     attestationWeight: t.bigint().notNull().default(BigInt(0)),
     attestationsCount: t.integer().notNull().default(0),
     forwardedAt: t.integer(),

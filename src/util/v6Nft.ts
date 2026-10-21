@@ -87,16 +87,12 @@ export async function recordV6NftTransfer({ event, context, strict = false, stor
         });
       }
 
-      await context.db
-        .update(nftTier, {
-          chainId,
-          hook,
-          tierId: tier.id,
-          version,
-        })
-        .set({
-          remainingSupply: tier.remainingSupply,
-        });
+      // A Defifa hook can transfer before its LaunchGame seeds the tiers in the same block; the seed then reads
+      // the block's final supply.
+      const tierKey = { chainId, hook, tierId: tier.id, version };
+      if (await context.db.find(nftTier, tierKey)) {
+        await context.db.update(nftTier, tierKey).set({ remainingSupply: tier.remainingSupply });
+      }
     } catch (e) {
       if (strict) throw e;
       console.error("JB721TiersHook6:Transfer", e);

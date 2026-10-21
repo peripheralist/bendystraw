@@ -13,4 +13,5 @@ export const DefifaHookAbi = parseAbi([
   "event TierCashOutWeightsSet(DefifaTierCashOutWeight[] tierWeights, address caller)",
   "function tierNameOf(uint256 tierId) view returns (string)",
   "function totalMintCost() view returns (uint256)",
+  "function projectId() view returns (uint256)",
 ]);

@@ -12,7 +12,7 @@ async function ensureScorecard({
   context, projectId, scorecardId, tierWeights, proposer, timestamp, txHash, quorum, attestationsBegin, gracePeriodEnds,
 }: {
   context: Context; projectId: number; scorecardId: bigint; tierWeights: TierWeights; proposer: `0x${string}`;
-  timestamp: number; txHash: `0x${string}`; quorum?: bigint; attestationsBegin?: number; gracePeriodEnds?: number;
+  timestamp: number; txHash: `0x${string}`; quorum?: bigint; attestationsBegin?: bigint; gracePeriodEnds?: bigint;
 }) {
   const key = { chainId: context.chain.id, projectId, scorecardId };
   if (await context.db.find(defifaScorecard, key)) return key;
@@ -67,7 +67,8 @@ ponder.on("DefifaVotingReferee:ScorecardSubmitted", async ({ event, context }) =
   if (!game || game.attestationStartTime == null || game.attestationGracePeriod == null) {
     throw new Error(`Defifa game ${projectId} has no voting-referee settings`);
   }
-  const attestationsBegin = timestamp >= game.attestationStartTime ? timestamp + 1 : game.attestationStartTime;
+  const now = BigInt(timestamp);
+  const attestationsBegin = now >= game.attestationStartTime ? now + 1n : game.attestationStartTime;
   await ensureScorecard({
     context, projectId, scorecardId, tierWeights, proposer: caller, timestamp, txHash: event.transaction.hash, quorum,
     attestationsBegin, gracePeriodEnds: attestationsBegin + game.attestationGracePeriod,
