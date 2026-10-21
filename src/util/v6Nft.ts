@@ -44,45 +44,7 @@ export async function recordV6NftTransfer({ event, context, strict = false, stor
 
       const projectId = Number(_projectId);
 
-      const _project = await context.db.find(project, {
-        projectId,
-        chainId,
-        version,
-      });
-
-      if (!_project) {
-        throw new Error("Missing project");
-      }
-
-      await context.db
-        .insert(wallet)
-        .values({ address: to })
-        .onConflictDoNothing();
-
-      const _participant = await context.db
-        .insert(participant)
-        .values({
-          address: to,
-          chainId,
-          projectId,
-          createdAt: Number(event.block.timestamp),
-          suckerGroupId: _project.suckerGroupId,
-          isRevnet: _project.isRevnet,
-          isHomerun: _project.isHomerun,
-          isSticky: _project.isSticky,
-          version,
-        })
-        .onConflictDoUpdate({
-          suckerGroupId: _project.suckerGroupId,
-          isRevnet: _project.isRevnet,
-          isHomerun: _project.isHomerun,
-          isSticky: _project.isSticky,
-        });
-      await setParticipantSnapshot({
-        participant: _participant,
-        context,
-        event,
-      });
+      await recordNftRecipient({ context, event, projectId, to });
 
       const existingNft = await context.db.find(nft, {
         chainId,
@@ -185,4 +147,58 @@ export async function recordV6NftMint({ event, context, strict = false }: { even
       if (strict) throw e;
       console.error("JB721TiersHook6:Mint", e);
     }
+}
+
+/** Record `to` as a wallet and a participant of the project they received an NFT in. */
+export async function recordNftRecipient({
+  context,
+  event,
+  projectId,
+  to,
+}: {
+  context: Context;
+  event: Parameters<typeof setParticipantSnapshot>[0]["event"];
+  projectId: number;
+  to: `0x${string}`;
+}) {
+  const chainId = context.chain.id;
+  const _project = await context.db.find(project, {
+    projectId,
+    chainId,
+    version,
+  });
+
+  if (!_project) {
+    throw new Error("Missing project");
+  }
+
+  await context.db
+    .insert(wallet)
+    .values({ address: to })
+    .onConflictDoNothing();
+
+  const _participant = await context.db
+    .insert(participant)
+    .values({
+      address: to,
+      chainId,
+      projectId,
+      createdAt: Number(event.block.timestamp),
+      suckerGroupId: _project.suckerGroupId,
+      isRevnet: _project.isRevnet,
+      isHomerun: _project.isHomerun,
+      isSticky: _project.isSticky,
+      version,
+    })
+    .onConflictDoUpdate({
+      suckerGroupId: _project.suckerGroupId,
+      isRevnet: _project.isRevnet,
+      isHomerun: _project.isHomerun,
+      isSticky: _project.isSticky,
+    });
+  await setParticipantSnapshot({
+    participant: _participant,
+    context,
+    event,
+  });
 }
