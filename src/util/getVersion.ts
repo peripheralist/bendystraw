@@ -66,8 +66,9 @@ export function getVersion(
   const v5Address = ADDRESS[v5Key] as `0x${string}` | undefined;
 
   if (
-    v6Address &&
-    isAddressEqual(event.log.address, v6Address)
+    (v6Address && isAddressEqual(event.log.address, v6Address)) ||
+    (contractName === "banny721TokenUriResolver" &&
+      isAddressEqual(event.log.address, ADDRESS.banny721TokenUriResolver6_upgraded))
   ) {
     return 6;
   }

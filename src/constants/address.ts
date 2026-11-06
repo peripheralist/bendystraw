@@ -23,6 +23,7 @@ export const ADDRESS = {
   banny721TokenUriResolver5_old: "0x47c011146a4498a70e0bf2e4585acf9cade85954",
   banny721TokenUriResolver5: "0x2De178aDde33Cf27d391E9506C7B6f8b2DDc5efF",
   banny721TokenUriResolver6: "0x70d28338226e61a442ef516c731d371d13c9c6df",
+  banny721TokenUriResolver6_upgraded: "0xadb600920dcf30b83ef636100fc9fdfc1e5b2949",
   revDeployer: "0x027f1684c6d31066c3f2468117f2508e8134fdfc",
   revDeployer5: "0x2ca27bde7e7d33e353b44c27acfcf6c78dde251d",
   revDeployer6: "0xb552eb94284f94b833837d4b2cbb237128415d4e",

@@ -1,4 +1,6 @@
 import { Context } from "ponder:registry";
+import { JB721TiersHookAbi } from "../../abis/JB721TiersHookAbi";
+import { JB721TiersHookStoreAbi } from "../../abis/JB721TiersHookStoreAbi";
 import { Banny721TokenUriResolverAbi } from "../../abis/Banny721TokenUriResolverAbi";
 import { ADDRESS } from "../constants/address";
 import { bannyRetailHookForVersion } from "../constants/bannyHook";
@@ -28,7 +30,7 @@ const resolverStartBlocks = {
   },
 } as const;
 
-export function getBannySvg({
+export async function getBannySvg({
   context,
   tierId,
   block,
@@ -45,16 +47,28 @@ export function getBannySvg({
       : resolverStartBlocks.legacy[context.chain.name];
 
   // current resolver contract is a redeploy from the original. some events may trigger this query in a block prior to the current resolver contract being deployed. in that case, we will just return empty.
-  if (block < resolverStartBlock) return Promise.resolve(null);
-
-  const address =
-    version === 6
-      ? ADDRESS.banny721TokenUriResolver6
-      : version === 5
-        ? ADDRESS.banny721TokenUriResolver5
-        : ADDRESS.banny721TokenUriResolver;
+  if (block < resolverStartBlock) return null;
 
   const hook = bannyRetailHookForVersion(version, context.chain.id);
+  let address: `0x${string}`;
+  if (version === 6) {
+    const store = await context.client.readContract({
+      abi: JB721TiersHookAbi,
+      address: hook,
+      functionName: "STORE",
+    });
+    // Follow the collection's resolver at the indexed block, including resolver upgrades.
+    address = await context.client.readContract({
+      abi: JB721TiersHookStoreAbi,
+      address: store,
+      functionName: "tokenUriResolverOf",
+      args: [hook],
+    });
+  } else {
+    address = version === 5
+      ? ADDRESS.banny721TokenUriResolver5
+      : ADDRESS.banny721TokenUriResolver;
+  }
 
   return context.client.readContract({
     abi: Banny721TokenUriResolverAbi,

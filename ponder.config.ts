@@ -675,7 +675,7 @@ export const mainnetConfig = createConfig({
     },
     Banny721TokenUriResolver6: {
       abi: Banny721TokenUriResolverV6Abi,
-      address: [ADDRESS.banny721TokenUriResolver6],
+      address: [ADDRESS.banny721TokenUriResolver6, ADDRESS.banny721TokenUriResolver6_upgraded],
       chain: {
         ethereum: {
           startBlock: V6_MAINNET_START_BLOCKS.banny721TokenUriResolver.ethereum,
@@ -1242,7 +1242,7 @@ export const testnetConfig = createConfig({
     },
     Banny721TokenUriResolver6: {
       abi: Banny721TokenUriResolverV6Abi,
-      address: [ADDRESS.banny721TokenUriResolver6],
+      address: [ADDRESS.banny721TokenUriResolver6, ADDRESS.banny721TokenUriResolver6_upgraded],
       chain: {
         ethereumSepolia: {
           startBlock:
