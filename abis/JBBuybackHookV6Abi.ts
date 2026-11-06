@@ -1373,6 +1373,17 @@ export const JBBuybackHookV6Abi = [
   },
   {
     type: "error",
+    name: "JBBuybackHook_PoolHookMismatch",
+    inputs: [
+      {
+        name: "hooks",
+        type: "address",
+        internalType: "address"
+      }
+    ]
+  },
+  {
+    type: "error",
     name: "JBBuybackHook_PoolInitializedAtWrongPrice",
     inputs: [
       {
