@@ -9,17 +9,20 @@ export async function getAllTiers({
   hook,
   version,
   includeResolvedUri = true,
+  store,
 }: {
   context: Context;
   hook: `0x${string}`;
   version: Version;
   includeResolvedUri?: boolean;
+  // A V6 hook that keeps its tiers outside the canonical store (Defifa 2.0) passes that store.
+  store?: `0x${string}`;
 }) {
   const maxTierCall =
     version === 6
       ? await context.client.readContract({
           abi: JB721TiersHookStoreV6Abi,
-          address: addressForVersion("jb721TiersHookStore", version),
+          address: store ?? addressForVersion("jb721TiersHookStore", version),
           functionName: "maxTierIdOf",
           args: [hook],
         })
@@ -33,7 +36,7 @@ export async function getAllTiers({
   const tierPromises = [];
 
   for (let tierId = BigInt(1); tierId <= maxTierCall; tierId += BigInt(1)) {
-    tierPromises.push(tierOf({ context, hook, tierId, version, includeResolvedUri }));
+    tierPromises.push(tierOf({ context, hook, tierId, version, includeResolvedUri, store }));
   }
 
   return Promise.all(tierPromises);

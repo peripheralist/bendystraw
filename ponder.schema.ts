@@ -2579,3 +2579,253 @@ export const stickyFundEventRelations = relations(stickyFundEvent, ({ one }) => 
     references: [project.chainId, project.projectId, project.version],
   }),
 }));
+
+// ── Defifa 2.0 ──
+// Games launched by the @ballkidz/defifa 2.0.0 721 and ERC-1155 deployers. A game is a V6 project
+// (gameId == projectId), so its pot, payments and cash-outs come from the project relation. Time-derived
+// values (game phase, scorecard state) are not stored: every input they need is. See docs/defifa-indexing.md.
+
+export const defifaGameType = onchainEnum("defifa_game_type", ["erc721", "erc1155"]);
+
+export const defifaGame = onchainTable(
+  "defifa_game",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...version(t),
+    gameType: defifaGameType().notNull(),
+    deployer: t.hex().notNull(),
+    hook: t.hex().notNull(),
+    governor: t.hex().notNull(),
+    // The address whose submissions the governor accepts. The sample DefifaVotingReferee runs attestation voting.
+    referee: t.hex().notNull(),
+    tokenUriResolver: t.hex().notNull(),
+    name: t.text().notNull(),
+    symbol: t.text().notNull(),
+    tiersCount: t.integer().notNull(),
+    // When each phase's ruleset starts, read from JBRulesets at launch. `start` (DefifaDeployer.timesFor) is
+    // when scoring is scheduled; every ruleset is must-start-at-or-after, so a late launch shifts them.
+    mintStartsAt: t.bigint().notNull(),
+    // Null when the game has no refund period.
+    refundStartsAt: t.bigint(),
+    scoringStartsAt: t.bigint().notNull(),
+    mintPeriodDuration: t.integer().notNull(),
+    refundPeriodDuration: t.integer().notNull(),
+    // DefifaDeployer.safetyParamsOf: NO_CONTEST when participation or ratification falls short.
+    minParticipation: t.bigint().notNull(),
+    scorecardTimeout: t.bigint().notNull(),
+    timelockDuration: t.bigint().notNull(),
+    // Set only when the referee is the DefifaVotingReferee.
+    attestationStartTime: t.bigint(),
+    attestationGracePeriod: t.bigint(),
+    // The hook's totalMintCost: paid and reserve mint value net of cash-out burns. Below minParticipation the
+    // game is NO_CONTEST once scoring begins. Refreshed on every mint and burn.
+    totalMintCost: t.bigint().notNull().default(BigInt(0)),
+    scorecardsCount: t.integer().notNull().default(0),
+    // The scorecard the referee last submitted to the governor; a new submission replaces it.
+    pendingScorecardId: t.bigint(),
+    pendingSubmittedAt: t.integer(),
+    ratifiedScorecardId: t.bigint(),
+    ratifiedAt: t.integer(),
+    // [{ tierId, cashOutWeight }] as the hook recorded them at ratification.
+    cashOutWeights: t.json(),
+    cashOutWeightsSetAt: t.integer(),
+    pot: t.bigint(),
+    commitmentsFulfilledAt: t.integer(),
+    noContestQueuedAt: t.integer(),
+    launchedBy: t.hex().notNull(),
+    launchTxHash: t.hex().notNull(),
+    ...createdAt(t),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.projectId] }),
+    hookIdx: index().on(t.chainId, t.hook),
+    createdIdx: index().on(t.createdAt),
+  })
+);
+
+export const defifaScorecard = onchainTable(
+  "defifa_scorecard",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    scorecardId: t.bigint().notNull(),
+    // [{ tierId, cashOutWeight }].
+    tierWeights: t.json().notNull(),
+    // Who proposed it: the attester-proposer on the voting referee, else the referee's submission caller.
+    proposer: t.hex().notNull(),
+    proposedAt: t.integer().notNull(),
+    proposalTxHash: t.hex().notNull(),
+    // DefifaVotingReferee.quorumOf, frozen at proposal. Null for scorecards submitted by other referees.
+    quorum: t.bigint(),
+    // Voting referee only: attestations open at attestationsBegin and the grace period ends at gracePeriodEnds.
+    attestationsBegin: t.bigint(),
+    gracePeriodEnds: t.bigint(),
+    attestationWeight: t.bigint().notNull().default(BigInt(0)),
+    attestationsCount: t.integer().notNull().default(0),
+    forwardedAt: t.integer(),
+    submittedAt: t.integer(),
+    ratifiedAt: t.integer(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.scorecardId] }),
+  })
+);
+
+export const defifaAttestation = onchainTable(
+  "defifa_attestation",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    scorecardId: t.bigint().notNull(),
+    account: t.hex().notNull(),
+    // The account's attestation weight on this scorecard; 0 after revocation.
+    weight: t.bigint().notNull(),
+    attestedAt: t.integer().notNull(),
+    revokedAt: t.integer(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.projectId, t.scorecardId, t.account] }),
+    accountIdx: index().on(t.account),
+  })
+);
+
+// Positions an owner holds per tier, for both game types. Rows stay at 0 after a full exit.
+export const defifaHolding = onchainTable(
+  "defifa_holding",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    ...version(t),
+    hook: t.hex().notNull(),
+    owner: t.hex().notNull(),
+    tierId: t.integer().notNull(),
+    count: t.integer().notNull(),
+    // ERC-1155 only: positions held under the reserve token ID (tierId + 65536), which cannot be refunded.
+    reserveCount: t.integer(),
+    updatedAt: t.integer().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.hook, t.owner, t.tierId] }),
+    gameIdx: index().on(t.chainId, t.projectId, t.tierId),
+    ownerIdx: index().on(t.owner),
+  })
+);
+
+// Attestation units delegated to an account per tier (TierDelegateAttestationsChanged).
+export const defifaTierDelegate = onchainTable(
+  "defifa_tier_delegate",
+  (t) => ({
+    ...chainId(t),
+    ...projectId(t),
+    hook: t.hex().notNull(),
+    tierId: t.integer().notNull(),
+    delegate: t.hex().notNull(),
+    attestationUnits: t.bigint().notNull(),
+    updatedAt: t.integer().notNull(),
+  }),
+  (t) => ({
+    pk: primaryKey({ columns: [t.chainId, t.hook, t.tierId, t.delegate] }),
+    gameIdx: index().on(t.chainId, t.projectId),
+  })
+);
+
+export const defifaEventType = onchainEnum("defifa_event_type", [
+  "launched",
+  "minted",
+  "reserveMinted",
+  "scorecardProposed",
+  "scorecardAttested",
+  "attestationRevoked",
+  "scorecardForwarded",
+  "scorecardSubmitted",
+  "scorecardRatified",
+  "cashOutWeightsSet",
+  "commitmentsFulfilled",
+  "noContestQueued",
+  "feeTokensClaimed",
+  "delegateChanged",
+]);
+
+// Append-only Defifa 2.0 history. Mint rows repeat the transaction's total contribution per tier, so
+// `amount` must not be summed as revenue; terminal payments are the revenue source.
+export const defifaEvent = onchainTable(
+  "defifa_event",
+  (t) => ({
+    ...eventParams(t),
+    ...projectId(t),
+    type: defifaEventType().notNull(),
+    // The beneficiary, attester, claimer or delegator.
+    account: t.hex(),
+    tierId: t.integer(),
+    count: t.integer(),
+    // Mints: the transaction's total contribution. commitmentsFulfilled: the pot.
+    amount: t.bigint(),
+    scorecardId: t.bigint(),
+    // Attestation weight on scorecardAttested / attestationRevoked.
+    weight: t.bigint(),
+    defifaTokenAmount: t.bigint(),
+    baseProtocolTokenAmount: t.bigint(),
+    // delegateChanged: the new delegate.
+    delegate: t.hex(),
+  }),
+  (t) => ({
+    gameHistoryIdx: index().on(t.chainId, t.projectId, t.timestamp),
+    accountIdx: index().on(t.account),
+  })
+);
+
+export const defifaGameRelations = relations(defifaGame, ({ one, many }) => ({
+  project: one(project, {
+    fields: [defifaGame.projectId, defifaGame.chainId, defifaGame.version],
+    references: [project.projectId, project.chainId, project.version],
+  }),
+  nftHook: one(nftHook, {
+    fields: [defifaGame.hook, defifaGame.chainId, defifaGame.version],
+    references: [nftHook.address, nftHook.chainId, nftHook.version],
+  }),
+  scorecards: many(defifaScorecard),
+  holdings: many(defifaHolding),
+  tierDelegates: many(defifaTierDelegate),
+  events: many(defifaEvent),
+}));
+
+export const defifaScorecardRelations = relations(defifaScorecard, ({ one, many }) => ({
+  game: one(defifaGame, {
+    fields: [defifaScorecard.chainId, defifaScorecard.projectId],
+    references: [defifaGame.chainId, defifaGame.projectId],
+  }),
+  attestations: many(defifaAttestation),
+}));
+
+export const defifaAttestationRelations = relations(defifaAttestation, ({ one }) => ({
+  scorecard: one(defifaScorecard, {
+    fields: [defifaAttestation.chainId, defifaAttestation.projectId, defifaAttestation.scorecardId],
+    references: [defifaScorecard.chainId, defifaScorecard.projectId, defifaScorecard.scorecardId],
+  }),
+}));
+
+export const defifaHoldingRelations = relations(defifaHolding, ({ one }) => ({
+  game: one(defifaGame, {
+    fields: [defifaHolding.chainId, defifaHolding.projectId],
+    references: [defifaGame.chainId, defifaGame.projectId],
+  }),
+  tier: one(nftTier, {
+    fields: [defifaHolding.tierId, defifaHolding.chainId, defifaHolding.hook, defifaHolding.version],
+    references: [nftTier.tierId, nftTier.chainId, nftTier.hook, nftTier.version],
+  }),
+}));
+
+export const defifaTierDelegateRelations = relations(defifaTierDelegate, ({ one }) => ({
+  game: one(defifaGame, {
+    fields: [defifaTierDelegate.chainId, defifaTierDelegate.projectId],
+    references: [defifaGame.chainId, defifaGame.projectId],
+  }),
+}));
+
+export const defifaEventRelations = relations(defifaEvent, ({ one }) => ({
+  game: one(defifaGame, {
+    fields: [defifaEvent.chainId, defifaEvent.projectId],
+    references: [defifaGame.chainId, defifaGame.projectId],
+  }),
+}));

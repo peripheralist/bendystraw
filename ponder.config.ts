@@ -1,6 +1,8 @@
 import { DefifaDeployerAbi } from "./abis/DefifaDeployerAbi";
 import { DefifaHookAbi } from "./abis/DefifaHookAbi";
-import { DEFIFA_DEPLOYMENTS } from "./src/constants/defifa";
+import { Defifa1155HookAbi } from "./abis/Defifa1155HookAbi";
+import { DefifaGovernorAbi, DefifaVotingRefereeAbi } from "./abis/DefifaGovernorAbi";
+import { DEFIFA_DEPLOYMENTS, DEFIFA_V2_DEPLOYMENTS } from "./src/constants/defifa";
 import { CTPublisherV6Abi } from "./abis/CTPublisherV6Abi";
 import { createConfig, factory } from "ponder";
 import { erc20Abi, fallback, getAbiItem, http } from "viem";
@@ -522,6 +524,40 @@ export const mainnetConfig = createConfig({
       }),
       chain: DEFIFA_DEPLOYMENTS.mainnet.chain,
     },
+    // Both 2.0 deployers emit the same events; the handler tells the game type from the emitting address.
+    DefifaDeployerV2: {
+      abi: DefifaDeployerAbi,
+      address: [DEFIFA_V2_DEPLOYMENTS.mainnet.deployer, DEFIFA_V2_DEPLOYMENTS.mainnet.deployer1155],
+      chain: DEFIFA_V2_DEPLOYMENTS.mainnet.chain,
+    },
+    Defifa1155Hook: {
+      abi: Defifa1155HookAbi,
+      address: factory({
+        address: DEFIFA_V2_DEPLOYMENTS.mainnet.deployer1155,
+        event: getAbiItem({ abi: DefifaDeployerAbi, name: "LaunchGame" }),
+        parameter: "hook",
+      }),
+      chain: DEFIFA_V2_DEPLOYMENTS.mainnet.chain,
+    },
+    DefifaGovernorV2: {
+      abi: DefifaGovernorAbi,
+      address: [DEFIFA_V2_DEPLOYMENTS.mainnet.governor, DEFIFA_V2_DEPLOYMENTS.mainnet.governor1155],
+      chain: DEFIFA_V2_DEPLOYMENTS.mainnet.chain,
+    },
+    DefifaVotingReferee: {
+      abi: DefifaVotingRefereeAbi,
+      address: DEFIFA_V2_DEPLOYMENTS.mainnet.votingReferee,
+      chain: DEFIFA_V2_DEPLOYMENTS.mainnet.chain,
+    },
+    DefifaHookV2: {
+      abi: DefifaHookAbi,
+      address: factory({
+        address: DEFIFA_V2_DEPLOYMENTS.mainnet.address,
+        event: getAbiItem({ abi: DefifaDeployerAbi, name: "LaunchGame" }),
+        parameter: "hook",
+      }),
+      chain: DEFIFA_V2_DEPLOYMENTS.mainnet.chain,
+    },
     JB721TiersHookDeployer: JB721TiersHookDeployer.mainnet,
     JB721TiersHook: {
       abi: JB721TiersHookAbi,
@@ -1039,6 +1075,40 @@ export const testnetConfig = createConfig({
         parameter: "hook",
       }),
       chain: DEFIFA_DEPLOYMENTS.testnet.chain,
+    },
+    // Both 2.0 deployers emit the same events; the handler tells the game type from the emitting address.
+    DefifaDeployerV2: {
+      abi: DefifaDeployerAbi,
+      address: [DEFIFA_V2_DEPLOYMENTS.testnet.deployer, DEFIFA_V2_DEPLOYMENTS.testnet.deployer1155],
+      chain: DEFIFA_V2_DEPLOYMENTS.testnet.chain,
+    },
+    Defifa1155Hook: {
+      abi: Defifa1155HookAbi,
+      address: factory({
+        address: DEFIFA_V2_DEPLOYMENTS.testnet.deployer1155,
+        event: getAbiItem({ abi: DefifaDeployerAbi, name: "LaunchGame" }),
+        parameter: "hook",
+      }),
+      chain: DEFIFA_V2_DEPLOYMENTS.testnet.chain,
+    },
+    DefifaGovernorV2: {
+      abi: DefifaGovernorAbi,
+      address: [DEFIFA_V2_DEPLOYMENTS.testnet.governor, DEFIFA_V2_DEPLOYMENTS.testnet.governor1155],
+      chain: DEFIFA_V2_DEPLOYMENTS.testnet.chain,
+    },
+    DefifaVotingReferee: {
+      abi: DefifaVotingRefereeAbi,
+      address: DEFIFA_V2_DEPLOYMENTS.testnet.votingReferee,
+      chain: DEFIFA_V2_DEPLOYMENTS.testnet.chain,
+    },
+    DefifaHookV2: {
+      abi: DefifaHookAbi,
+      address: factory({
+        address: DEFIFA_V2_DEPLOYMENTS.testnet.address,
+        event: getAbiItem({ abi: DefifaDeployerAbi, name: "LaunchGame" }),
+        parameter: "hook",
+      }),
+      chain: DEFIFA_V2_DEPLOYMENTS.testnet.chain,
     },
     JB721TiersHookDeployer: JB721TiersHookDeployer.testnet,
     JB721TiersHook: {

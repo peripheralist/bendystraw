@@ -9,17 +9,20 @@ export function tierOf({
   tierId,
   version,
   includeResolvedUri = true,
+  store,
 }: {
   context: Context;
   hook: `0x${string}`;
   tierId: bigint;
   version: Version;
   includeResolvedUri?: boolean;
+  // A V6 hook that keeps its tiers outside the canonical store (Defifa 2.0) passes that store.
+  store?: `0x${string}`;
 }) {
   if (version === 6) {
     return context.client.readContract({
       abi: JB721TiersHookStoreV6Abi,
-      address: addressForVersion("jb721TiersHookStore", version),
+      address: store ?? addressForVersion("jb721TiersHookStore", version),
       functionName: "tierOf",
       args: [hook, tierId, includeResolvedUri],
     });
