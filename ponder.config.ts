@@ -1172,7 +1172,7 @@ export const testnetConfig = createConfig({
     },
     Banny721TokenUriResolver6: {
       abi: Banny721TokenUriResolverV6Abi,
-      address: [ADDRESS.banny721TokenUriResolver6],
+      address: [ADDRESS.banny721TokenUriResolver6, ADDRESS.banny721TokenUriResolver6_upgraded],
       chain: {
         ethereumSepolia: {
           startBlock:

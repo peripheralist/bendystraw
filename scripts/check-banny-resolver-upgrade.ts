@@ -12,6 +12,13 @@ for (const address of [ADDRESS.banny721TokenUriResolver6, ADDRESS.banny721TokenU
 assert.equal(getVersion({ log: { address: ADDRESS.banny721TokenUriResolver5 } }, "banny721TokenUriResolver"), 5);
 assert.equal(getVersion({ log: { address: ADDRESS.banny721TokenUriResolver } }, "banny721TokenUriResolver"), 4);
 
+// Mainnet and testnet collections both moved to the upgraded resolver, so both sources watch both addresses.
+const config = readFileSync("ponder.config.ts", "utf8");
+assert.equal(
+  config.split("address: [ADDRESS.banny721TokenUriResolver6, ADDRESS.banny721TokenUriResolver6_upgraded]").length - 1,
+  2,
+);
+
 // Exercise the actual SVG reader: a V6 collection can switch resolvers without
 // changing protocol version, and replay must follow the resolver at each block.
 const source = readFileSync(new URL("../src/util/getBannySvg.ts", import.meta.url), "utf8");
