@@ -117,7 +117,7 @@ To download the schema (e.g. for generating graphql types in your frontend):
 
 `GET /deployments` returns this indexer's receipt-backed contract records for its network, including each address, deployment block, package version, artifact path, and generation (`current`, `previous`, or `v1`). `current` means the canonical deployment artifact; an individual project's registry selection can still point to a previous generation. Historical buyback and router addresses remain indexed after retirement.
 
-Canonical artifact commit `a6ab40c5806b52ff4cb21f9eaefe275e621796f9` records executed buyback 1.4.0, router 1.3.0, gateway, and ratio-feed deployments on Ethereum, Arbitrum, Base, Optimism, Sepolia, Base Sepolia, and Arbitrum Sepolia. Optimism Sepolia has the ratio price feed only. The generated records now enable the gateway on all four mainnets at each chain's actual deployment block; existing project pins can still select a retired generation. All V6 activity keeps `version: 6`, including records from retired V6 contracts.
+Canonical artifact commit `b827a8b6c72869997207cd9246413ec99e7baceb` (Bananapus/deploy-all-v6#253) records executed buyback 2.0.0, router 1.4.0, gateway 1.4.0 and V4 hook 2.0.0 deployments on Ethereum, Arbitrum, Base, Optimism, Sepolia, Base Sepolia, and Arbitrum Sepolia, alongside every earlier generation. Optimism Sepolia has the ratio price feed only. Each generation is a source from its own deployment receipt; existing project pins can still select a retired generation. All V6 activity keeps `version: 6`, including records from retired V6 contracts.
 
 Gateway custody is available through these GraphQL collections:
 
@@ -146,7 +146,7 @@ A queued call retains the original input token. Its first failure is unqualified
 After canonical artifacts change, regenerate from the sibling deployment repository and reindex:
 
 ```sh
-npm run generate:rollout -- --ref a6ab40c5806b52ff4cb21f9eaefe275e621796f9
+npm run generate:rollout -- --ref b827a8b6c72869997207cd9246413ec99e7baceb
 npm run codegen
 npm run typecheck
 npm test

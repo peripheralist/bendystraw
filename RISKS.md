@@ -12,7 +12,7 @@ Bendystraw reconstructs protocol activity from chain logs. Its GraphQL results d
 
 ## Trust assumptions and validation limits
 
-The generated snapshot at `a6ab40c5806b52ff4cb21f9eaefe275e621796f9` includes executed gateway deployments on all four mainnets and the three supported testnets; Optimism Sepolia remains ratio-feed-only. Enabling these sources in code does not deploy or reindex a production Bendystraw instance. Keep the executed snapshot when artifact PRs are still awaiting merge: an older local branch can omit deployed generations even if its remaining receipts are valid.
+The generated snapshot at `b827a8b6c72869997207cd9246413ec99e7baceb` includes the executed hooks 2.0.0 rollout (buyback 2.0.0, router and gateway 1.4.0, V4 hook 2.0.0) and every earlier generation on all four mainnets and the three supported testnets; Optimism Sepolia remains ratio-feed-only. Enabling these sources in code does not deploy or reindex a production Bendystraw instance. Keep the executed snapshot when artifact PRs are still awaiting merge: an older local branch can omit deployed generations even if its remaining receipts are valid.
 
 Canonical deployment artifacts, ABI accuracy, RPC responses, Ponder's canonical-chain/reorg handling, and a complete backfill underpin the results. An empty collection can mean no events, an unavailable source, or incomplete indexing. RPC rate limits and unavailable archive history can delay or prevent replay; monitor readiness and indexed block heights per chain before presenting balances as current.
 
