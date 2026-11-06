@@ -167,16 +167,16 @@ const V6_MAINNET_START_BLOCKS = {
     optimism: 157213225,
   },
   stickyHook: {
-    ethereum: 26057164,
-    arbitrum: 508887149,
-    base: 51791252,
-    optimism: 157386536,
+    ethereum: 26222421,
+    arbitrum: 516101851,
+    base: 52786466,
+    optimism: 158381751,
   },
   stickyDistributor: {
-    ethereum: 26057166,
-    arbitrum: 508887191,
-    base: 51791257,
-    optimism: 157386542,
+    ethereum: 26222427,
+    arbitrum: 516101977,
+    base: 52786482,
+    optimism: 158381766,
   },
 } as const;
 
@@ -225,16 +225,16 @@ const V6_TESTNET_START_BLOCKS = {
     optimismSepolia: 49111081,
   },
   stickyHook: {
-    ethereumSepolia: 11781859,
-    arbitrumSepolia: 312706619,
-    baseSepolia: 47301559,
-    optimismSepolia: 49284433,
+    ethereumSepolia: 11943713,
+    arbitrumSepolia: 318466134,
+    baseSepolia: 48026611,
+    optimismSepolia: 50009485,
   },
   stickyDistributor: {
-    ethereumSepolia: 11781861,
-    arbitrumSepolia: 312706660,
-    baseSepolia: 47301564,
-    optimismSepolia: 49284439,
+    ethereumSepolia: 11943720,
+    arbitrumSepolia: 318466262,
+    baseSepolia: 48026628,
+    optimismSepolia: 50009501,
   },
 } as const;
 
