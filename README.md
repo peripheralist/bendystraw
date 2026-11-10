@@ -14,21 +14,23 @@ Ponder indexes events emitted by the protocol, and stores data in two databases 
 
 ## Getting Started
 
-### Authentication
+### Rate limits
 
-To make queries, first contact [Peri](https://x.com/peripheralist) for an API key. **API keys should not be exposed.** If you need to make requests from a frontend, consider using a server side proxy.
+No API key is needed. Requests are limited to 100 per minute per IP address.
+
+Building a community app? Contact [Peri](https://x.com/peripheralist) about higher limits for your domain.
 
 ### Schema
 
 To download the schema (e.g. for generating graphql types in your frontend):
 
-`GET https://bendystraw.xyz/schema` (no API key)
+`GET https://bendystraw.xyz/schema`
 
 > Schemas are the same for both mainnet and testnet databases.
 
 ### GraphQL Queries
 
-`POST https://<base-url>/<api-key>/graphql`
+`POST https://<base-url>/graphql`
 
 **Singular queries**
 
@@ -199,7 +201,7 @@ Some data is not conveniently accessible via GraphQL, but may be requested via o
     </tr>
     <tr>
       <td>
-        <code>POST https://&lt;url&gt;/&lt;api-key&gt;/participants</code>
+        <code>POST https://&lt;url&gt;/participants</code>
         <br/>
         <br/>
         <code>// body <br/>{

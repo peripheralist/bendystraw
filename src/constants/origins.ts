@@ -1,4 +1,4 @@
-export const ALLOWED_ORIGINS = [
+export const TRUSTED_ORIGINS = [
   "https://retail.banny.eth.sucks",
   "https://retail.banny.eth.shop",
   "https://juicebox.money",

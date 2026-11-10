@@ -10,9 +10,7 @@ import schema from "ponder:schema";
 import { IS_DEV } from "../constants/dev";
 import { NETWORKS } from "../constants/networks";
 import { ROLLOUT_DEPLOYMENTS } from "../constants/rolloutDeployments";
-import { ALLOWED_ORIGINS } from "../constants/origins";
 import { getBsStatus } from "../lib/getBsStatus";
-import { keyAuthMiddleware } from "../middleware/keyAuth";
 import { rateLimitMiddleware } from "../middleware/rateLimit";
 import { getParticipantSnapshots } from "./participants";
 
@@ -170,20 +168,30 @@ app.get("/status.svg", async (c) => {
   }
 });
 
-if (process.env.NODE_ENV !== "development") {
-  app.use("/schema", rateLimitMiddleware);
+const API_ROUTES = [
+  "/graphql",
+  "/participants",
+  // Legacy API-key routes. Keys are no longer checked; the segment is ignored.
+  "/:key/graphql",
+  "/:key/participants",
+];
+
+// Any site may query from the browser; requests are rate limited per client IP
+// (see rateLimitMiddleware). TRUSTED_ORIGINS get a higher limit.
+for (const route of API_ROUTES) {
+  app.use(route, cors({ origin: "*" }));
 }
+
+for (const route of ["/schema", ...API_ROUTES]) {
+  app.use(route, rateLimitMiddleware);
+}
+
 app.use("/schema", graphql({ db, schema }));
 
-app.post("/graphql", cors({ origin: ALLOWED_ORIGINS }));
-app.post("/participants", cors({ origin: ALLOWED_ORIGINS }));
-
 app.post("/graphql", graphql({ db, schema }));
-app.post("/:key/graphql", keyAuthMiddleware);
 app.post("/:key/graphql", graphql({ db, schema }));
 
 app.post("/participants", getParticipantSnapshots);
-app.post("/:key/participants", keyAuthMiddleware);
 app.post("/:key/participants", getParticipantSnapshots);
 
 app.get(
